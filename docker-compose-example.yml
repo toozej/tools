@@ -1,0 +1,90 @@
+---
+services:
+  www:
+    container_name: tools_www
+    image: nginx:latest
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - backend
+    volumes:
+      - "./nginx/conf.d/:/etc/nginx/conf.d/"
+      - "taboo:/var/www/html/taboo:ro"
+      - "unit-converter:/var/www/html/unit-converter:ro"
+      - "yaml-formatter:/var/www/html/yaml-formatter:ro"
+
+  clip2gist:
+    container_name: tools_clip2gist
+    build:
+      context: ./apps/clip2gist
+      dockerfile: Dockerfile
+    restart: always
+    env_file: ./apps/clip2gist/app.env
+    networks:
+      - backend
+
+  gh-dashboard:
+    container_name: tools_gh-dashboard
+    build:
+      context: ./apps/gh-dashboard
+      dockerfile: Dockerfile
+    restart: always
+    env_file: ./apps/gh-dashboard/app.env
+    networks:
+      - backend
+
+  www2s:
+    container_name: tools_www2s
+    build:
+      context: ./apps/www2s
+      dockerfile: Dockerfile
+    restart: always
+    env_file: ./apps/www2s/app.env
+    networks:
+      - backend
+
+  www2epub:
+    container_name: tools_www2epub
+    build:
+      context: ./apps/www2epub
+      dockerfile: Dockerfile
+    restart: always
+    networks:
+      - backend
+
+  # Builder services - run once with: docker compose --profile build up
+  taboo-builder:
+    profiles: ["build"]
+    build:
+      context: ./apps/taboo
+      dockerfile: Dockerfile
+    volumes:
+      - "taboo:/output"
+    restart: "no"
+
+  unit-converter-builder:
+    profiles: ["build"]
+    build:
+      context: ./apps/unit-converter
+      dockerfile: Dockerfile
+    volumes:
+      - "unit-converter:/output"
+    restart: "no"
+
+  yaml-formatter-builder:
+    profiles: ["build"]
+    build:
+      context: ./apps/yaml-formatter
+      dockerfile: Dockerfile
+    volumes:
+      - "yaml-formatter:/output"
+    restart: "no"
+
+volumes:
+  taboo:
+  unit-converter:
+  yaml-formatter:
+networks:
+  backend:
+    driver: bridge

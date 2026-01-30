@@ -1,0 +1,20 @@
+# JavaScript/NextJS/Bun .dockerignore
+.git
+.gitignore
+.github
+*.md
+LICENSE
+node_modules
+.next
+.cache
+coverage
+.env*
+.vscode
+.idea
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+__tests__
+.turbo
+.vercel
