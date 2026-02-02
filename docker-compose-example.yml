@@ -1,18 +1,4 @@
 ---
-# --------------------------------
-# Generic exporter template
-# --------------------------------
-# x-exporter: &exporter
-#   image: busybox:stable
-#   command: ["sh", "-c", "cp -r /app/out/ /output && touch /output/.ready"]
-#   restart: "no"
-#   # healthcheck:
-#   #   test: ["CMD", "test", "-f", "/output/.ready"]
-#   #   interval: 2s
-#   #   timeout: 1s
-#   #   retries: 3
-#   profiles: ["build"]
-
 services:
   # -------------------------
   # Shared nginx
@@ -120,7 +106,7 @@ services:
       - backend
 
   # -------------------------
-  # Artifact images (never run)
+  # Builder services
   # -------------------------
   homepage-builder:
     container_name: tools_homepage-builder
@@ -165,39 +151,6 @@ services:
     volumes:
       - tools_yaml-formatter:/app/out
     command: ["sleep", "5"]
-
-  # -------------------------
-  # Collapsed exporters
-  # -------------------------
-  # homepage-export:
-  #   <<: *exporter
-  #   container_name: tools_homepage-export
-  #   volumes:
-  #     - tools_homepage-builder:/app/out:ro
-  #     - tools_homepage:/output
-  #   volumes_from:
-  #     - homepage-builder:ro
-
-  # taboo-export:
-  #   <<: *exporter
-  #   container_name: tools_taboo-export
-  #   volumes:
-  #     - tools_taboo-builder:/app/out:ro
-  #     - tools_taboo:/output
-
-  # unit-converter-export:
-  #   <<: *exporter
-  #   container_name: tools_unit-converter-export
-  #   volumes:
-  #     - tools_unit-converter-builder:/app/out:ro
-  #     - tools_unit-converter:/output
-
-  # yaml-formatter-export:
-  #   <<: *exporter
-  #   container_name: tools_yaml-formatter-export
-  #   volumes:
-  #     - tools_yaml-formatter-builder:/app/out:ro
-  #     - tools_yaml-formatter:/output
 
 volumes:
   tools_homepage:

@@ -7,21 +7,87 @@
 Tools and web-apps
 
 ## Usage
-- Ensure you have Docker Compose installed
-- Move the example Docker Compose file into place
-```bash
-cp docker-compose-example.yml docker-compose.yml
-```
-- build and run the full tools stack of apps
-```bash
-docker compose --profile build --profile runtime up --build -d
-```
-- browse the apps at http://localhost:8080/
-- stop full tools stack
-```bash
-docker compose --profile build --profile runtime down --remove-orphans
-```
 
+This repository leverages `Make` targets to simplify common operations. For those who prefer direct Docker Compose commands, alternatives are provided.
+
+- Ensure you have Docker Compose installed.
+
+### Production Mode
+
+Runs the full tools stack using `docker-compose.yml` (recommended for stable environments).
+
+- **Copy and adjust the example:**
+    *   Copy the example:
+    ```bash
+    cp docker-compose-example.yml docker-compose.yml
+    ```
+    *   Adjust the example as needed, particularly for either exposing Nginx port or configuring a reverse proxy:
+    ```bash
+    vim docker-compose.yml
+    ```
+- **Start the full tools stack:**
+    *   Using `make`:
+    ```bash
+    make up
+    ```
+    *   Alternatively, using Docker Compose directly:
+    ```bash
+    docker compose -f docker-compose.yml --profile build --profile runtime up --build -d
+    ```
+- Browse the apps at the configured hostname + port
+- **Stop the full tools stack:**
+    *   Using `make`:
+    ```bash
+    make down
+    ```
+    *   Alternatively, using Docker Compose directly:
+    ```bash
+    docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
+    ```
+
+## Development Usage
+
+For development, `docker-compose-example.yml` is used. This allows you to develop without affecting your production `docker-compose.yml`.
+
+### Start Development Services
+
+- **To start the development environment (builds images if needed):**
+    *   Using `make`:
+    ```bash
+    make dev
+    ```
+    *   Alternatively, using Docker Compose directly:
+    ```bash
+    docker compose -f docker-compose-example.yml --profile build --profile runtime up --build -d
+    ```
+    *   Browse the apps at http://localhost:8080/
+
+### Stop Development Services
+
+- **To stop the development environment:**
+    *   Using `make`:
+    ```bash
+    make dev-down
+    ```
+    *   Alternatively, using Docker Compose directly:
+    ```bash
+    docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+    ```
+
+### Clean Rebuild in Development
+
+To perform a clean rebuild (without cache) in development:
+
+-   Using `make`:
+    ```bash
+    make dev-nc
+    ```
+-   Alternatively, using Docker Compose directly:
+    ```bash
+    docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+    docker compose -f docker-compose-example.yml --profile build --profile runtime build --no-cache --pull
+    docker compose -f docker-compose-example.yml --profile build --profile runtime up -d
+    ```
 ### manage
 - install uv
 - install pre-requisite packages
@@ -90,36 +156,8 @@ The tools repository supports two deployment patterns:
 #### Static Apps (HTML, JS static)
 Static apps are built once and served by nginx. Build output is stored in Docker volumes.
 
-```bash
-# Build all static apps (run once, or when rebuilding after changes)
-docker compose --profile build up
-
-# Start nginx to serve static apps
-docker compose up -d www
-```
-
 #### Server Apps (JS server, Go)
 Server apps run as long-running containers proxied by nginx via the backend network.
-
-```bash
-# Start all services (nginx + all server apps)
-docker compose up -d
-
-# Or start specific server apps individually
-docker compose up -d gh-dashboard www2s www2epub
-```
-
-#### Full Deployment
-To deploy everything:
-
-```bash
-# 1. Build static apps first
-docker compose --profile build up
-
-# 2. Start all services
-docker compose up -d
-```
-
 
 ### Template Files
 
@@ -143,7 +181,7 @@ See [`templates/README.md`](templates/README.md) for detailed template documenta
 ```bash
 uv run generate-colophon
 ```
-- Specify output location (e.g., for NextJS public folder)
+- Specify output location (e.g., for use by the homepage app)
 ```bash
 uv run generate-colophon --output ./homepage/public/colophon.json
 ```
