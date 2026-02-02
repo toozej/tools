@@ -11,7 +11,7 @@ const Game: React.FC = () => {
     { name: '', score: 0 },
     { name: '', score: 0 },
   ]);
-  const [gamePhase, setGamePhase] = useState<'setup' | 'playing' | 'end'>('setup');
+  const [gamePhase, setGamePhase] =useState<'setup' | 'playing' | 'end'>('setup');
   const [currentTeam, setCurrentTeam] = useState(0);
   const [deck, setDeck] = useState<Card[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -87,27 +87,29 @@ const Game: React.FC = () => {
 
   if (gamePhase === 'setup') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <h1 className="text-3xl font-bold mb-8">Taboo Game Setup</h1>
-        <div className="space-y-4 w-full max-w-sm">
+      <div className="p-6 sm:p-8">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-slate-900 dark:text-white">
+          Game Setup
+        </h2>
+        <div className="space-y-4 w-full max-w-sm mx-auto">
           <input
             type="text"
             placeholder="Team 1 Name"
             value={teams[0].name}
             onChange={(e) => handleTeamNameChange(0, e.target.value)}
-            className="border p-2 rounded w-full"
+            className="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <input
             type="text"
             placeholder="Team 2 Name"
             value={teams[1].name}
             onChange={(e) => handleTeamNameChange(1, e.target.value)}
-            className="border p-2 rounded w-full"
+            className="w-full bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg p-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <button
             onClick={startGame}
             disabled={!teams[0].name || !teams[1].name}
-            className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50 w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Start Game
           </button>
@@ -118,38 +120,44 @@ const Game: React.FC = () => {
 
   if (gamePhase === 'playing') {
     const card = deck[currentCardIndex];
-    if (!card) return <div>Loading...</div>; // Safety
+    if (!card) return <div className="p-8 text-center">Loading...</div>;
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold">Current Team: {teams[currentTeam].name}</h2>
-          <div className="text-4xl font-bold">{timeLeft}</div>
+      <div className="p-4 sm:p-8 flex flex-col items-center">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300">
+            Current Team: <span className="text-blue-600 dark:text-blue-400">{teams[currentTeam].name}</span>
+          </h2>
+          <div className="text-6xl font-bold text-slate-900 dark:text-white mt-2">{timeLeft}</div>
         </div>
-        <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-          <h3 className="text-2xl font-bold mb-4 text-center">{card.target}</h3>
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2">Taboo Words:</h4>
-            <ul className="list-disc list-inside grid grid-cols-2 gap-1">
+
+        <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 w-full max-w-md">
+          <h3 className="text-3xl font-bold mb-6 text-center text-slate-900 dark:text-white">{card.target}</h3>
+          <div className="mb-6">
+            <h4 className="font-semibold mb-3 text-center text-slate-600 dark:text-slate-400">Taboo Words:</h4>
+            <ul className="grid grid-cols-2 gap-2 text-center">
               {card.taboo.map((word, i) => (
-                <li key={i} className="text-red-600">{word}</li>
+                <li key={i} className="text-red-600 dark:text-red-500 bg-red-100/50 dark:bg-red-900/30 rounded-md px-2 py-1">
+                  {word}
+                </li>
               ))}
             </ul>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button onClick={guessCorrect} className="bg-green-500 text-white px-4 py-2 rounded flex-1 min-w-0">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <button onClick={guessCorrect} className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-2 rounded-lg transition-colors text-sm sm:text-base">
               Correct
             </button>
-            <button onClick={pass} className="bg-yellow-500 text-white px-4 py-2 rounded flex-1 min-w-0">
+            <button onClick={pass} className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-2 rounded-lg transition-colors text-sm sm:text-base">
               Pass
             </button>
-            <button onClick={buzz} className="bg-red-500 text-white px-4 py-2 rounded flex-1 min-w-0">
+            <button onClick={buzz} className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-2 rounded-lg transition-colors text-sm sm:text-base">
               Buzz
             </button>
           </div>
         </div>
-        <div className="mt-4 text-center">
-          <p className="text-lg">
-            {teams[0].name}: {teams[0].score} | {teams[1].name}: {teams[1].score}
+
+        <div className="mt-8 text-center">
+          <p className="text-lg text-slate-700 dark:text-slate-300">
+            <span className="font-semibold">{teams[0].name}:</span> {teams[0].score} | <span className="font-semibold">{teams[1].name}:</span> {teams[1].score}
           </p>
         </div>
       </div>
@@ -160,19 +168,19 @@ const Game: React.FC = () => {
     const winner =
       teams[0].score > teams[1].score ? teams[0] : teams[1].score > teams[0].score ? teams[1] : null;
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <h1 className="text-3xl font-bold mb-8">Game Over</h1>
-        <div className="text-center">
-          <p className="text-lg mb-2">
-            {teams[0].name}: {teams[0].score}
+      <div className="p-8 text-center">
+        <h1 className="text-4xl font-bold mb-8 text-slate-900 dark:text-white">Game Over</h1>
+        <div className="text-center bg-slate-100 dark:bg-slate-800 p-8 rounded-lg">
+          <p className="text-2xl mb-4 text-slate-700 dark:text-slate-300">
+            <span className="font-bold">{teams[0].name}:</span> {teams[0].score}
           </p>
-          <p className="text-lg mb-4">
-            {teams[1].name}: {teams[1].score}
+          <p className="text-2xl mb-6 text-slate-700 dark:text-slate-300">
+            <span className="font-bold">{teams[1].name}:</span> {teams[1].score}
           </p>
           {winner ? (
-            <p className="text-xl font-semibold">Winner: {winner.name}</p>
+            <p className="text-3xl font-semibold text-green-600 dark:text-green-400">Winner: {winner.name}!</p>
           ) : (
-            <p className="text-xl font-semibold">It is a Tie!</p>
+            <p className="text-3xl font-semibold text-blue-600 dark:text-blue-400">It is a Tie!</p>
           )}
         </div>
       </div>
