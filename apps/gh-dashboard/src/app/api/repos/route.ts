@@ -5,7 +5,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get("username");
   const token = searchParams.get("token");
-  const _force = searchParams.get("force") === "true";
+  // Force parameter bypasses cache - reserved for future use
+  // const force = searchParams.get("force") === "true";
 
   if (!username) {
     return NextResponse.json(

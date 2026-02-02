@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { RepoStatus, DashboardState } from "@/types/github";
 import { filterRepos, sortRepos, getUniqueLanguages } from "@/lib/repo-data";
 
@@ -226,16 +227,21 @@ export default function Dashboard() {
     }
   }, [state.error, pat, hasTriedFallback, username]);
 
-  // Live refresh every 30 seconds
+  // Live refresh with configurable interval (default: 10 minutes = 600000ms)
+  const POLLING_INTERVAL_MS = parseInt(
+    process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || "600000",
+    10
+  );
+
   useEffect(() => {
     if (!username) return;
 
     const interval = setInterval(() => {
       fetchData(false);
-    }, 30000);
+    }, POLLING_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [fetchData, username]);
+  }, [fetchData, username, POLLING_INTERVAL_MS]);
 
   // Filter and sort repos
   const filteredRepos = filterRepos(
@@ -579,12 +585,14 @@ export default function Dashboard() {
                     <tr key={repoStatus.repo.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          <div className="flex-shrink-0 h-10 w-10 relative">
                             <a href={repoStatus.repo.html_url} target="_blank" rel="noopener noreferrer">
-                              <img
-                                className="h-10 w-10 rounded-full"
+                              <Image
+                                className="rounded-full"
                                 src={repoStatus.repo.owner.avatar_url}
                                 alt={repoStatus.repo.owner.login}
+                                width={40}
+                                height={40}
                               />
                             </a>
                           </div>
@@ -705,7 +713,7 @@ export default function Dashboard() {
             {state.lastUpdated && (
               <span>Last updated: {formatDateTime(state.lastUpdated.toISOString())}</span>
             )}
-            <span className="ml-auto">Auto-refreshes every 30 seconds</span>
+            <span className="ml-auto">Auto-refreshes every {Math.floor(POLLING_INTERVAL_MS / 60000)} minutes</span>
           </div>
         </div>
       )}

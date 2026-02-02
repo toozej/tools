@@ -12,7 +12,7 @@ Use this template for pure client-side apps that can be statically exported.
 - **Examples**: taboo, unit-converter, yaml-formatter
 - **Requirements**: Set `output: 'export'` in `next.config.ts`
 - **Output**: Builds to a Docker volume for nginx serving
-- **Build Command**: `docker-compose --profile build up`
+- **Build Command**: `make build`
 
 ## Server Template (`Dockerfile.js.server`)
 
@@ -27,6 +27,7 @@ Use this template for applications that require server-side functionality.
 
 | App | Template Type | Reason |
 |-----|---------------|--------|
+| homepage | Static | Pure client-side |
 | taboo | Static | Pure client-side game |
 | unit-converter | Static | Pure client-side |
 | yaml-formatter | Static | Pure client-side |
@@ -38,10 +39,10 @@ Use this template for applications that require server-side functionality.
 
 ### Building Static Apps
 
-To build a static app, use the build profile:
+To build a static app, use the build Make target:
 
 ```bash
-docker-compose --profile build up
+make build
 ```
 
 ### Adding New Static Apps to docker-compose.yml

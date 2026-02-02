@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: '/clip2gist',
-  output: 'standalone',
+  output: 'export',
+  trailingSlash: true,
 };
 
 export default nextConfig;

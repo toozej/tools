@@ -9,7 +9,7 @@ dependencies = [
 
 [project.scripts]
 manage = "manage:main"
-generate-colophon = "generate_colophon:main"
+colophon = "generate_colophon:main"
 
 [build-system]
 requires = ["hatchling"]

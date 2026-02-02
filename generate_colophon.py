@@ -9,15 +9,12 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 class ColophonGenerator:
     """Generator for combined colophon from app documentation."""
 
-    def __init__(
-        self, repo_root: Optional[Path] = None, output_path: Optional[Path] = None
-    ):
+    def __init__(self, repo_root: Path | None = None, output_path: Path | None = None):
         """Initialize the generator with repository root path."""
         self.repo_root = repo_root or Path.cwd()
         self.output_path = output_path or self.repo_root / "colophon.json"
@@ -43,7 +40,7 @@ class ColophonGenerator:
         colophon_data = []
 
         for app_name in sorted(apps):
-            app_dir = self.repo_root / app_name
+            app_dir = self.repo_root / "apps" / app_name
             app_info = self._extract_app_info(app_name, app_dir)
 
             if app_info:
@@ -65,11 +62,16 @@ class ColophonGenerator:
         print(f"\n✓ Generated colophon: {self.output_path}")
         print(f"  Total apps: {len(colophon_data)}")
 
-    def _discover_apps(self) -> List[str]:
+    def _discover_apps(self) -> list[str]:
         """Discover all app directories in the repository."""
         apps = []
 
-        for item in self.repo_root.iterdir():
+        # Look in the apps/ subdirectory
+        apps_dir = self.repo_root / "apps"
+        if not apps_dir.exists():
+            return apps
+
+        for item in apps_dir.iterdir():
             # Skip if not a directory
             if not item.is_dir():
                 continue
@@ -84,7 +86,7 @@ class ColophonGenerator:
 
         return apps
 
-    def _extract_app_info(self, app_name: str, app_dir: Path) -> Optional[Dict]:
+    def _extract_app_info(self, app_name: str, app_dir: Path) -> dict | None:
         """Extract information from an app's README.md and CREDITS.md."""
         readme_path = app_dir / "README.md"
         credits_path = app_dir / "CREDITS.md"
@@ -94,13 +96,13 @@ class ColophonGenerator:
             return None
 
         # Read README
-        with open(readme_path, "r", encoding="utf-8") as f:
+        with open(readme_path, encoding="utf-8") as f:
             readme_content = f.read()
 
         # Read CREDITS if it exists
         credits_content = ""
         if credits_path.exists():
-            with open(credits_path, "r", encoding="utf-8") as f:
+            with open(credits_path, encoding="utf-8") as f:
                 credits_content = f.read()
 
         # Extract information
@@ -134,10 +136,28 @@ class ColophonGenerator:
         # Remove the title (first H1)
         content = re.sub(r"^#\s+.+$", "", readme_content, count=1, flags=re.MULTILINE)
 
-        # Extract first paragraph after title
+        # Look for text after common description headings
+        desc_patterns = [
+            r"##\s+(?:Project Purpose|Description|Overview|About)\s*\n+(.+?)(?=\n##|\Z)",
+            r"##\s+.+?\s*\n+(.+?)(?=\n##|\Z)",  # First section content after any H2
+        ]
+
+        for pattern in desc_patterns:
+            match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+            if match:
+                description = match.group(1).strip()
+                # Clean up markdown formatting
+                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
+                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
+                description = re.sub(r"`([^`]+)`", r"\1", description)
+                # Normalize whitespace
+                description = " ".join(description.split())
+                if description:
+                    return description
+
+        # Fallback: Extract first paragraph after title
         paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
 
-        # Get first non-empty paragraph that's not a heading
         for para in paragraphs:
             # Skip if it's a heading
             if para.startswith("#"):
@@ -151,19 +171,15 @@ class ColophonGenerator:
 
             # Clean up markdown formatting
             description = para
-            description = re.sub(
-                r"\[([^\]]+)\]\([^\)]+\)", r"\1", description
-            )  # Remove links
-            description = re.sub(
-                r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description
-            )  # Remove bold/italic
-            description = re.sub(r"`([^`]+)`", r"\1", description)  # Remove inline code
+            description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
+            description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
+            description = re.sub(r"`([^`]+)`", r"\1", description)
 
             return description.strip()
 
         return "No description available."
 
-    def _extract_tags(self, readme_content: str) -> List[str]:
+    def _extract_tags(self, readme_content: str) -> list[str]:
         """Extract tags from README.md."""
         tags = []
 
@@ -192,7 +208,7 @@ class ColophonGenerator:
         # Limit to first 10 tags
         return tags[:10]
 
-    def _parse_credits(self, credits_content: str) -> List[Dict]:
+    def _parse_credits(self, credits_content: str) -> list[dict]:
         """Parse CREDITS.md and extract credit entries with links."""
         if not credits_content.strip():
             return []
@@ -238,11 +254,7 @@ class ColophonGenerator:
                         "http"
                     ):  # First pattern
                         name, url = match.group(1), match.group(2)
-                        desc = (
-                            match.group(3)
-                            if len(match.groups()) > 2 and match.group(3)
-                            else ""
-                        )
+                        desc = match.group(3) if len(match.groups()) > 2 and match.group(3) else ""
                         credit_entry = {
                             "name": name.strip(),
                             "description": desc.strip() if desc else "",

@@ -1,25 +1,70 @@
 ---
+# --------------------------------
+# Generic exporter template
+# --------------------------------
+# x-exporter: &exporter
+#   image: busybox:stable
+#   command: ["sh", "-c", "cp -r /app/out/ /output && touch /output/.ready"]
+#   restart: "no"
+#   # healthcheck:
+#   #   test: ["CMD", "test", "-f", "/output/.ready"]
+#   #   interval: 2s
+#   #   timeout: 1s
+#   #   retries: 3
+#   profiles: ["build"]
+
 services:
+  # -------------------------
+  # Shared nginx
+  # -------------------------
   www:
     container_name: tools_www
     image: nginx:latest
     restart: always
     ports:
       - "8080:80"
+    depends_on:
+      homepage-builder:
+        condition: service_started
+      taboo-builder:
+        condition: service_started
+      unit-converter-builder:
+        condition: service_started
+      yaml-formatter-builder:
+        condition: service_started
+      clip2gist:
+        condition: service_started
+      gh-dashboard:
+        condition: service_started
+      www2s:
+        condition: service_started
+      www2epub:
+        condition: service_started
     networks:
       - backend
     volumes:
       - "./nginx/conf.d/:/etc/nginx/conf.d/"
-      - "taboo:/var/www/html/taboo:ro"
-      - "unit-converter:/var/www/html/unit-converter:ro"
-      - "yaml-formatter:/var/www/html/yaml-formatter:ro"
+      - "tools_homepage:/var/www/html/homepage:ro"
+      - "tools_taboo:/var/www/html/taboo:ro"
+      - "tools_unit-converter:/var/www/html/unit-converter:ro"
+      - "tools_yaml-formatter:/var/www/html/yaml-formatter:ro"
 
+  # -------------------------
+  # Runtime apps
+  # -------------------------
   clip2gist:
     container_name: tools_clip2gist
     build:
       context: ./apps/clip2gist
       dockerfile: Dockerfile
+    image: tools_clip2gist:latest
     restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/clip2gist/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     env_file: ./apps/clip2gist/app.env
     networks:
       - backend
@@ -29,7 +74,14 @@ services:
     build:
       context: ./apps/gh-dashboard
       dockerfile: Dockerfile
+    image: tools_gh-dashboard:latest
     restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/gh-dashboard/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     env_file: ./apps/gh-dashboard/app.env
     networks:
       - backend
@@ -39,7 +91,14 @@ services:
     build:
       context: ./apps/www2s
       dockerfile: Dockerfile
+    image: tools_www2s:latest
     restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/www2s/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     env_file: ./apps/www2s/app.env
     networks:
       - backend
@@ -49,42 +108,103 @@ services:
     build:
       context: ./apps/www2epub
       dockerfile: Dockerfile
+    image: tools_www2epub:latest
     restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/www2epub/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - backend
 
-  # Builder services - run once with: docker compose --profile build up
+  # -------------------------
+  # Artifact images (never run)
+  # -------------------------
+  homepage-builder:
+    container_name: tools_homepage-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/homepage
+      dockerfile: Dockerfile
+    image: tools_homepage-builder:latest
+    volumes:
+      - tools_homepage:/app/out
+    command: ["sleep", "5"]
+
   taboo-builder:
+    container_name: tools_taboo-builder
     profiles: ["build"]
     build:
       context: ./apps/taboo
       dockerfile: Dockerfile
+    image: tools_taboo-builder:latest
     volumes:
-      - "taboo:/output"
-    restart: "no"
+      - tools_taboo:/app/out
+    command: ["sleep", "5"]
 
   unit-converter-builder:
+    container_name: tools_unit-converter-builder
     profiles: ["build"]
     build:
       context: ./apps/unit-converter
       dockerfile: Dockerfile
+    image: tools_unit-converter-builder:latest
     volumes:
-      - "unit-converter:/output"
-    restart: "no"
+      - tools_unit-converter:/app/out
+    command: ["sleep", "5"]
 
   yaml-formatter-builder:
+    container_name: tools_yaml-formatter-builder
     profiles: ["build"]
     build:
       context: ./apps/yaml-formatter
       dockerfile: Dockerfile
+    image: tools_yaml-formatter-builder:latest
     volumes:
-      - "yaml-formatter:/output"
-    restart: "no"
+      - tools_yaml-formatter:/app/out
+    command: ["sleep", "5"]
+
+  # -------------------------
+  # Collapsed exporters
+  # -------------------------
+  # homepage-export:
+  #   <<: *exporter
+  #   container_name: tools_homepage-export
+  #   volumes:
+  #     - tools_homepage-builder:/app/out:ro
+  #     - tools_homepage:/output
+  #   volumes_from:
+  #     - homepage-builder:ro
+
+  # taboo-export:
+  #   <<: *exporter
+  #   container_name: tools_taboo-export
+  #   volumes:
+  #     - tools_taboo-builder:/app/out:ro
+  #     - tools_taboo:/output
+
+  # unit-converter-export:
+  #   <<: *exporter
+  #   container_name: tools_unit-converter-export
+  #   volumes:
+  #     - tools_unit-converter-builder:/app/out:ro
+  #     - tools_unit-converter:/output
+
+  # yaml-formatter-export:
+  #   <<: *exporter
+  #   container_name: tools_yaml-formatter-export
+  #   volumes:
+  #     - tools_yaml-formatter-builder:/app/out:ro
+  #     - tools_yaml-formatter:/output
 
 volumes:
-  taboo:
-  unit-converter:
-  yaml-formatter:
+  tools_homepage:
+  tools_taboo:
+  tools_unit-converter:
+  tools_yaml-formatter:
+
 networks:
   backend:
     driver: bridge

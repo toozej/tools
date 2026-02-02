@@ -12,7 +12,8 @@ const rateLimitState: RateLimitInfo = {
 
 // Cache for storing API responses
 const cache = new Map<string, { data: unknown; timestamp: number; token?: string }>();
-const CACHE_DURATION = 60 * 1000; // 1 minute cache
+// Cache duration in milliseconds (default: 5 minutes, configurable via env var)
+const CACHE_DURATION = parseInt(process.env.GITHUB_CACHE_DURATION_MS || "300000", 10); // 5 minutes default
 
 export function getRateLimitInfo(): RateLimitInfo {
   return { ...rateLimitState };
@@ -71,9 +72,12 @@ async function fetchWithRateLimit<T>(endpoint: string, token?: string, useCache 
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Calculate Next.js revalidate time in seconds (from CACHE_DURATION ms)
+  const revalidateSeconds = useCache ? Math.floor(CACHE_DURATION / 1000) : 0;
+
   const response = await fetch(`${GITHUB_API_BASE}${endpoint}`, {
     headers,
-    next: { revalidate: useCache ? 60 : 0 }, // Next.js cache for 60 seconds
+    next: { revalidate: revalidateSeconds }, // Next.js cache
   });
 
   updateRateLimit(response.headers);

@@ -14,12 +14,12 @@ cp docker-compose-example.yml docker-compose.yml
 ```
 - build and run the full tools stack of apps
 ```bash
-docker compose --profile build build --pull
-docker compose up -d
+docker compose --profile build --profile runtime up --build -d
 ```
+- browse the apps at http://localhost:8080/
 - stop full tools stack
 ```bash
-docker compose down --remove-orphans
+docker compose --profile build --profile runtime down --remove-orphans
 ```
 
 ### manage

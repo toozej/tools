@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-01-31T20:50:07.783619Z",
+  "total_apps": 8,
+  "apps": [
+    {
+      "name": "clip2gist",
+      "title": "GitHub Private Gist Creator",
+      "description": "A web application that allows users to create private GitHub gists from clipboard content or uploaded files. The app provides a simple interface to paste text or select a file, creates a private gist via GitHub API, and returns the gist link while copying it to the clipboard.",
+      "tags": [],
+      "url": "/clip2gist",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "gh-dashboard",
+      "title": "GitHub Repo Status Dashboard",
+      "description": "A modern, responsive web dashboard for monitoring GitHub repository status. This application provides a comprehensive view of a user's repositories including build status, workflow runs, releases, and commit history.",
+      "tags": [],
+      "url": "/gh-dashboard",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "homepage",
+      "title": "Tools Collection Homepage",
+      "description": "- Responsive Design: Mobile-first grid layout that adapts from 1 column (mobile) to 2 columns (tablet) to 3 columns (desktop) - Modern UI: Clean cards with gradient accents, hover animations, and smooth transitions - Dark Mode Support: Full dark mode compatibility with automatic system preference detection - Static Generation: Pre-rendered at build time for optimal performance and SEO - Accessible: Semantic HTML and proper link handling for screen readers - Type Safe: Built with TypeScript for robust code quality",
+      "tags": [],
+      "url": "/homepage",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "taboo",
+      "title": "Taboo Game Project",
+      "description": "This is a web-based implementation of the Taboo word game, built with Next.js, React 19, TypeScript, and Tailwind CSS v4. The application allows players to play the classic Taboo game entirely within the browser, with responsive design for mobile and desktop, including buzzer and timer functionality.",
+      "tags": [],
+      "url": "/taboo",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "unit-converter",
+      "title": "Unit Converter Web Application",
+      "description": "A responsive web application for unit conversion using natural language input (e.g., \"9 cups to ml\") with optional dropdown selectors for \"from\" and \"to\" units, supporting both imperial and metric systems.",
+      "tags": [],
+      "url": "/unit-converter",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "www2epub",
+      "title": "URL to EPUB Converter",
+      "description": "A web application that converts any inputted URL into an EPUB file. Users can customize the output by including or excluding media (graphics) and optimizing for e-ink devices with small screens.",
+      "tags": [],
+      "url": "/www2epub",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "www2s",
+      "title": "Webpage Reader Aloud",
+      "description": "- URL input form - Text extraction from webpages using Readability - Native browser TTS support (SpeechSynthesis API) - Fallback to configurable TTS API - Responsive UI with Tailwind CSS - Self-hostable in Docker with environment variables",
+      "tags": [],
+      "url": "/www2s",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "yaml-formatter",
+      "title": "YAML Validator Web Application",
+      "description": "A responsive web application for validating and formatting YAML content. Users can input YAML via copy/paste or file upload, validate its syntax, and format it with configurable indentation spacing. All data is stored locally in the browser.",
+      "tags": [],
+      "url": "/yaml-formatter",
+      "credits": [],
+      "has_credits": false
+    }
+  ]
+}

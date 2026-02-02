@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
+    "dependencies": "^0.0.1",
     "idb": "^8.0.3",
     "jszip": "^3.10.1",
     "next": "15.5.9",
