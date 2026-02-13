@@ -1,39 +1,313 @@
 {
-  "generated_at": "2026-01-31T20:50:07.783619Z",
-  "total_apps": 8,
+  "generated_at": "2026-02-10T21:24:40.682004Z",
+  "total_apps": 18,
   "apps": [
+    {
+      "name": "anki2epub",
+      "title": "anki2epub",
+      "description": "- 📁 Multiple Input Methods - Upload .apkg files via drag-and-drop or file browser - Load decks from a direct URL - 📱 E-Ink Device Presets - Optimized formatting for popular e-ink devices: - Xteink X4 (480×800) - Compact layout with smaller fonts - Onyx Boox Page (1264×1680) - High-resolution optimized - Kindle (1264×1680) - Kindle-specific formatting - Kobo Clara Reader (1072×1448) - Kobo-optimized settings - 📖 Two-Page Flashcard Format - Each flashcard generates two pages for easy self-testing: - Question # - The front of the card - Answer # - The back of the card - Navigate to the next page to reveal the answer - 🎨 E-Ink Optimized Styling - High contrast black & white design - Readable serif fonts (Georgia) - Proper margins for comfortable reading - Clean, distraction-free layout - ⚡ Fast & Private - Client-side processing - your decks never leave your browser - No account required - Instant conversion and download",
+      "tags": [
+        "Next.Js",
+        "Tailwind Css",
+        "Typescript",
+        "Go",
+        "Bun",
+        "Node.Js",
+        "Readability",
+        "Epub"
+      ],
+      "url": "/anki2epub",
+      "credits": [
+        {
+          "name": "Next.js",
+          "description": "The React Framework for the Web",
+          "url": "https://nextjs.org/"
+        },
+        {
+          "name": "[Next.js](https",
+          "description": "//nextjs.org/) - The React Framework for the Web",
+          "url": ""
+        },
+        {
+          "name": "TypeScript",
+          "description": "JavaScript with syntax for types",
+          "url": "https://www.typescriptlang.org/"
+        },
+        {
+          "name": "[TypeScript](https",
+          "description": "//www.typescriptlang.org/) - JavaScript with syntax for types",
+          "url": ""
+        },
+        {
+          "name": "Tailwind CSS",
+          "description": "A utility-first CSS framework",
+          "url": "https://tailwindcss.com/"
+        },
+        {
+          "name": "[Tailwind CSS](https",
+          "description": "//tailwindcss.com/) - A utility-first CSS framework",
+          "url": ""
+        },
+        {
+          "name": "Bun",
+          "description": "Fast all-in-one JavaScript runtime",
+          "url": "https://bun.sh/"
+        },
+        {
+          "name": "[Bun](https",
+          "description": "//bun.sh/) - Fast all-in-one JavaScript runtime",
+          "url": ""
+        },
+        {
+          "name": "JSZip",
+          "description": "Create, read and edit .zip files with Javascript",
+          "url": "https://stuk.github.io/jszip/"
+        },
+        {
+          "name": "[JSZip](https",
+          "description": "//stuk.github.io/jszip/) - Create, read and edit .zip files with Javascript",
+          "url": ""
+        },
+        {
+          "name": "sql.js",
+          "description": "SQLite compiled to JavaScript",
+          "url": "https://sql.js.org/"
+        },
+        {
+          "name": "[sql.js](https",
+          "description": "//sql.js.org/) - SQLite compiled to JavaScript",
+          "url": ""
+        },
+        {
+          "name": "epub-gen-memory",
+          "description": "Generate EPUB files in memory",
+          "url": "https://github.com/CharliePops/epub-gen-memory"
+        },
+        {
+          "name": "[epub-gen-memory](https",
+          "description": "//github.com/CharliePops/epub-gen-memory) - Generate EPUB files in memory",
+          "url": ""
+        },
+        {
+          "name": "The [Anki](https",
+          "description": "//apps.ankiweb.net/) team for creating an amazing spaced repetition system",
+          "url": ""
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "bingo-creator",
+      "title": "Bingo Creator",
+      "description": "- Custom Bingo Cards: Create bingo cards for trips, events, or any occasion - Adjustable Grid Size: Choose from 3x3 to 10x10 grids - PDF Export: Download your bingo cards as PDF files - Local Storage: Your items are saved automatically per trip name - Shuffled Generation: Each card gets a unique arrangement - Free Space: Center cell is automatically set as \"Free Space\" - Offline Support: Works offline once loaded (PWA) - Responsive Design: Works on desktop and mobile devices",
+      "tags": [
+        "Go",
+        "Docker",
+        "Json",
+        "Webassembly"
+      ],
+      "url": "/bingo-creator",
+      "credits": [
+        {
+          "name": "maxence-charriere",
+          "url": "https://github.com/maxence-charriere"
+        }
+      ],
+      "has_credits": true
+    },
     {
       "name": "clip2gist",
       "title": "GitHub Private Gist Creator",
       "description": "A web application that allows users to create private GitHub gists from clipboard content or uploaded files. The app provides a simple interface to paste text or select a file, creates a private gist via GitHub API, and returns the gist link while copying it to the clipboard.",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Go",
+        "Docker",
+        "Oauth",
+        "Github Api"
+      ],
       "url": "/clip2gist",
       "credits": [],
       "has_credits": false
     },
     {
+      "name": "emoji-identifier",
+      "title": "emoji-identifier",
+      "description": "Extract and identify all emojis from text by pasting or typing into the input field, and instantly view their names and Unicode codepoint values. The tool uses a comprehensive emoji detection regex pattern combined with a Unicode emoji dataset to recognize a wide variety of emoji characters, including skin tone variants and zero-width joiner sequences. Results are displayed in real-time, showing each unique emoji found along with its standardized name and corresponding Unicode representation.",
+      "tags": [],
+      "url": "/emoji-identifier",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "exiftools",
+      "title": "exiftools",
+      "description": "Extract and view EXIF metadata from image files, including GPS coordinates and other embedded image data. This tool allows you to upload an image and instantly retrieve detailed information such as geolocation data, camera settings, and timestamps stored within the file. The viewer displays GPS coordinates in decimal format when available and presents all extracted metadata in a structured, readable format.",
+      "tags": [
+        "Exif"
+      ],
+      "url": "/exiftools",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
       "name": "gh-dashboard",
       "title": "GitHub Repo Status Dashboard",
       "description": "A modern, responsive web dashboard for monitoring GitHub repository status. This application provides a comprehensive view of a user's repositories including build status, workflow runs, releases, and commit history.",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Docker",
+        "Github Api",
+        "Bun"
+      ],
       "url": "/gh-dashboard",
       "credits": [],
       "has_credits": false
     },
     {
+      "name": "ghissue2md",
+      "title": "ghissue2md",
+      "description": "# Documentation",
+      "tags": [
+        "Markdown"
+      ],
+      "url": "/ghissue2md",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "graphviz-visualizer",
+      "title": "graphviz-visualizer",
+      "description": "Render DOT graph files into visual diagrams directly in your browser. Paste your DOT syntax into the textarea and the graph will automatically render as an SVG visualization, with live updates as you edit. Share your graphs by copying the URL, which encodes your DOT content in the fragment identifier.",
+      "tags": [
+        "Graphviz",
+        "Dot"
+      ],
+      "url": "/graphviz-visualizer",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
       "name": "homepage",
       "title": "Tools Collection Homepage",
       "description": "- Responsive Design: Mobile-first grid layout that adapts from 1 column (mobile) to 2 columns (tablet) to 3 columns (desktop) - Modern UI: Clean cards with gradient accents, hover animations, and smooth transitions - Dark Mode Support: Full dark mode compatibility with automatic system preference detection - Static Generation: Pre-rendered at build time for optimal performance and SEO - Accessible: Semantic HTML and proper link handling for screen readers - Type Safe: Built with TypeScript for robust code quality",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Bun",
+        "Node.Js",
+        "Json"
+      ],
       "url": "/homepage",
       "credits": [],
       "has_credits": false
     },
     {
+      "name": "link-extractor",
+      "title": "link-extractor",
+      "description": "Extract hyperlinks from pasted web content and export them in multiple formats including HTML, Markdown, and plain text. The tool automatically detects and removes duplicate links while displaying each link's title and URL for easy verification. Copy extracted links in your preferred format with a single click.",
+      "tags": [
+        "Markdown"
+      ],
+      "url": "/link-extractor",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "ocr",
+      "title": "ocr",
+      "description": "Extract text from PDF documents and images using optical character recognition (OCR) directly in your browser. The tool leverages Tesseract.js for text recognition and PDF.js to handle multi-page PDF files, supporting multiple languages and file formats including JPEG, PNG, and GIF. All processing occurs locally in your browser with no files being transmitted to external servers.",
+      "tags": [
+        "Ocr",
+        "Tesseract",
+        "Pdf.Js"
+      ],
+      "url": "/ocr",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "qr",
+      "title": "qr",
+      "description": "Decode QR codes from image files by uploading, dragging and dropping, or pasting them directly into the application. The decoder processes the image data using the jsQR library to extract and display the encoded content, automatically converting URLs into clickable links for convenient access.",
+      "tags": [
+        "Jsqr",
+        "Qr"
+      ],
+      "url": "/qr",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "render-markdown",
+      "title": "render-markdown",
+      "description": "Convert Markdown text to HTML using GitHub's official Markdown API, with options to render standard Markdown or GitHub Flavored Markdown (GFM). The tool displays a live preview of the rendered content, automatically generates a table of contents for headings, and provides the raw HTML output for copying, while also offering cleanup options to remove GitHub-specific formatting artifacts.",
+      "tags": [
+        "Markdown"
+      ],
+      "url": "/render-markdown",
+      "credits": [
+        {
+          "name": "simonw",
+          "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
       "name": "taboo",
       "title": "Taboo Game Project",
       "description": "This is a web-based implementation of the Taboo word game, built with Next.js, React 19, TypeScript, and Tailwind CSS v4. The application allows players to play the classic Taboo game entirely within the browser, with responsive design for mobile and desktop, including buzzer and timer functionality.",
-      "tags": [],
+      "tags": [
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Docker",
+        "Bun"
+      ],
       "url": "/taboo",
       "credits": [],
       "has_credits": false
@@ -42,7 +316,12 @@
       "name": "unit-converter",
       "title": "Unit Converter Web Application",
       "description": "A responsive web application for unit conversion using natural language input (e.g., \"9 cups to ml\") with optional dropdown selectors for \"from\" and \"to\" units, supporting both imperial and metric systems.",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript"
+      ],
       "url": "/unit-converter",
       "credits": [],
       "has_credits": false
@@ -51,7 +330,14 @@
       "name": "www2epub",
       "title": "URL to EPUB Converter",
       "description": "A web application that converts any inputted URL into an EPUB file. Users can customize the output by including or excluding media (graphics) and optimizing for e-ink devices with small screens.",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Readability",
+        "Epub"
+      ],
       "url": "/www2epub",
       "credits": [],
       "has_credits": false
@@ -60,7 +346,14 @@
       "name": "www2s",
       "title": "Webpage Reader Aloud",
       "description": "- URL input form - Text extraction from webpages using Readability - Native browser TTS support (SpeechSynthesis API) - Fallback to configurable TTS API - Responsive UI with Tailwind CSS - Self-hostable in Docker with environment variables",
-      "tags": [],
+      "tags": [
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Docker",
+        "Readability",
+        "Speechsynthesis"
+      ],
       "url": "/www2s",
       "credits": [],
       "has_credits": false
@@ -69,7 +362,13 @@
       "name": "yaml-formatter",
       "title": "YAML Validator Web Application",
       "description": "A responsive web application for validating and formatting YAML content. Users can input YAML via copy/paste or file upload, validate its syntax, and format it with configurable indentation spacing. All data is stored locally in the browser.",
-      "tags": [],
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Yaml"
+      ],
       "url": "/yaml-formatter",
       "credits": [],
       "has_credits": false

@@ -183,7 +183,7 @@ uv run generate-colophon
 ```
 - Specify output location (e.g., for use by the homepage app)
 ```bash
-uv run generate-colophon --output ./homepage/public/colophon.json
+uv run generate-colophon --output ./apps/homepage/src/data/colophon.json
 ```
 - Specify different repo location
 ```bash

@@ -109,7 +109,7 @@ class ColophonGenerator:
         title = self._extract_title(readme_content, app_name)
         description = self._extract_description(readme_content)
         tags = self._extract_tags(readme_content)
-        credits = self._parse_credits(credits_content)
+        credits = self._parse_credits(credits_content, readme_content)
 
         return {
             "name": app_name,
@@ -133,6 +133,20 @@ class ColophonGenerator:
 
     def _extract_description(self, readme_content: str) -> str:
         """Extract description from README.md."""
+        # Handle special case for apps copied from simonw/tools
+        # Format: "# Title\n\nFrom <url>\n\nDescription here\n\n<!-- Generated... -->"
+        lines = readme_content.split("\n")
+        if len(lines) >= 5 and lines[2].strip().startswith("From https://github.com/simonw/tools"):
+            # Description is on line 4 (index 4) for simonw/tools format
+            description = lines[4].strip()
+            if description:
+                # Clean up markdown formatting
+                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
+                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
+                description = re.sub(r"`([^`]+)`", r"\1", description)
+                description = " ".join(description.split())
+                return description if description else "No description available."
+
         # Remove the title (first H1)
         content = re.sub(r"^#\s+.+$", "", readme_content, count=1, flags=re.MULTILINE)
 
@@ -179,8 +193,44 @@ class ColophonGenerator:
 
         return "No description available."
 
+    # Technology patterns for tag extraction: (regex pattern -> canonical tag name)
+    # Order matters: more specific patterns should come before general ones
+    TECH_PATTERNS = [
+        # Web frameworks
+        (r"next\.js\s*19?", "Next.js"),
+        (r"react\s*19?", "React"),
+        (r"tailwind\s*css\s*v?4", "Tailwind CSS"),
+        (r"tailwind\s*css", "Tailwind CSS"),
+        # Languages
+        (r"typescript", "TypeScript"),
+        (r"golang|\bgo\b", "Go"),
+        # Platforms/Tools
+        (r"docker", "Docker"),
+        (r"oauth\s*2?", "OAuth"),
+        (r"github\s*api", "GitHub API"),
+        (r"\bbun\b", "Bun"),
+        (r"node\.js", "Node.js"),
+        # Processing/Conversion
+        (r"optical\s*character\s*recognition|ocr", "OCR"),
+        (r"tesseract", "Tesseract"),
+        (r"pdf\.js", "PDF.js"),
+        (r"jsqr", "jsQR"),
+        (r"readability", "Readability"),
+        (r"speechsynthesis|tts", "SpeechSynthesis"),
+        (r"graphviz", "Graphviz"),
+        (r"\bdot\b", "DOT"),
+        # Formats
+        (r"markdown|gfm", "Markdown"),
+        (r"epub", "EPUB"),
+        (r"exif", "EXIF"),
+        (r"qr\s*code", "QR"),
+        (r"yaml", "YAML"),
+        (r"json", "JSON"),
+        (r"webassembly|wasm", "WebAssembly"),
+    ]
+
     def _extract_tags(self, readme_content: str) -> list[str]:
-        """Extract tags from README.md."""
+        """Extract tags from README.md using data-driven pattern matching."""
         tags = []
 
         # Look for a Tags or Keywords section
@@ -205,18 +255,95 @@ class ColophonGenerator:
             if badge and badge not in tags:
                 tags.append(badge)
 
-        # Limit to first 10 tags
-        return tags[:10]
+        # Extract technology tags using pattern matching
+        content_lower = readme_content.lower()
+        for pattern, canonical_tag in self.TECH_PATTERNS:
+            if re.search(pattern, content_lower, re.IGNORECASE):
+                if canonical_tag not in tags:
+                    tags.append(canonical_tag)
 
-    def _parse_credits(self, credits_content: str) -> list[dict]:
-        """Parse CREDITS.md and extract credit entries with links."""
-        if not credits_content.strip():
+        # Normalize tags: lowercase, trimmed, deduped
+        normalized_tags = []
+        seen = set()
+        for tag in tags:
+            tag_normalized = tag.strip().lower()
+            if tag_normalized and tag_normalized not in seen:
+                seen.add(tag_normalized)
+                # Title case for display
+                tag_title = tag_normalized.title()
+                normalized_tags.append(tag_title)
+
+        return normalized_tags[:10]
+
+    def _extract_github_usernames(self, text: str) -> list[dict]:
+        """Extract GitHub usernames/links from text content.
+
+        Matches patterns like:
+        - https://github.com/<user>/<repo>
+        - https://github.com/<user>/<repo>/...
+        - https://www.github.com/<user>/<repo>
+        - [text](https://github.com/<user>/<repo>)
+
+        Returns a list of dicts with 'name' (username) and 'url' (full link).
+        """
+        github_patterns = [
+            # Markdown links: [text](https://github.com/user/repo)
+            r"\[([^\]]+)\]\((?:https?://)?(?:www\.)?github\.com/([^/]+)/[^)]+\)",
+            # Bare URLs: https://github.com/user/repo or www.github.com/user/repo
+            r"(?:https?://)?(?:www\.)?github\.com/([^/]+)/[^\s\)\]<>]+",
+        ]
+
+        usernames = []
+        seen = set()
+
+        for pattern in github_patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            for match in matches:
+                # Extract username (second group for markdown links, first for bare URLs)
+                if len(match.groups()) >= 2:
+                    username = match.group(2).strip()
+                else:
+                    username = match.group(1).strip()
+
+                # Clean username (remove trailing slashes, etc.)
+                username = username.rstrip("/")
+
+                if username and username not in seen:
+                    seen.add(username)
+                    # Reconstruct the full GitHub URL
+                    full_url = f"https://github.com/{username}"
+                    usernames.append({"name": username, "url": full_url})
+
+        return usernames
+
+    def _parse_credits(self, credits_content: str, readme_content: str = "") -> list[dict]:
+        """Parse CREDITS.md and extract credit entries with links.
+
+        Falls back to README.md if CREDITS.md is empty or not present.
+        """
+        credits = []
+
+        # First try CREDITS.md if it has content
+        if credits_content.strip():
+            credits = self._parse_credits_content(credits_content)
+
+        # If no credits found, try extracting from README.md
+        if not credits and readme_content:
+            github_users = self._extract_github_usernames(readme_content)
+            if github_users:
+                credits = github_users
+
+        return credits
+
+    def _parse_credits_content(self, content: str) -> list[dict]:
+        """Parse credit content (from CREDITS.md or similar)."""
+        if not content.strip():
             return []
 
         credits = []
 
         # Split by headings or bullet points
-        sections = re.split(r"\n(?=##\s+|\*\s+|-\s+)", credits_content)
+        sections = re.split(r"\n(?=##\s+|\*\s+|-\s+)", content)
 
         for section in sections:
             section = section.strip()
@@ -227,10 +354,10 @@ class ColophonGenerator:
             heading_match = re.match(r"##\s+(.+)", section)
             if heading_match:
                 category = heading_match.group(1).strip()
-                content = section[len(heading_match.group(0)) :].strip()
+                content_body = section[len(heading_match.group(0)) :].strip()
             else:
                 category = None
-                content = section
+                content_body = section
 
             # Extract credit entries (bullet points or lines with links)
             # Look for patterns like: "- [Name](url) - description" or "- Name: description [link](url)"
@@ -241,7 +368,7 @@ class ColophonGenerator:
             ]
 
             for pattern in entry_patterns:
-                matches = re.finditer(pattern, content, re.MULTILINE)
+                matches = re.finditer(pattern, content_body, re.MULTILINE)
                 for match in matches:
                     if len(match.groups()) == 4:  # Second pattern
                         name, desc, link_text, url = match.groups()
