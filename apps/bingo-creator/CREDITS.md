@@ -1,0 +1,1 @@
+Created by [toozej](https://github.com/toozej) based off an old Jupyter notebook for generating bingo cards for trips.
