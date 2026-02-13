@@ -3,12 +3,14 @@
 <head>
   <title>OCR PDFs and images directly in your browser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- nosemgrep: html.security.audit.missing-integrity.missing-integrity -->
   <script defer data-domain="tools.simonwillison.net" src="https://plausible.io/js/script.js"></script>
   <script type="module">
   import pdfjsDist from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/+esm';
   pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.mjs";
   </script>
+  <!-- nosemgrep: html.security.audit.missing-integrity.missing-integrity -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 body {

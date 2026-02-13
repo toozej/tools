@@ -58,13 +58,13 @@ repos:
 
   # Check for updates to dependencies in uv lock file
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.10.1
+    rev: 0.10.2
     hooks:
       - id: uv-lock
 
   # Python Linter, Code Style, Error and Complexity Checker, and Formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.1
     hooks:
       - id: ruff
         args: ["--fix", "--ignore", "E501,E203,E231,E722,C901"]

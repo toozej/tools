@@ -1,0 +1,6 @@
+# Semgrep ignore file
+# See https://semgrep.dev/docs/ignoring-files-folders-code/
+
+# Ignore H2C smuggling false positives in nginx config
+# These are intentional WebSocket proxy configurations
+nginx/conf.d/default.conf:generic.nginx.security.possible-h2c-smuggling.possible-nginx-h2c-smuggling

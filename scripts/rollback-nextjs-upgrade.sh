@@ -29,4 +29,3 @@ for app_dir in "$BACKUP_DIR"/*/; do
 done
 
 echo "Rollback complete."
-

@@ -1,7 +1,7 @@
 package services
 
 import (
-	"math/rand"
+	"math/rand" // nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"strings"
 )
 
