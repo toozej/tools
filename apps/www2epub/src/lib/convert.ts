@@ -47,7 +47,7 @@ export async function convertUrlToEpub(
           }
           const newSrc = `images/img${imgIndex}.jpg`;
           images.push({ src, newSrc, blob });
-          content = content.replace(new RegExp(src.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), newSrc);
+          content = content.replaceAll(src, newSrc);
           imgIndex++;
         } catch {
           console.warn('Failed to fetch image:', src);
