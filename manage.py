@@ -47,9 +47,6 @@ class ToolsManager:
         # Copy template files
         self._copy_template_files(app_dir, language, app_type)
 
-        # Add service to docker-compose.yml
-        self._add_docker_service(name, app_type, language)
-
         print(f"Successfully created tool: {name}")
 
     def remove_tool(self, name: str, force: bool = False) -> None:
@@ -72,15 +69,17 @@ class ToolsManager:
         shutil.rmtree(app_dir)
         print(f"Removed directory: {app_dir}")
 
-        # Remove service from docker-compose.yml
-        self._remove_docker_service(name)
-
         print(f"Successfully removed tool: {name}")
 
     def copy_tool(self, name: str, git_url: str, repo_path: str = "") -> None:
         """Copy a tool from a git repository."""
         # Parse and extract actual git URL
         actual_git_url = self._parse_git_url(git_url)
+
+        # Check for simonw/tools special case
+        if self._is_simonw_tools_repo(actual_git_url):
+            self._copy_from_simonw_tools(name, repo_path)
+            return
 
         print(f"Copying tool '{name}' from: {actual_git_url}")
 
@@ -130,12 +129,14 @@ class ToolsManager:
 
                 # Validate next.config.ts for JS apps
                 if app_language == "js":
-                    self._validate_next_config(name, app_type)
+                    validated = self._validate_next_config(name, app_type)
 
-                # Add service to docker-compose.yml
-                self._add_docker_service(name, app_type, app_language)
-
-                print(f"Successfully copied tool: {name}")
+                if validated:
+                    print(f"Successfully copied tool: {name}")
+                else:
+                    print(
+                        f"Successfully copied tool: {name} but next.config.ts was not properly configured. Requires manual verification"
+                    )
 
             except git.GitCommandError as e:
                 print(f"Error cloning repository: {e}", file=sys.stderr)
@@ -195,8 +196,8 @@ class ToolsManager:
 
         return "static"
 
-    def _validate_next_config(self, name: str, app_type: str) -> None:
-        """Validate and auto-fix next.config.ts for copy mode."""
+    def _validate_next_config(self, name: str, app_type: str) -> bool:
+        """Validate next.config.ts for copy mode."""
         config_path = self.apps_dir / name / "next.config.ts"
         if not config_path.exists():
             expected_fields = ["basePath"]
@@ -213,7 +214,6 @@ class ToolsManager:
         with open(config_path, encoding="utf-8") as f:
             content = f.read()
 
-        lines = content.split("\n")
         modified = False
 
         # Always set basePath
@@ -222,14 +222,6 @@ class ToolsManager:
             content, count = re.subn(r"(basePath\s*:\s*)[^,]+", rf"\1{base_path_value}", content)
             if count > 0:
                 modified = True
-        else:
-            # Insert after the opening {
-            for i, line in enumerate(lines):
-                if "{" in line and ("NextConfig" in lines[i - 1] if i > 0 else False):
-                    indent = "  "
-                    lines.insert(i + 1, f"{indent}basePath: {base_path_value},")
-                    modified = True
-                    break
 
         # Set output
         if app_type == "static":
@@ -240,24 +232,6 @@ class ToolsManager:
             content, count = re.subn(r"(output\s*:\s*)[^,]+", rf"\1{output_value}", content)
             if count > 0:
                 modified = True
-        else:
-            # Insert after basePath or after {
-            inserted = False
-            for i, line in enumerate(lines):
-                if "basePath:" in line:
-                    lines.insert(
-                        i + 1, f"{line[: len(line) - len(line.lstrip())]}output: {output_value},"
-                    )
-                    modified = True
-                    inserted = True
-                    break
-            if not inserted:
-                for i, line in enumerate(lines):
-                    if "{" in line and ("NextConfig" in lines[i - 1] if i > 0 else False):
-                        indent = "  "
-                        lines.insert(i + 1, f"{indent}output: {output_value},")
-                        modified = True
-                        break
 
         # For static, set assetPrefix
         if app_type == "static":
@@ -268,22 +242,8 @@ class ToolsManager:
                 )
                 if count > 0:
                     modified = True
-            else:
-                # Insert after basePath
-                for i, line in enumerate(lines):
-                    if "basePath:" in line:
-                        lines.insert(
-                            i + 1,
-                            f"{line[: len(line) - len(line.lstrip())]}assetPrefix: {asset_prefix_value},",
-                        )
-                        modified = True
-                        break
 
-        if modified:
-            content = "\n".join(lines)
-            with open(config_path, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"Updated next.config.ts for {name}")
+        return modified
 
     def _copy_template_files(
         self, dest_dir: Path, app_language: str, app_type: str | None = None
@@ -333,16 +293,16 @@ class ToolsManager:
             if template_path.exists():
                 dest_path = dest_dir / ".dockerignore"
                 shutil.copy2(template_path, dest_path)
-                print("Copied: .dockerignore for {app_language}")
+                print(f"Copied: .dockerignore for {app_language}")
             else:
-                print("Warning: Template '{dockerignore_templates[app_language]}' not found")
+                print(f"Warning: Template '{dockerignore_templates[app_language]}' not found")
 
         # Copy language-specific Dockerfile
         dockerfile_templates = template_files["dockerfile"]
         if app_language == "go" and "go" in dockerfile_templates:
             template_path = self.templates_dir / dockerfile_templates["go"]
             if template_path.exists():
-                dest_path = dest_dir / "Dockerfile.go"
+                dest_path = dest_dir / "Dockerfile"
                 shutil.copy2(template_path, dest_path)
                 print("Copied: Dockerfile.go")
             else:
@@ -352,7 +312,7 @@ class ToolsManager:
             if template_key in dockerfile_templates:
                 template_path = self.templates_dir / dockerfile_templates[template_key]
                 if template_path.exists():
-                    dest_path = dest_dir / "Dockerfile.js"
+                    dest_path = dest_dir / "Dockerfile"
                     shutil.copy2(template_path, dest_path)
                     print(f"  Copied: {dockerfile_templates[template_key]} as Dockerfile.js")
                 else:
@@ -360,7 +320,7 @@ class ToolsManager:
         elif app_language == "html" and "html" in dockerfile_templates:
             template_path = self.templates_dir / dockerfile_templates["html"]
             if template_path.exists():
-                dest_path = dest_dir / "Dockerfile.html"
+                dest_path = dest_dir / "Dockerfile"
                 shutil.copy2(template_path, dest_path)
                 print("Copied: Dockerfile.html")
             else:
@@ -368,6 +328,18 @@ class ToolsManager:
 
     def _copy_non_git_files(self, source: Path, dest: Path) -> None:
         """Copy all files except .git directory from source to destination."""
+        # Handle both files and directories
+        if source.is_file():
+            # Copy single file
+            if ".git" in source.parts:
+                return
+            dest_path = dest / source.name
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, dest_path)
+            print(f"  Copied: {source.name}")
+            return
+
+        # Handle directory
         for item in source.rglob("*"):
             # Skip .git directory
             if ".git" in item.parts:
@@ -400,490 +372,127 @@ class ToolsManager:
         # Otherwise, assume it's a standard git URL
         return input_url.strip()
 
-    def _add_docker_service(
-        self, name: str, app_type: str = "static", language: str = "unknown"
-    ) -> None:
-        """Add a service entry to docker-compose.yml."""
-        if not self.docker_compose_path.exists():
-            print(
-                f"Error: docker-compose.yml not found at {self.docker_compose_path}",
-                file=sys.stderr,
-            )
+    def _is_simonw_tools_repo(self, git_url: str) -> bool:
+        """Check if the git URL is for simonw/tools repository."""
+        # Various URL formats to check
+        patterns = [
+            r"https://github\.com/simonw/tools(\.git)?$",
+            r"github\.com/simonw/tools(\.git)?$",
+            r"^simonw/tools(\.git)?$",
+        ]
+        for pattern in patterns:
+            if re.match(pattern, git_url):
+                return True
+        return False
+
+    def _copy_from_simonw_tools(self, name: str, repo_path: str) -> None:
+        """Copy a tool from the local simonw/tools clone or clone if needed."""
+        simonw_tools_path = self.repo_root / "tmp" / "github" / "simonw" / "tools"
+
+        # 1. Check for locally cloned repo
+        if not simonw_tools_path.exists():
+            print("Cloning simonw/tools to local cache...")
+            simonw_tools_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                git.Repo.clone_from("https://github.com/simonw/tools.git", simonw_tools_path)
+                print(f"Successfully cloned simonw/tools to {simonw_tools_path}")
+            except git.GitCommandError as e:
+                print(f"Error cloning simonw/tools: {e}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print(f"Using existing local clone at {simonw_tools_path}")
+
+        # 2. Check for repo_path
+        if not repo_path:
+            print("Error: --path flag is required for copying from simonw/tools", file=sys.stderr)
             sys.exit(1)
 
-        # Read existing content
-        with open(self.docker_compose_path) as f:
-            content = f.read()
-
-        # Generate service configuration
-        service_config = self._generate_service_config(name, app_type, language)
-
-        # Check if service already exists
-        if f"  {name}:" in content:
-            print(f"Warning: Service '{name}' already exists in docker-compose.yml")
-            return
-
-        # Find the services section and insert new service at correct position
-        if "services:" in content:
-            lines = content.split("\n")
-
-            # Find insertion point based on app type
-            if app_type == "server":
-                # Server apps go before builder services (before the first "-builder:" or "volumes:")
-                insert_index = None
-                for i, line in enumerate(lines):
-                    if line.strip() == "volumes:":
-                        insert_index = i
-                        break
-                    if "-builder:" in line and insert_index is None:
-                        insert_index = i
-                        break
-
-                if insert_index is None:
-                    # Fallback: find volumes section
-                    for i, line in enumerate(lines):
-                        if line.strip() == "volumes:":
-                            insert_index = i
-                            break
-            else:
-                # Static builder apps go before volumes section
-                insert_index = None
-                for i, line in enumerate(lines):
-                    if line.strip() == "volumes:":
-                        insert_index = i
-                        break
-
-            if insert_index is None:
-                # If no volumes section found, append before end
-                insert_index = len(lines)
-
-            # Insert service config at the correct position
-            service_lines = service_config.split("\n")
-            # Add blank line before if not at start of services
-            if insert_index > 0 and lines[insert_index - 1].strip():
-                service_lines.insert(0, "")
-
-            for j, service_line in enumerate(service_lines):
-                lines.insert(insert_index + j, service_line)
-
-            content = "\n".join(lines)
-        else:
-            print(
-                "Error: No 'services:' section found in docker-compose.yml",
-                file=sys.stderr,
-            )
+        source_path = simonw_tools_path / repo_path
+        if not source_path.exists():
+            print(f"Error: Path '{repo_path}' not found in simonw/tools", file=sys.stderr)
             sys.exit(1)
 
-        # Write updated content
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        # 3. Create app directory
+        app_dir = self.apps_dir / name
+        if app_dir.exists():
+            print(f"Error: Tool '{name}' already exists", file=sys.stderr)
+            sys.exit(1)
 
-        print(f"Added service '{name}' to docker-compose.yml")
+        app_dir.mkdir(parents=True)
+        print(f"Created directory: {app_dir}")
 
-        # Update nginx config based on app type
-        if app_type == "static":
-            self._add_nginx_volume(name)
-            self._add_volume_definition(name)
-        self._add_nginx_location(name, app_type)
+        # 4. Copy files from source
+        print(f"Copying files from {source_path} to {app_dir}")
+        self._copy_non_git_files(source_path, app_dir)
 
-    def _remove_docker_service(self, name: str) -> None:
-        """Remove a service entry from docker-compose.yml."""
-        if not self.docker_compose_path.exists():
-            print("Warning: docker-compose.yml not found")
-            return
+        # 5. Rename HTML file to index.html if present
+        html_file = app_dir / f"{name}.html"
+        if html_file.exists():
+            index_file = app_dir / "index.html"
+            html_file.rename(index_file)
+            print(f"Renamed {name}.html to index.html")
 
-        with open(self.docker_compose_path, encoding="utf-8") as f:
-            lines = f.readlines()
+        # 6. Copy Apache 2.0 license from repo root
+        self._copy_license(app_dir)
 
-        # Find and remove service section
-        new_lines = []
-        skip = False
-        service_indent = None
-        is_static = False
+        # 7. Copy template files
+        app_language = self._detect_language(app_dir)
+        print(f"Detected language: {app_language}")
+        self._copy_template_files(app_dir, app_language)
 
-        for i, line in enumerate(lines):
-            # Check if this is the start of our service
-            if line.strip() == f"{name}:" or line.strip().startswith(f"{name}-builder:"):
-                skip = True
-                service_indent = len(line) - len(line.lstrip())
-                # Check if it's a builder service (static app)
-                if f"{name}-builder:" in line:
-                    is_static = True
-                continue
+        # 8. Copy documentation and add credit
+        self._copy_simonw_docs(repo_path, app_dir, name)
 
-            # If we're skipping, check if we've reached the next service
-            if skip:
-                current_indent = len(line) - len(line.lstrip())
-                # Empty line or comment
-                if not line.strip() or line.strip().startswith("#"):
-                    continue
-                # Next service at same indent level
-                if current_indent <= service_indent and line.strip():
-                    skip = False
-                else:
-                    continue
+        # 9. For JS apps, detect app type and validate next.config.ts
+        if app_language == "js":
+            app_type = self._detect_app_type(app_dir)
+            print(f"Detected app type: {app_type}")
+            validated = self._validate_next_config(name, app_type)
 
-            new_lines.append(line)
-
-        # Write updated content
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Removed service '{name}' from docker-compose.yml")
-
-        # Remove nginx volume mount and location
-        if is_static:
-            self._remove_nginx_volume(name)
-            self._remove_volume_definition(name)
-        self._remove_nginx_location(name, is_static)
-
-    def _add_nginx_volume(self, name: str) -> None:
-        """Add volume mount to www service for the app's build output."""
-        with open(self.docker_compose_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        new_lines = []
-        in_www = False
-        in_volumes = False
-        added = False
-
-        for line in lines:
-            # Check if we're in www service (was incorrectly looking for "nginx:")
-            if line.strip() == "www:" or line.strip().startswith("www:"):
-                in_www = True
-            elif in_www and line.strip() and not line[0].isspace():
-                in_www = False
-                in_volumes = False
-
-            # Check if we're in volumes section of www
-            if in_www and line.strip() == "volumes:":
-                in_volumes = True
-
-            new_lines.append(line)
-
-            # Add our volume mount after other volume entries
-            if in_volumes and not added and line.strip().startswith("- "):
-                # Check if this is the last volume entry by looking ahead
-                continue_loop = False
-                current_index = lines.index(line)
-                for next_line in lines[current_index + 1 :]:
-                    if next_line.strip().startswith("- "):
-                        continue_loop = True
-                        break
-                    elif next_line.strip() and not next_line[0].isspace():
-                        break
-
-                if not continue_loop:
-                    # Fixed: use correct volume name format and mount path
-                    volume_mount = f"      - {name}:/var/www/html/{name}:ro\n"
-                    new_lines.append(volume_mount)
-                    added = True
-
-        if not added:
-            print("Warning: Could not add volume mount to www service")
-
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Added volume mount for '{name}' to www service")
-
-    def _add_volume_definition(self, name: str) -> None:
-        """Add volume definition to docker-compose.yml for static apps."""
-        with open(self.docker_compose_path, encoding="utf-8") as f:
-            content = f.read()
-
-        # Check if volume already exists
-        if f"\n  {name}:" in content or f"volumes:\n  {name}:" in content:
-            print(f"Warning: Volume '{name}' already exists in docker-compose.yml")
-            return
-
-        lines = content.split("\n")
-
-        # Find volumes section and insert before networks section
-        volumes_index = None
-        networks_index = None
-
-        for i, line in enumerate(lines):
-            if line.strip() == "volumes:":
-                volumes_index = i
-            elif line.strip() == "networks:":
-                networks_index = i
-                break
-
-        if volumes_index is None:
-            print("Warning: Could not find volumes section in docker-compose.yml")
-            return
-
-        # Find the last volume entry or insert after volumes:
-        insert_index = volumes_index + 1
-        for i in range(volumes_index + 1, len(lines)):
-            if lines[i].strip().startswith("  ") and lines[i].strip().endswith(":"):
-                insert_index = i + 1
-            elif lines[i].strip() and not lines[i].strip().endswith(":"):
-                break
-
-        # Insert volume definition (using networks_index if available, else end)
-        if networks_index is not None:
-            insert_index = networks_index
-
-        lines.insert(insert_index, f"  {name}:")
-
-        content = "\n".join(lines)
-
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        print(f"Added volume definition for '{name}' to docker-compose.yml")
-
-    def _remove_nginx_volume(self, name: str) -> None:
-        """Remove volume mount from www service for the app's build output."""
-        with open(self.docker_compose_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        new_lines = []
-        # Fixed: use correct volume pattern
-        volume_mount_pattern = f"{name}:/var/www/html/{name}"
-
-        for line in lines:
-            if volume_mount_pattern not in line:
-                new_lines.append(line)
-
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Removed volume mount for '{name}' from www service")
-
-    def _remove_volume_definition(self, name: str) -> None:
-        """Remove volume definition from docker-compose.yml."""
-        with open(self.docker_compose_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        new_lines = []
-        in_volumes = False
-
-        for line in lines:
-            # Check if we're in volumes section
-            if line.strip() == "volumes:":
-                in_volumes = True
-            elif in_volumes and line.strip() and not line[0].isspace():
-                in_volumes = False
-
-            # Skip the volume definition for this app
-            if in_volumes and line.strip() == f"{name}:":
-                continue
-
-            new_lines.append(line)
-
-        with open(self.docker_compose_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Removed volume definition for '{name}' from docker-compose.yml")
-
-    def _add_nginx_location(self, name: str, app_type: str = "static") -> None:
-        """Add location block to nginx config for the app."""
-        nginx_config_path = self.repo_root / "nginx" / "conf.d" / "default.conf"
-
-        if not nginx_config_path.exists():
-            print(f"Warning: nginx config not found at {nginx_config_path}")
-            return
-
-        with open(nginx_config_path, encoding="utf-8") as f:
-            content = f.read()
-
-        # Check if location already exists
-        location_pattern = f"location ^~ /{name}"
-        if location_pattern in content:
-            print(f"Warning: Location '/{name}' already exists in nginx config")
-            return
-
-        # Generate location block based on app type
-        if app_type == "static":
-            location_block = f"""
-    location ^~ /{name}/ {{
-        alias /var/www/html/{name}/;
-        try_files $uri $uri/ /{name}/index.html;
-    }}
-"""
-        else:  # server
-            location_block = f"""
-    location ^~ /{name} {{
-        proxy_pass http://{name}:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }}
-"""
-
-        # Find correct position to insert based on app type
-        if app_type == "static":
-            # Static apps: Insert before first static location (after the comment block)
-            insert_marker = "    # Per-app location blocks"
-            if insert_marker in content:
-                content = content.replace(insert_marker, insert_marker + "\n" + location_block)
-            else:
-                # Fallback: insert before static asset caching
-                insert_marker = "    # Static asset caching"
-                if insert_marker in content:
-                    content = content.replace(insert_marker, location_block + insert_marker)
-                else:
-                    content = content.rstrip().rstrip("}") + location_block + "}\n"
+        if validated:
+            print(f"Successfully copied tool: {name} from simonw/tools")
         else:
-            # Server apps: Insert before server-type comment or static asset caching
-            insert_marker = "    # Server-type NextJS apps"
-            if insert_marker in content:
-                content = content.replace(insert_marker, insert_marker + "\n" + location_block)
-            else:
-                insert_marker = "    # Static asset caching"
-                if insert_marker in content:
-                    content = content.replace(insert_marker, location_block + insert_marker)
-                else:
-                    content = content.rstrip().rstrip("}") + location_block + "}\n"
+            print(f"Copying tool: {name} from simonw/tools failed")
 
-        # For static apps, add referer rule in /_next/ location
-        if app_type == "static":
-            next_location_start = "    location ^~ /_next/ {"
-            if next_location_start in content:
-                # Find the position after the last if statement in /_next/
-                lines = content.split("\n")
-                next_block_start = None
-                last_if_line = -1
-                for i, line in enumerate(lines):
-                    if line.strip() == next_location_start.strip():
-                        next_block_start = i
-                    elif next_block_start is not None and line.strip().startswith(
-                        "if ($http_referer ~*"
-                    ):
-                        last_if_line = i
-                    elif (
-                        next_block_start is not None
-                        and line.strip() == "}"
-                        and i > next_block_start
-                    ):
-                        break
-                if last_if_line != -1:
-                    # Insert after the last if
-                    insert_pos = last_if_line + 1
-                    indent = "        "
-                    referer_stanza = f'{indent}if ($http_referer ~* "/{name}/") {{\n{indent}    root /var/www/html/{name};\n{indent}}}\n'
-                    lines.insert(insert_pos, referer_stanza.rstrip())
-                    content = "\n".join(lines)
-                else:
-                    print(f"Warning: Could not find position to add referer rule for {name}")
-            else:
-                print("Warning: /_next/ location not found in nginx config")
+    def _copy_simonw_docs(self, repo_path: str, app_dir: Path, name: str) -> None:
+        """Copy documentation from simonw/tools and add credit header."""
+        # Extract app name from repo_path (strip .html if present)
+        app_name = Path(repo_path).stem
+        if app_name.endswith(".html"):
+            app_name = app_name[:-5]
 
-        with open(nginx_config_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        docs_filename = f"{app_name}.docs.md"
+        simonw_tools_path = self.repo_root / "tmp" / "github" / "simonw" / "tools"
+        docs_source = simonw_tools_path / docs_filename
+        readme_path = app_dir / "README.md"
 
-        print(f"Added nginx location for '/{name}'")
+        # Build the source URL for credit
+        source_url = f"https://github.com/simonw/tools/blob/main/{repo_path}"
 
-    def _remove_nginx_location(self, name: str, is_static: bool = False) -> None:
-        """Remove location block from nginx config for the app."""
-        nginx_config_path = self.repo_root / "nginx" / "conf.d" / "default.conf"
+        if docs_source.exists():
+            # Read existing docs
+            existing_content = docs_source.read_text()
+            # Create new README with credit header
+            new_content = f"# {name}\n\nFrom {source_url}\n\n{existing_content}"
+            readme_path.write_text(new_content)
+            print(f"Copied documentation from {docs_filename} to README.md with credit")
+        else:
+            print(f"Warning: Documentation file '{docs_filename}' not found in simonw/tools")
+            # Create minimal README with credit
+            new_content = f"# {name}\n\nFrom {source_url}\n"
+            readme_path.write_text(new_content)
+            print("Created README.md with credit header only")
 
-        if not nginx_config_path.exists():
-            return
+    def _copy_license(self, app_dir: Path) -> None:
+        """Copy Apache 2.0 license to the app directory."""
+        license_source = self.repo_root / "LICENSE"
+        license_dest = app_dir / "LICENSE"
 
-        with open(nginx_config_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        new_lines = []
-        skip_block = False
-        brace_count = 0
-
-        for line in lines:
-            # Match both static (/name/) and server (/name) patterns
-            if f"location ^~ /{name}/" in line or f"location ^~ /{name} " in line:
-                skip_block = True
-                brace_count = 0
-
-            if skip_block:
-                brace_count += line.count("{")
-                brace_count -= line.count("}")
-                if brace_count <= 0 and "}" in line:
-                    skip_block = False
-                continue
-
-            new_lines.append(line)
-
-        with open(nginx_config_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Removed nginx location for '/{name}'")
-
-        # Also remove referer rule from /_next/ location for static apps
-        if is_static:
-            self._remove_nginx_referer_rule(name)
-
-    def _remove_nginx_referer_rule(self, name: str) -> None:
-        """Remove referer rule from /_next/ location for static apps."""
-        nginx_config_path = self.repo_root / "nginx" / "conf.d" / "default.conf"
-
-        if not nginx_config_path.exists():
-            return
-
-        with open(nginx_config_path, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        new_lines = []
-        in_next_block = False
-        referer_pattern = f'$http_referer ~* "/{name}/"'
-
-        for line in lines:
-            # Check if we're entering the /_next/ location block
-            if "location ^~ /_next/" in line:
-                in_next_block = True
-            elif in_next_block and line.strip() == "}":
-                in_next_block = False
-
-            # Skip referer rules for this app
-            if in_next_block and referer_pattern in line:
-                # Also skip the next line (the root directive and closing brace)
-                continue
-
-            new_lines.append(line)
-
-        with open(nginx_config_path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
-
-        print(f"Removed referer rule for '/{name}' from nginx config")
-
-    def _generate_service_config(
-        self, name: str, app_type: str = "static", language: str = "unknown"
-    ) -> str:
-        """Generate Docker Compose service configuration for an app."""
-        # HTML apps are always static
-        if language == "html":
-            app_type = "static"
-
-        if app_type == "static":
-            # Static apps use builder pattern with volume output
-            return f"""  {name}-builder:
-    profiles: ["build"]
-    build:
-      context: ./apps/{name}
-      dockerfile: Dockerfile
-    volumes:
-      - "{name}:/output"
-    restart: "no"
-"""
-        else:  # server
-            # Server apps run as containers proxied by nginx
-            return f"""  {name}:
-    container_name: tools_{name}
-    build:
-      context: ./apps/{name}
-      dockerfile: Dockerfile
-    restart: always
-    env_file: ./apps/{name}/app.env
-    networks:
-      - backend
-"""
+        if license_source.exists():
+            shutil.copy2(license_source, license_dest)
+            print(f"Copied LICENSE to {app_dir.name}")
+        else:
+            print(f"Warning: LICENSE file not found at {license_source}")
 
 
 def main():
