@@ -15,4 +15,11 @@ COPY . .
 # Build the application with static export
 RUN bun run build
 
+# Create non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
 CMD ["bun", "run", "start"]
