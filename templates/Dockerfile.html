@@ -1,10 +1,13 @@
 # Simple static file copy for pure HTML/CSS/JS sites
 FROM busybox:latest
 
-# Copy all static files to output directory
-COPY . /output
+WORKDIR /app
 
-# Remove non-essential files from output
-RUN rm -rf /output/.git /output/.gitignore /output/*.md /output/LICENSE /output/.dockerignore 2>/dev/null || true
+RUN mkdir -p /app/out
+
+# Copy all static files to out directory
+COPY ./*.html /app/out
+COPY ./*.js /app/out
+COPY ./*.css /app/out
 
 # The container will exit after copying files to the volume mount

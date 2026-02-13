@@ -12,3 +12,4 @@ Makefile
 .idea
 tmp/
 vendor/
+bin/
