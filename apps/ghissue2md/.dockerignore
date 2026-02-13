@@ -1,0 +1,10 @@
+# HTML/Static .dockerignore
+.git
+.gitignore
+.github
+*.md
+LICENSE
+.env*
+.vscode
+.idea
+node_modules

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert GitHub issue to markdown</title>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .token-help {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    background: #2ea44f;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background: #2c974b;
+  }
+
+  button:disabled {
+    background: #94d3a2;
+    cursor: not-allowed;
+  }
+
+  .output {
+    margin-top: 24px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 12px;
+    font-size: 16px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+  }
+
+  .error {
+    background: #ffebe9;
+    border: 1px solid #ff8182;
+    color: #cf222e;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .error.visible {
+    display: block;
+  }
+
+  .copy-button {
+    margin-top: 12px;
+  }
+
+  .loading {
+    display: none;
+    margin: 20px 0;
+    color: #666;
+  }
+
+  .loading.visible {
+    display: block;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+    }
+
+    .button-row {
+      flex-direction: column;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 16px;
+    }
+
+    textarea {
+      min-height: 200px;
+      font-size: 14px;
+    }
+
+    input {
+      font-size: 16px;
+    }
+  }
+  </style>
+</head>
+<body>
+  <h1>Convert GitHub issue to markdown</h1>
+
+  <div class="input-group">
+    <label for="token-input">GitHub Personal Access Token (optional)</label>
+    <input
+      type="password"
+      id="token-input"
+      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    >
+    <div class="token-help">For private repos and higher rate limits. Stored in browser.</div>
+  </div>
+
+  <div class="input-group">
+    <label for="issue-url">GitHub issue URL</label>
+    <input
+      type="text"
+      id="issue-url"
+      placeholder="https://github.com/owner/repo/issues/123"
+    >
+  </div>
+
+  <div class="button-row">
+    <button id="convert">Convert to markdown</button>
+  </div>
+
+  <div id="loading" class="loading">Loading...</div>
+  <div id="error" class="error"></div>
+
+  <div class="output">
+    <textarea id="markdown-output" readonly></textarea>
+    <button class="copy-button" id="copy">Copy to clipboard</button>
+  </div>
+
+<script type="module">
+const urlInput = document.getElementById('issue-url')
+const tokenInput = document.getElementById('token-input')
+const convertButton = document.getElementById('convert')
+const markdownOutput = document.getElementById('markdown-output')
+const copyButton = document.getElementById('copy')
+const errorElement = document.getElementById('error')
+const loadingElement = document.getElementById('loading')
+
+// Load token from localStorage on page load
+const savedToken = localStorage.getItem('GITHUB_TOKEN')
+if (savedToken) {
+  tokenInput.value = savedToken
+}
+
+// Save token to localStorage when it changes
+tokenInput.addEventListener('input', () => {
+  const token = tokenInput.value.trim()
+  if (token) {
+    localStorage.setItem('GITHUB_TOKEN', token)
+  } else {
+    localStorage.removeItem('GITHUB_TOKEN')
+  }
+})
+
+function parseGitHubUrl(url) {
+  try {
+    const urlObj = new URL(url)
+    const [, owner, repo, , number] = urlObj.pathname.split('/')
+    if (!owner || !repo || !number) {
+      throw new Error('Invalid URL format')
+    }
+    return { owner, repo, number }
+  } catch (e) {
+    throw new Error('Invalid GitHub URL. Expected format: https://github.com/owner/repo/issues/123')
+  }
+}
+
+function getRequestHeaders() {
+  const headers = {
+    'Accept': 'application/vnd.github.v3+json'
+  }
+  const token = tokenInput.value.trim()
+  if (token) {
+    headers['Authorization'] = `token ${token}`
+  }
+  return headers
+}
+
+function formatDate(dateString) {
+  return new Date(dateString)
+    .toISOString()
+    .replace('T', ' ')
+    .replace('Z', ' UTC')
+}
+
+function convertToMarkdown(issue, comments) {
+  let md = `# ${issue.title}\n\n`
+  md += `**State:** ${issue.state}\n`
+  md += `**Created by:** @${issue.user.login}\n`
+  md += `**Created at:** ${formatDate(issue.created_at)}\n\n`
+  md += (issue.body || '*No description provided.*') + '\n\n'
+
+  if (comments.length > 0) {
+    md += '---\n\n'
+    comments.forEach(comment => {
+      md += `### Comment by @${comment.user.login} at ${formatDate(comment.created_at)}\n\n`
+      md += comment.body + '\n\n'
+      md += '---\n\n'
+    })
+  }
+
+  return md
+}
+
+// Parse GitHub blob URLs with line numbers
+// e.g., https://github.com/owner/repo/blob/commit/path/to/file.py#L10-L20
+function parseGitHubBlobUrl(url) {
+  const match = url.match(
+    /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+?)#L(\d+)(?:-L(\d+))?$/
+  )
+  if (!match) return null
+
+  const [, owner, repo, ref, path, startLine, endLine] = match
+  return {
+    owner,
+    repo,
+    ref,
+    path,
+    startLine: parseInt(startLine, 10),
+    endLine: endLine ? parseInt(endLine, 10) : parseInt(startLine, 10)
+  }
+}
+
+// Get language tag from file extension
+function getLanguageFromPath(path) {
+  const ext = path.split('.').pop().toLowerCase()
+  const langMap = {
+    'py': 'python',
+    'js': 'javascript',
+    'ts': 'typescript',
+    'tsx': 'typescript',
+    'jsx': 'javascript',
+    'rb': 'ruby',
+    'rs': 'rust',
+    'go': 'go',
+    'java': 'java',
+    'c': 'c',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'cs': 'csharp',
+    'php': 'php',
+    'swift': 'swift',
+    'kt': 'kotlin',
+    'scala': 'scala',
+    'sh': 'bash',
+    'bash': 'bash',
+    'zsh': 'bash',
+    'fish': 'fish',
+    'ps1': 'powershell',
+    'sql': 'sql',
+    'html': 'html',
+    'htm': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sass': 'sass',
+    'less': 'less',
+    'json': 'json',
+    'xml': 'xml',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'toml': 'toml',
+    'ini': 'ini',
+    'md': 'markdown',
+    'markdown': 'markdown',
+    'r': 'r',
+    'R': 'r',
+    'lua': 'lua',
+    'pl': 'perl',
+    'pm': 'perl',
+    'ex': 'elixir',
+    'exs': 'elixir',
+    'erl': 'erlang',
+    'hs': 'haskell',
+    'ml': 'ocaml',
+    'fs': 'fsharp',
+    'clj': 'clojure',
+    'lisp': 'lisp',
+    'scm': 'scheme',
+    'vim': 'vim',
+    'dockerfile': 'dockerfile',
+    'makefile': 'makefile',
+    'cmake': 'cmake',
+    'tf': 'terraform',
+    'hcl': 'hcl',
+    'proto': 'protobuf',
+    'graphql': 'graphql',
+    'gql': 'graphql'
+  }
+  return langMap[ext] || ''
+}
+
+// Fetch code snippet from raw.githubusercontent.com
+async function fetchCodeSnippet(parsed, headers) {
+  const rawUrl = `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${parsed.ref}/${parsed.path}`
+
+  try {
+    const response = await fetch(rawUrl, { headers })
+    if (!response.ok) {
+      return null
+    }
+
+    const content = await response.text()
+    const lines = content.split('\n')
+
+    // Line numbers are 1-indexed, array is 0-indexed
+    const startIdx = parsed.startLine - 1
+    const endIdx = parsed.endLine
+    const selectedLines = lines.slice(startIdx, endIdx)
+
+    return selectedLines.join('\n')
+  } catch (e) {
+    return null
+  }
+}
+
+// Find all GitHub blob URLs in markdown and expand them with code snippets
+async function expandCodeUrls(markdown, headers) {
+  // Match GitHub blob URLs with line numbers that are on their own line or in markdown links
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const urls = [...new Set(markdown.match(urlPattern) || [])]
+
+  if (urls.length === 0) {
+    return markdown
+  }
+
+  // Fetch all snippets in parallel
+  const snippetPromises = urls.map(async (url) => {
+    const parsed = parseGitHubBlobUrl(url)
+    if (!parsed) return { url, snippet: null }
+
+    const snippet = await fetchCodeSnippet(parsed, headers)
+    const lang = getLanguageFromPath(parsed.path)
+    return { url, snippet, lang }
+  })
+
+  const results = await Promise.all(snippetPromises)
+
+  // Replace each URL with URL + code block
+  let expandedMarkdown = markdown
+  for (const { url, snippet, lang } of results) {
+    if (snippet !== null) {
+      const codeBlock = `\n\n\`\`\`${lang}\n${snippet}\n\`\`\``
+      // Replace URL followed by optional whitespace/newline, but only if not already followed by a code block
+      const urlEscaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const pattern = new RegExp(`(${urlEscaped})(?!\\s*\n*\`\`\`)`, 'g')
+      expandedMarkdown = expandedMarkdown.replace(pattern, `$1${codeBlock}`)
+    }
+  }
+
+  return expandedMarkdown
+}
+
+async function getAllPages(url, headers) {
+  let allItems = []
+  let nextUrl = url
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl, { headers })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid GitHub token')
+      } else if (response.status === 403) {
+        throw new Error('Rate limit exceeded. Try adding a GitHub token.')
+      }
+      throw new Error('Failed to fetch comments')
+    }
+
+    const items = await response.json()
+    allItems = allItems.concat(items)
+
+    // Check for pagination in Link header
+    const link = response.headers.get('Link')
+    nextUrl = null
+
+    if (link) {
+      const nextLink = link.split(',').find(s => s.includes('rel="next"'))
+      if (nextLink) {
+        nextUrl = nextLink.split(';')[0].trim().slice(1, -1)
+      }
+    }
+  }
+
+  return allItems
+}
+
+async function fetchIssueAndComments(owner, repo, number) {
+  const headers = getRequestHeaders()
+  const issueUrl = `https://api.github.com/repos/${owner}/${repo}/issues/${number}`
+  const commentsUrl = `${issueUrl}/comments`
+
+  const issueResponse = await fetch(issueUrl, { headers })
+
+  if (!issueResponse.ok) {
+    if (issueResponse.status === 401) {
+      throw new Error('Invalid GitHub token')
+    } else if (issueResponse.status === 403) {
+      throw new Error('Rate limit exceeded. Try adding a GitHub token.')
+    } else if (issueResponse.status === 404) {
+      throw new Error('Issue not found. It may be private - try adding a GitHub token.')
+    }
+    throw new Error('Failed to fetch issue')
+  }
+
+  const issue = await issueResponse.json()
+  const comments = await getAllPages(commentsUrl, headers)
+
+  return { issue, comments }
+}
+
+function showError(message) {
+  errorElement.textContent = message
+  errorElement.classList.add('visible')
+}
+
+function hideError() {
+  errorElement.textContent = ''
+  errorElement.classList.remove('visible')
+}
+
+function showLoading() {
+  loadingElement.classList.add('visible')
+}
+
+function hideLoading() {
+  loadingElement.classList.remove('visible')
+}
+
+async function handleConvert() {
+  hideError()
+  markdownOutput.value = ''
+  convertButton.disabled = true
+  showLoading()
+
+  try {
+    const { owner, repo, number } = parseGitHubUrl(urlInput.value)
+    const { issue, comments } = await fetchIssueAndComments(owner, repo, number)
+    let markdown = convertToMarkdown(issue, comments)
+
+    // Expand GitHub code URLs with their content
+    const headers = getRequestHeaders()
+    markdown = await expandCodeUrls(markdown, headers)
+
+    markdownOutput.value = markdown
+  } catch (error) {
+    showError(error.message)
+  } finally {
+    hideLoading()
+    convertButton.disabled = false
+  }
+}
+
+convertButton.addEventListener('click', handleConvert)
+
+urlInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    handleConvert()
+  }
+})
+
+copyButton.addEventListener('click', () => {
+  markdownOutput.select()
+  navigator.clipboard.writeText(markdownOutput.value).then(() => {
+    const originalText = copyButton.textContent
+    copyButton.textContent = 'Copied!'
+    copyButton.disabled = true
+
+    setTimeout(() => {
+      copyButton.textContent = originalText
+      copyButton.disabled = false
+    }, 1500)
+  })
+})
+
+// Update URL with ?issue= parameter
+function updateUrlParam(issueUrl) {
+  const url = new URL(window.location)
+  if (issueUrl) {
+    url.searchParams.set('issue', issueUrl)
+  } else {
+    url.searchParams.delete('issue')
+  }
+  history.replaceState(null, '', url)
+}
+
+// Check for ?issue= parameter on page load and auto-fetch
+const params = new URLSearchParams(window.location.search)
+const issueParam = params.get('issue')
+if (issueParam) {
+  urlInput.value = issueParam
+  handleConvert()
+}
+
+// Update URL when input changes
+urlInput.addEventListener('input', () => {
+  const issueUrl = urlInput.value.trim()
+  updateUrlParam(issueUrl)
+})
+
+// ============================================
+// AUTOMATED TESTS
+// ============================================
+
+const testResults = []
+
+function test(name, fn) {
+  try {
+    fn()
+    testResults.push({ name, passed: true })
+  } catch (e) {
+    testResults.push({ name, passed: false, error: e.message })
+  }
+}
+
+function assertEqual(actual, expected, message = '') {
+  if (actual !== expected) {
+    throw new Error(`${message ? message + ': ' : ''}Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+  }
+}
+
+function assertDeepEqual(actual, expected, message = '') {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`${message ? message + ': ' : ''}Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+  }
+}
+
+function assertNull(actual, message = '') {
+  if (actual !== null) {
+    throw new Error(`${message ? message + ': ' : ''}Expected null, got ${JSON.stringify(actual)}`)
+  }
+}
+
+function assertThrows(fn, message = '') {
+  let threw = false
+  try {
+    fn()
+  } catch (e) {
+    threw = true
+  }
+  if (!threw) {
+    throw new Error(`${message ? message + ': ' : ''}Expected function to throw`)
+  }
+}
+
+// Tests for parseGitHubUrl
+test('parseGitHubUrl: valid issue URL', () => {
+  const result = parseGitHubUrl('https://github.com/owner/repo/issues/123')
+  assertDeepEqual(result, { owner: 'owner', repo: 'repo', number: '123' })
+})
+
+test('parseGitHubUrl: valid PR URL', () => {
+  const result = parseGitHubUrl('https://github.com/simonw/sqlite-utils/pull/456')
+  assertDeepEqual(result, { owner: 'simonw', repo: 'sqlite-utils', number: '456' })
+})
+
+test('parseGitHubUrl: URL with trailing slash', () => {
+  const result = parseGitHubUrl('https://github.com/owner/repo/issues/789/')
+  assertEqual(result.owner, 'owner')
+  assertEqual(result.repo, 'repo')
+})
+
+test('parseGitHubUrl: invalid URL throws', () => {
+  assertThrows(() => parseGitHubUrl('not-a-url'))
+})
+
+test('parseGitHubUrl: incomplete URL throws', () => {
+  assertThrows(() => parseGitHubUrl('https://github.com/owner'))
+})
+
+// Tests for formatDate
+test('formatDate: formats ISO date correctly', () => {
+  const result = formatDate('2025-05-09T05:27:33Z')
+  assertEqual(result, '2025-05-09 05:27:33.000 UTC')
+})
+
+test('formatDate: handles different date', () => {
+  const result = formatDate('2024-01-15T12:30:00Z')
+  assertEqual(result, '2024-01-15 12:30:00.000 UTC')
+})
+
+// Tests for parseGitHubBlobUrl
+test('parseGitHubBlobUrl: basic blob URL with single line', () => {
+  const url = 'https://github.com/owner/repo/blob/main/file.py#L10'
+  const result = parseGitHubBlobUrl(url)
+  assertDeepEqual(result, {
+    owner: 'owner',
+    repo: 'repo',
+    ref: 'main',
+    path: 'file.py',
+    startLine: 10,
+    endLine: 10
+  })
+})
+
+test('parseGitHubBlobUrl: blob URL with line range', () => {
+  const url = 'https://github.com/owner/repo/blob/main/file.py#L10-L20'
+  const result = parseGitHubBlobUrl(url)
+  assertEqual(result.startLine, 10)
+  assertEqual(result.endLine, 20)
+})
+
+test('parseGitHubBlobUrl: blob URL with commit SHA', () => {
+  const url = 'https://github.com/simonw/sqlite-utils/blob/d892d2ae49cd29b9639e73cd13017cfeef507ac7/sqlite_utils/db.py#L544-L556'
+  const result = parseGitHubBlobUrl(url)
+  assertDeepEqual(result, {
+    owner: 'simonw',
+    repo: 'sqlite-utils',
+    ref: 'd892d2ae49cd29b9639e73cd13017cfeef507ac7',
+    path: 'sqlite_utils/db.py',
+    startLine: 544,
+    endLine: 556
+  })
+})
+
+test('parseGitHubBlobUrl: nested path', () => {
+  const url = 'https://github.com/owner/repo/blob/main/src/components/Button.tsx#L5-L15'
+  const result = parseGitHubBlobUrl(url)
+  assertEqual(result.path, 'src/components/Button.tsx')
+})
+
+test('parseGitHubBlobUrl: URL without line numbers returns null', () => {
+  const url = 'https://github.com/owner/repo/blob/main/file.py'
+  const result = parseGitHubBlobUrl(url)
+  assertNull(result)
+})
+
+test('parseGitHubBlobUrl: non-blob URL returns null', () => {
+  const url = 'https://github.com/owner/repo/issues/123'
+  const result = parseGitHubBlobUrl(url)
+  assertNull(result)
+})
+
+// Tests for getLanguageFromPath
+test('getLanguageFromPath: Python file', () => {
+  assertEqual(getLanguageFromPath('file.py'), 'python')
+})
+
+test('getLanguageFromPath: JavaScript file', () => {
+  assertEqual(getLanguageFromPath('app.js'), 'javascript')
+})
+
+test('getLanguageFromPath: TypeScript file', () => {
+  assertEqual(getLanguageFromPath('component.ts'), 'typescript')
+})
+
+test('getLanguageFromPath: TSX file', () => {
+  assertEqual(getLanguageFromPath('Component.tsx'), 'typescript')
+})
+
+test('getLanguageFromPath: nested path', () => {
+  assertEqual(getLanguageFromPath('src/utils/helper.rb'), 'ruby')
+})
+
+test('getLanguageFromPath: unknown extension returns empty string', () => {
+  assertEqual(getLanguageFromPath('file.xyz'), '')
+})
+
+test('getLanguageFromPath: Rust file', () => {
+  assertEqual(getLanguageFromPath('main.rs'), 'rust')
+})
+
+test('getLanguageFromPath: Go file', () => {
+  assertEqual(getLanguageFromPath('server.go'), 'go')
+})
+
+// Tests for URL detection regex
+test('URL detection regex: matches basic blob URL', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'See https://github.com/owner/repo/blob/main/file.py#L10'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+  assertEqual(matches?.[0], 'https://github.com/owner/repo/blob/main/file.py#L10')
+})
+
+test('URL detection regex: matches URL with line range', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'Code: https://github.com/owner/repo/blob/main/file.py#L10-L20 here'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.[0], 'https://github.com/owner/repo/blob/main/file.py#L10-L20')
+})
+
+test('URL detection regex: matches the problematic URL from issue', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'Relevant code: https://github.com/simonw/sqlite-utils/blob/d892d2ae49cd29b9639e73cd13017cfeef507ac7/sqlite_utils/db.py#L544-L556'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+  assertEqual(matches?.[0], 'https://github.com/simonw/sqlite-utils/blob/d892d2ae49cd29b9639e73cd13017cfeef507ac7/sqlite_utils/db.py#L544-L556')
+})
+
+test('URL detection regex: matches URL in markdown link', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = '[code](https://github.com/owner/repo/blob/main/file.py#L10-L20)'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+})
+
+test('URL detection regex: finds multiple URLs', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'First: https://github.com/a/b/blob/main/x.py#L1 and https://github.com/c/d/blob/main/y.js#L2-L3'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 2)
+})
+
+test('URL detection regex: does not match URL without line numbers', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'See https://github.com/owner/repo/blob/main/file.py'
+  const matches = text.match(urlPattern)
+  assertNull(matches)
+})
+
+test('URL detection regex: URL at end of line', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'See https://github.com/owner/repo/blob/main/file.py#L10-L20'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+})
+
+test('URL detection regex: URL on its own line', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'Relevant code:\nhttps://github.com/owner/repo/blob/main/file.py#L10-L20\nMore text'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+})
+
+test('URL detection regex: URL followed by newline', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'https://github.com/simonw/sqlite-utils/blob/d892d2ae49cd29b9639e73cd13017cfeef507ac7/sqlite_utils/db.py#L544-L556\n'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+  assertEqual(matches?.[0], 'https://github.com/simonw/sqlite-utils/blob/d892d2ae49cd29b9639e73cd13017cfeef507ac7/sqlite_utils/db.py#L544-L556')
+})
+
+test('URL detection regex: URL with underscores in path', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'https://github.com/owner/repo/blob/main/my_module/sub_dir/file_name.py#L1-L5'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+})
+
+test('URL detection regex: URL with hyphenated repo name', () => {
+  const urlPattern = /https:\/\/github\.com\/[^\/]+\/[^\/]+\/blob\/[^\s\)#]+#L\d+(?:-L\d+)?/g
+  const text = 'https://github.com/simonw/sqlite-utils/blob/main/sqlite_utils/db.py#L544-L556'
+  const matches = text.match(urlPattern)
+  assertEqual(matches?.length, 1)
+})
+
+// Test expandCodeUrls with mocked content
+test('expandCodeUrls: returns unchanged markdown when no URLs', async () => {
+  const markdown = 'Just some text\nNo URLs here'
+  const result = await expandCodeUrls(markdown, {})
+  assertEqual(result, markdown)
+})
+
+// Tests for convertToMarkdown
+test('convertToMarkdown: basic issue without comments', () => {
+  const issue = {
+    title: 'Test Issue',
+    state: 'open',
+    user: { login: 'testuser' },
+    created_at: '2025-01-01T00:00:00Z',
+    body: 'Issue body'
+  }
+  const result = convertToMarkdown(issue, [])
+  assertEqual(result.includes('# Test Issue'), true)
+  assertEqual(result.includes('**State:** open'), true)
+  assertEqual(result.includes('@testuser'), true)
+  assertEqual(result.includes('Issue body'), true)
+})
+
+test('convertToMarkdown: issue with comments', () => {
+  const issue = {
+    title: 'Test',
+    state: 'closed',
+    user: { login: 'user1' },
+    created_at: '2025-01-01T00:00:00Z',
+    body: 'Body'
+  }
+  const comments = [{
+    user: { login: 'user2' },
+    created_at: '2025-01-02T00:00:00Z',
+    body: 'Comment text'
+  }]
+  const result = convertToMarkdown(issue, comments)
+  assertEqual(result.includes('### Comment by @user2'), true)
+  assertEqual(result.includes('Comment text'), true)
+  assertEqual(result.includes('---'), true)
+})
+
+test('convertToMarkdown: issue with null body', () => {
+  const issue = {
+    title: 'No Body',
+    state: 'open',
+    user: { login: 'user' },
+    created_at: '2025-01-01T00:00:00Z',
+    body: null
+  }
+  const result = convertToMarkdown(issue, [])
+  assertEqual(result.includes('*No description provided.*'), true)
+})
+
+// Display test results
+function displayTestResults() {
+  const container = document.createElement('div')
+  container.id = 'test-results'
+  container.style.cssText = 'margin-top: 40px; padding: 16px; border: 1px solid #ccc; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 14px;'
+
+  const passed = testResults.filter(t => t.passed).length
+  const failed = testResults.filter(t => !t.passed).length
+  const total = testResults.length
+
+  const summary = document.createElement('div')
+  summary.style.cssText = `margin-bottom: 12px; padding: 8px; border-radius: 4px; font-weight: bold; background: ${failed > 0 ? '#ffebe9' : '#d4edda'}; color: ${failed > 0 ? '#cf222e' : '#155724'};`
+  summary.textContent = `Tests: ${passed}/${total} passed` + (failed > 0 ? `, ${failed} failed` : '')
+  container.appendChild(summary)
+
+  const list = document.createElement('div')
+  testResults.forEach(result => {
+    const item = document.createElement('div')
+    item.style.cssText = `padding: 4px 0; border-bottom: 1px solid #eee; color: ${result.passed ? '#155724' : '#cf222e'};`
+    if (result.passed) {
+      item.textContent = `✓ ${result.name}`
+    } else {
+      item.innerHTML = `✗ ${result.name}<br><span style="color: #666; font-size: 12px; margin-left: 16px;">${result.error}</span>`
+    }
+    list.appendChild(item)
+  })
+  container.appendChild(list)
+
+  document.body.appendChild(container)
+}
+
+displayTestResults()
+
+</script>
+</body>
+</html>

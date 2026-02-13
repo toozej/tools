@@ -1,0 +1,7 @@
+# qr
+
+From https://github.com/simonw/tools/blob/main/qr.html
+
+Decode QR codes from image files by uploading, dragging and dropping, or pasting them directly into the application. The decoder processes the image data using the jsQR library to extract and display the encoded content, automatically converting URLs into clickable links for convenient access.
+
+<!-- Generated from commit: 345bdc992ffa314a78473541afb6815d215eec0b -->
