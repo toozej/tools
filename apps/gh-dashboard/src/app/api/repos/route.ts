@@ -4,7 +4,6 @@ import { fetchRepoStatus } from "@/lib/repo-data";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get("username");
-  const token = searchParams.get("token");
   // Force parameter bypasses cache - reserved for future use
   // const force = searchParams.get("force") === "true";
 
@@ -16,9 +15,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Use provided token, or fall back to GITHUB_TOKEN env var
-    const authToken = token || process.env.GITHUB_TOKEN;
-    const result = await fetchRepoStatus(username, authToken);
+    // Token is controlled server-side via the toggle API
+    const result = await fetchRepoStatus(username);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching repo status:", error);

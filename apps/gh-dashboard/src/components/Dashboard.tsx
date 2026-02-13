@@ -28,7 +28,7 @@ function StatusIcon({ status }: { status: RepoStatus["buildStatus"] }) {
     ),
     unknown: (
       <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1-1 1 0 00v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
       </svg>
     ),
   };
@@ -112,13 +112,10 @@ export default function Dashboard() {
     },
   });
 
-  const [pat, setPat] = useState("");
-  const [showPatInput, setShowPatInput] = useState(false);
-  const [patError, setPatError] = useState<string | null>(null);
+  const [tokenEnabled, setTokenEnabled] = useState(true);
   const [username, setUsername] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
   const [rateLimitTimer, setRateLimitTimer] = useState<string | null>(null);
-  const [hasTriedFallback, setHasTriedFallback] = useState(false);
 
   // Get username from URL after hydration
   useEffect(() => {
@@ -126,6 +123,41 @@ export default function Dashboard() {
     setIsHydrated(true);
   }, []);
 
+  // Fetch token status on mount
+  useEffect(() => {
+    async function fetchTokenStatus() {
+      try {
+        const response = await fetch(`${BASE_PATH}/api/token`);
+        if (response.ok) {
+          const data = await response.json();
+          setTokenEnabled(data.enabled);
+        }
+      } catch {
+        // Silently fail - token status is non-critical
+      }
+    }
+    fetchTokenStatus();
+  }, []);
+
+  // Handle token toggle
+  const handleTokenToggle = async () => {
+    const action = tokenEnabled ? "disable" : "enable";
+    try {
+      const response = await fetch(`${BASE_PATH}/api/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTokenEnabled(data.enabled);
+        // Refresh data with new token state
+        fetchData(true);
+      }
+    } catch {
+      // Silently fail
+    }
+  };
 
   // Update rate limit timer countdown
   useEffect(() => {
@@ -152,17 +184,6 @@ export default function Dashboard() {
     }
   }, [state.rateLimit.remaining, state.rateLimit.reset]);
 
-  // Save PAT to localStorage when changed
-  const handlePatChange = useCallback((newPat: string) => {
-    setPat(newPat);
-    setPatError(null);
-    if (newPat) {
-      localStorage.setItem("github_pat", newPat);
-    } else {
-      localStorage.removeItem("github_pat");
-    }
-  }, []);
-
   const fetchData = useCallback(async (force = false) => {
     if (!username) {
       setState((prev) => ({ ...prev, isLoading: false, error: "Please provide a GitHub username" }));
@@ -170,25 +191,13 @@ export default function Dashboard() {
     }
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
-    setPatError(null);
 
     try {
-      let url = `${BASE_PATH}/api/repos?username=${encodeURIComponent(username)}${force ? "&force=true" : ""}`;
-      if (pat) {
-        url += `&token=${encodeURIComponent(pat)}`;
-      }
+      const url = `${BASE_PATH}/api/repos?username=${encodeURIComponent(username)}${force ? "&force=true" : ""}`;
       const response = await fetch(url);
       const data = await response.json();
 
       if (!response.ok) {
-        // Check for specific error types
-        if (data.error?.includes("401") || data.error?.includes("Bad credentials")) {
-          setPatError("Invalid Personal Access Token. Please check your token and try again.");
-        } else if (data.error?.includes("403") && data.error?.includes("rate")) {
-          throw new Error(data.error);
-        } else if (data.error?.includes("Missing") || data.error?.includes("scope")) {
-          setPatError("Your token may not have the required permissions. Make sure it has 'repo' scope for private repos.");
-        }
         throw new Error(data.error || "Failed to fetch data");
       }
 
@@ -207,27 +216,15 @@ export default function Dashboard() {
         error: error instanceof Error ? error.message : "An error occurred",
       }));
     }
-  }, [username, pat]);
+  }, [username]);
 
   // Initial fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Fallback to localStorage token if env var fails
-  useEffect(() => {
-    if (state.error && state.error.includes("401") && !pat && !hasTriedFallback && username) {
-      setHasTriedFallback(true);
-      const savedPat = localStorage.getItem("github_pat");
-      if (savedPat) {
-        setPat(savedPat);
-      } else {
-        setShowPatInput(true);
-      }
-    }
-  }, [state.error, pat, hasTriedFallback, username]);
-
   // Live refresh with configurable interval (default: 10 minutes = 600000ms)
+  // Disabled when token is not enabled
   const POLLING_INTERVAL_MS = parseInt(
     process.env.NEXT_PUBLIC_POLLING_INTERVAL_MS || "600000",
     10
@@ -235,13 +232,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!username) return;
+    if (!tokenEnabled) return; // Disable polling when token is disabled
 
     const interval = setInterval(() => {
       fetchData(false);
     }, POLLING_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [fetchData, username, POLLING_INTERVAL_MS]);
+  }, [fetchData, username, POLLING_INTERVAL_MS, tokenEnabled]);
 
   // Filter and sort repos
   const filteredRepos = filterRepos(
@@ -349,15 +347,26 @@ export default function Dashboard() {
                   </>
                 )}
               </div>
-              {/* PAT toggle button */}
+              {/* Token status indicator */}
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                <span className={tokenEnabled ? "text-green-600" : "text-yellow-600"}>
+                  {tokenEnabled ? "● Token Enabled" : "○ Token Disabled"}
+                </span>
+              </div>
+              {/* Token toggle button */}
               <button
-                onClick={() => setShowPatInput(!showPatInput)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                onClick={handleTokenToggle}
+                className={`px-4 py-2 font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                  tokenEnabled
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
+                title={tokenEnabled ? "Disable token to reduce rate limit usage" : "Reload token from environment"}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                {pat ? "Token Set" : "Add Token"}
+                {tokenEnabled ? "Unload Token" : "Reload Token"}
               </button>
               {/* Force refresh button */}
               <button
@@ -382,52 +391,6 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-
-          {/* PAT Input */}
-          {showPatInput && (
-            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <label htmlFor="pat" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    GitHub Personal Access Token
-                  </label>
-                  <input
-                    type="password"
-                    id="pat"
-                    value={pat}
-                    onChange={(e) => handlePatChange(e.target.value)}
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Token is stored locally in your browser and never sent to our servers.
-                    Required for higher rate limits.{" "}
-                    <a
-                      href="https://github.com/settings/tokens"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-500"
-                    >
-                      Create a token →
-                    </a>
-                  </p>
-                </div>
-                <div className="flex items-end">
-                  <button
-                    onClick={() => handlePatChange("")}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
-                  >
-                    Remove Token
-                  </button>
-                </div>
-              </div>
-              {patError && (
-                <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-400">{patError}</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </header>
 
@@ -524,7 +487,7 @@ export default function Dashboard() {
       </div>
 
       {/* Error state */}
-      {state.error && !patError && (
+      {state.error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex">
@@ -713,7 +676,11 @@ export default function Dashboard() {
             {state.lastUpdated && (
               <span>Last updated: {formatDateTime(state.lastUpdated.toISOString())}</span>
             )}
-            <span className="ml-auto">Auto-refreshes every {Math.floor(POLLING_INTERVAL_MS / 60000)} minutes</span>
+            <span className="ml-auto">
+              {tokenEnabled
+                ? `Auto-refreshes every ${Math.floor(POLLING_INTERVAL_MS / 60000)} minutes`
+                : "Auto-refresh disabled (token unloaded)"}
+            </span>
           </div>
         </div>
       )}

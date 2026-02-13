@@ -35,6 +35,9 @@ COPY --from=builder /app/.next/static ./.next/static
 # Set ownership
 RUN chown -R nextjs:nodejs /app
 
+# Install curl for health checks
+RUN apk --no-cache add curl
+
 # Switch to non-root user
 USER nextjs
 

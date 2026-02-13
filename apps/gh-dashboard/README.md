@@ -57,6 +57,12 @@ src/
 ### GitHub API Integration
 
 - **Authentication**: Optional via `GITHUB_TOKEN` environment variable (increases rate limit from 60 to 5000 requests/hour)
+- **Token Management**: Server-side token toggle via UI button. Token is read from `GITHUB_TOKEN` env var (never exposed client-side).
+  - **Toggle UI**: Single button to "Unload GitHub token" (disables Authorization header) or "Reload GitHub token" (re-enables and re-reads env)
+  - **API Endpoints**:
+    - `GET /api/token` - Returns token status (`{enabled, envPresent}`)
+    - `POST /api/token` with `{action: "enable"|"disable"}` - Toggles token usage
+  - **Auto-refresh Behavior**: Polling is disabled when token is unloaded to conserve unauthenticated rate limits
 - **Rate Limiting**: Tracks and displays remaining requests
 - **Caching**: 1-minute cache to minimize API calls
 - **Endpoints Used**:
@@ -64,6 +70,10 @@ src/
   - `GET /repos/{owner}/{repo}/actions/runs` - Get workflow runs
   - `GET /repos/{owner}/{repo}/releases` - Get releases
   - `GET /repos/{owner}/{repo}/commits` - Get commits
+
+### Configuration
+
+- **Next.js Images**: GitHub avatar domains (`avatars.githubusercontent.com`, `githubusercontent.com`) are allowlisted via [`images.remotePatterns`](next.config.ts) for optimized image loading.
 
 ## Usage
 

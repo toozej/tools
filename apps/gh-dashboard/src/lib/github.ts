@@ -2,6 +2,25 @@ import { GitHubRepo, GitHubWorkflowRun, GitHubRelease, GitHubCommit, RateLimitIn
 
 const GITHUB_API_BASE = "https://api.github.com";
 
+// Token enable/disable state (server-side only, never exposed to client)
+let tokenEnabled = true;
+
+export function isTokenEnabled(): boolean {
+  return tokenEnabled;
+}
+
+export function disableToken(): void {
+  tokenEnabled = false;
+}
+
+export function enableToken(): void {
+  tokenEnabled = !!process.env.GITHUB_TOKEN;
+}
+
+export function hasEnvToken(): boolean {
+  return !!process.env.GITHUB_TOKEN;
+}
+
 // Rate limiting state (per-request, tracked from responses)
 const rateLimitState: RateLimitInfo = {
   limit: 60,
@@ -51,7 +70,9 @@ function setCache(endpoint: string, data: unknown, token?: string): void {
   cache.set(getCacheKey(endpoint, token), { data, timestamp: Date.now(), token });
 }
 
-async function fetchWithRateLimit<T>(endpoint: string, token?: string, useCache = true): Promise<T> {
+async function fetchWithRateLimit<T>(endpoint: string, useCache = true): Promise<T> {
+  const token = getToken();
+
   // Check cache first
   if (useCache) {
     const cached = getCached<T>(endpoint, token);
@@ -109,29 +130,32 @@ async function fetchWithRateLimit<T>(endpoint: string, token?: string, useCache 
   return data as T;
 }
 
-export async function getUserRepos(username: string, token?: string): Promise<GitHubRepo[]> {
-  return fetchWithRateLimit<GitHubRepo[]>(`/users/${username}/repos?sort=updated&per_page=100`, token);
+function getToken(): string | undefined {
+  if (!tokenEnabled) return undefined;
+  return process.env.GITHUB_TOKEN;
+}
+
+export async function getUserRepos(username: string): Promise<GitHubRepo[]> {
+  return fetchWithRateLimit<GitHubRepo[]>(`/users/${username}/repos?sort=updated&per_page=100`);
 }
 
 export async function getRepoWorkflowRuns(
   owner: string,
   repo: string,
-  branch?: string,
-  token?: string
+  branch?: string
 ): Promise<GitHubWorkflowRun[]> {
   let endpoint = `/repos/${owner}/${repo}/actions/runs?per_page=10`;
   if (branch) {
     endpoint += `&branch=${branch}`;
   }
 
-  const data = await fetchWithRateLimit<{ workflow_runs: GitHubWorkflowRun[] }>(endpoint, token);
+  const data = await fetchWithRateLimit<{ workflow_runs: GitHubWorkflowRun[] }>(endpoint);
   return data.workflow_runs;
 }
 
-export async function getRepoReleases(owner: string, repo: string, token?: string): Promise<GitHubRelease[]> {
+export async function getRepoReleases(owner: string, repo: string): Promise<GitHubRelease[]> {
   const data = await fetchWithRateLimit<GitHubRelease[]>(
-    `/repos/${owner}/${repo}/releases?per_page=5`,
-    token
+    `/repos/${owner}/${repo}/releases?per_page=5`
   );
   return data;
 }
@@ -139,32 +163,30 @@ export async function getRepoReleases(owner: string, repo: string, token?: strin
 export async function getRepoCommits(
   owner: string,
   repo: string,
-  branch?: string,
-  token?: string
+  branch?: string
 ): Promise<GitHubCommit[]> {
   let endpoint = `/repos/${owner}/${repo}/commits?per_page=5`;
   if (branch) {
     endpoint += `&sha=${branch}`;
   }
 
-  const data = await fetchWithRateLimit<GitHubCommit[]>(endpoint, token);
+  const data = await fetchWithRateLimit<GitHubCommit[]>(endpoint);
   return data;
 }
 
 export async function getRepo(
   owner: string,
-  repo: string,
-  token?: string
+  repo: string
 ): Promise<GitHubRepo> {
-  return fetchWithRateLimit<GitHubRepo>(`/repos/${owner}/${repo}`, token);
+  return fetchWithRateLimit<GitHubRepo>(`/repos/${owner}/${repo}`);
 }
 
-export async function getAuthenticatedUser(token: string): Promise<{ login: string }> {
-  return fetchWithRateLimit<{ login: string }>("/user", token);
+export async function getAuthenticatedUser(): Promise<{ login: string }> {
+  return fetchWithRateLimit<{ login: string }>("/user");
 }
 
-export async function getRateLimitStatus(token?: string): Promise<{
+export async function getRateLimitStatus(): Promise<{
   rate: { limit: number; remaining: number; reset: number; used: number };
 }> {
-  return fetchWithRateLimit<{ rate: RateLimitInfo }>("/rate_limit", token, false);
+  return fetchWithRateLimit<{ rate: RateLimitInfo }>("/rate_limit", false);
 }

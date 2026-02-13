@@ -7,14 +7,14 @@ import {
   getRateLimitInfo,
 } from "@/lib/github";
 
-export async function fetchRepoStatus(username: string, token?: string): Promise<{
+export async function fetchRepoStatus(username: string): Promise<{
   repos: RepoStatus[];
   rateLimit: RateLimitInfo;
   error?: string;
 }> {
   try {
     // Fetch all user repos
-    const repos = await getUserRepos(username, token);
+    const repos = await getUserRepos(username);
 
     // Fetch additional data for each repo in parallel
     const repoStatuses: RepoStatus[] = await Promise.all(
@@ -23,9 +23,9 @@ export async function fetchRepoStatus(username: string, token?: string): Promise
 
         // Fetch workflows, releases, and commits in parallel
         const [workflowRuns, releases, commits] = await Promise.allSettled([
-          getRepoWorkflowRuns(owner.login, name, undefined, token),
-          getRepoReleases(owner.login, name, token),
-          getRepoCommits(owner.login, name, undefined, token),
+          getRepoWorkflowRuns(owner.login, name, undefined),
+          getRepoReleases(owner.login, name),
+          getRepoCommits(owner.login, name, undefined),
         ]);
 
         // Get main branch workflow run
