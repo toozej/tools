@@ -150,3 +150,13 @@ __pycache__/
 # AI / LLM files
 plans/
 TODO.md
+
+# Temp files
+tmp/
+temp/
+
+# Go build output
+bin/
+generate
+app.wasm
+wasm_exec.js
