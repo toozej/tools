@@ -1,0 +1,5 @@
+rules:
+  - id: generic.nginx.security.possible-h2c-smuggling.possible-nginx-h2c-smuggling
+    paths:
+      exclude:
+        - nginx/conf.d/default.conf
