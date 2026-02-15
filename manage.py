@@ -255,7 +255,6 @@ class ToolsManager:
 
         template_files = {
             "all": {
-                "README.md": "README.md",
                 "app.env": "app.env",
             },
             "dockerignore": {
@@ -268,6 +267,10 @@ class ToolsManager:
                 "js-static": "Dockerfile.js.static",
                 "js-server": "Dockerfile.js.server",
                 "html": "Dockerfile.html",
+            },
+            "html_scaffold": {
+                "index.html": "index.html",
+                "style.css": "style.css",
             },
         }
 
@@ -325,6 +328,62 @@ class ToolsManager:
                 print("Copied: Dockerfile.html")
             else:
                 print("Warning: Template 'Dockerfile.html' not found")
+
+        # Copy HTML scaffold files (index.html, style.css) for HTML apps
+        if app_language == "html":
+            html_scaffold = template_files["html_scaffold"]
+            for template_name, dest_name in html_scaffold.items():
+                template_path = self.templates_dir / template_name
+                dest_path = dest_dir / dest_name
+                if not dest_path.exists():
+                    if template_path.exists():
+                        shutil.copy2(template_path, dest_path)
+                        print(f"  Copied: {dest_name}")
+                    else:
+                        print(f"  Warning: Template '{template_name}' not found")
+                else:
+                    print(f"  Skipping: {dest_name} already exists")
+
+            # Generate README.md with styling note for HTML apps
+            self._generate_html_readme(dest_dir, dest_dir.name)
+
+    def _generate_html_readme(self, app_dir: Path, name: str) -> None:
+        """Generate a README.md with styling note for HTML apps."""
+        readme_path = app_dir / "README.md"
+        if readme_path.exists():
+            print("  Skipping: README.md already exists")
+            return
+
+        readme_content = f"""# {name}
+
+A pure HTML/CSS/JavaScript application.
+
+## Styling
+
+This app uses homepage-inspired shared styling in `style.css`.
+
+When editing, keep the wrapper structure in `index.html`:
+- `.page` - root container
+- `.container` - content wrapper
+- `.hero` - header/hero section
+- `.card` - content cards
+
+## Development
+
+This is a static HTML app served by nginx. No build step required.
+
+Edit `index.html` and `style.css` directly, then refresh the browser.
+
+## Deployment
+
+Built and deployed via Docker Compose:
+```bash
+make dev    # Development
+make up     # Production
+```
+"""
+        readme_path.write_text(readme_content)
+        print("  Generated: README.md with styling note")
 
     def _copy_non_git_files(self, source: Path, dest: Path) -> None:
         """Copy all files except .git directory from source to destination."""
@@ -469,17 +528,34 @@ class ToolsManager:
         # Build the source URL for credit
         source_url = f"https://github.com/simonw/tools/blob/main/{repo_path}"
 
+        # Detect if this is an HTML app for styling note
+        app_language = self._detect_language(app_dir)
+        styling_note = ""
+        if app_language == "html":
+            styling_note = """
+
+## Styling
+
+This app uses homepage-inspired shared styling in `style.css`.
+
+When editing, keep the wrapper structure in `index.html`:
+- `.page` - root container
+- `.container` - content wrapper
+- `.hero` - header/hero section
+- `.card` - content cards
+"""
+
         if docs_source.exists():
             # Read existing docs
             existing_content = docs_source.read_text()
-            # Create new README with credit header
-            new_content = f"# {name}\n\nFrom {source_url}\n\n{existing_content}"
+            # Create new README with credit header and styling note for HTML apps
+            new_content = f"# {name}\n\nFrom {source_url}\n{styling_note}\n{existing_content}"
             readme_path.write_text(new_content)
             print(f"Copied documentation from {docs_filename} to README.md with credit")
         else:
             print(f"Warning: Documentation file '{docs_filename}' not found in simonw/tools")
-            # Create minimal README with credit
-            new_content = f"# {name}\n\nFrom {source_url}\n"
+            # Create minimal README with credit and styling note for HTML apps
+            new_content = f"# {name}\n\nFrom {source_url}\n{styling_note}\n"
             readme_path.write_text(new_content)
             print("Created README.md with credit header only")
 

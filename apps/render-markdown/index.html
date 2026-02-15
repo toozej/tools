@@ -4,41 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Render Markdown</title>
+  <link rel="stylesheet" href="style.css">
   <!-- nosemgrep: html.security.audit.missing-integrity.missing-integrity -->
   <script defer data-domain="tools.simonwillison.net" src="https://plausible.io/js/plausible.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      padding: 1em;
-      margin: 0;
-      font-family: Helvetica, Arial, sans-serif;
-      line-height: 1.5;
-      max-width: 100%;
-    }
-
-    h1 {
-      font-size: 1.8em;
-      margin-top: 0.5em;
-      margin-bottom: 0.5em;
-    }
-
-    p {
-      margin: 0.75em 0;
-    }
-
-    textarea {
-      width: 100%;
-      font-size: 16px;
-      padding: 0.75em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-bottom: 1em;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
     #input {
       height: 40vh;
       min-height: 140px;
@@ -53,27 +22,11 @@
 
     #preview {
       padding: 1em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       margin: 1em 0;
       overflow-x: auto;
-    }
-
-    button {
-      font-size: 16px;
-      padding: 0.75em 1.5em;
-      background-color: #0366d6;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-right: 0.5em;
-      margin-bottom: 0.5em;
-      touch-action: manipulation;
-    }
-
-    button:hover {
-      background-color: #0253b3;
+      background: var(--bg-elev);
     }
 
     #copy-button {
@@ -101,7 +54,7 @@
       margin: 0.5em 0 1.5em 0;
     }
 
-    label {
+    .checkbox-label {
       display: flex;
       align-items: center;
       gap: 0.5em;
@@ -117,20 +70,12 @@
     h3 {
       margin: 1.5em 0 0.5em 0;
       font-size: 1.2em;
+      color: var(--text);
     }
 
     @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5em;
-      }
-
-      textarea {
+      #input {
         font-size: 16px;
-      }
-
-      button {
-        width: 100%;
-        margin-right: 0;
       }
 
       .controls {
@@ -138,22 +83,23 @@
         align-items: flex-start;
       }
 
-      label {
+      .checkbox-label {
         margin-bottom: 0.5em;
       }
     }
 
     /* TOC styling */
     .toc {
-      background-color: #f6f8fa;
+      background-color: var(--bg-muted);
       padding: 1em;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       margin-bottom: 1em;
     }
 
     .toc h2 {
       margin-top: 0;
       font-size: 1.2em;
+      color: var(--text);
     }
 
     .toc ul {
@@ -181,16 +127,16 @@
     }
 
     #preview blockquote {
-      border-left: 4px solid #dfe2e5;
+      border-left: 4px solid var(--border);
       padding-left: 1em;
-      color: #586069;
+      color: var(--text-muted);
       margin-left: 0;
     }
 
     code {
       font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
       font-size: 85%;
-      background-color: rgba(27, 31, 35, 0.05);
+      background-color: var(--bg-muted);
       padding: 0.2em 0.4em;
       border-radius: 3px;
     }
@@ -324,37 +270,163 @@
       text-decoration: underline;
       color: #032f62;
     }
+
+    @media (prefers-color-scheme: dark) {
+      .pl-c {
+        color: #8b949e;
+      }
+
+      .pl-c1,
+      .pl-s .pl-v {
+        color: #79c0ff;
+      }
+
+      .pl-e,
+      .pl-en {
+        color: #d2a8ff;
+      }
+
+      .pl-smi,
+      .pl-s .pl-s1 {
+        color: #c9d1d9;
+      }
+
+      .pl-ent {
+        color: #7ee787;
+      }
+
+      .pl-k {
+        color: #ff7b72;
+      }
+
+      .pl-s,
+      .pl-pds,
+      .pl-s .pl-pse .pl-s1,
+      .pl-sr,
+      .pl-sr .pl-cce,
+      .pl-sr .pl-sre,
+      .pl-sr .pl-sra {
+        color: #a5d6ff;
+      }
+
+      .pl-v,
+      .pl-smw {
+        color: #ffa657;
+      }
+
+      .pl-bu {
+        color: #f85149;
+      }
+
+      .pl-ii {
+        color: #fafbfc;
+        background-color: #f85149;
+      }
+
+      .pl-c2 {
+        color: #fafbfc;
+        background-color: #ff7b72;
+      }
+
+      .pl-sr .pl-cce {
+        color: #7ee787;
+      }
+
+      .pl-ml {
+        color: #d29922;
+      }
+
+      .pl-mh,
+      .pl-mh .pl-en,
+      .pl-ms {
+        color: #79c0ff;
+      }
+
+      .pl-mi {
+        color: #c9d1d9;
+      }
+
+      .pl-mb {
+        color: #c9d1d9;
+      }
+
+      .pl-md {
+        color: #f85149;
+        background-color: #490202;
+      }
+
+      .pl-mi1 {
+        color: #7ee787;
+        background-color: #04260f;
+      }
+
+      .pl-mc {
+        color: #ffa657;
+        background-color: #3d1d06;
+      }
+
+      .pl-mi2 {
+        color: #f6f8fa;
+        background-color: #79c0ff;
+      }
+
+      .pl-mdr {
+        color: #d2a8ff;
+      }
+
+      .pl-ba {
+        color: #8b949e;
+      }
+
+      .pl-sg {
+        color: #6e7681;
+      }
+
+      .pl-corl {
+        color: #a5d6ff;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Render Markdown</h1>
-  <p>Using GitHub's API, see <a href="https://til.simonwillison.net/markdown/github-markdown-api">Rendering Markdown with the GitHub Markdown API</a></p>
-  
-  <textarea id="input" placeholder="Enter your markdown here..."></textarea>
-  
-  <div class="controls">
-    <button id="render-button">Render</button>
-    
-    <label>
-      <input type="checkbox" id="strip_hidden" checked> 
-      Strip hidden and cleanup HTML
-    </label>
-    
-    <label>
-      <input type="checkbox" id="gfm_mode"> 
-      Use GitHub Flavored Markdown (GFM)
-    </label>
-  </div>
-  
-  <div id="preview"></div>
-  
-  <h3>HTML Output</h3>
-  <button id="copy-button">Copy HTML</button>
-  
-  <div class="output-container">
-    <textarea id="output"></textarea>
-  </div>
-  
+  <main class="page">
+    <div class="container">
+      <header class="hero">
+        <h1 class="title">Render Markdown</h1>
+        <p class="subtitle">Convert markdown to HTML using GitHub's API</p>
+      </header>
+
+      <div class="card">
+        <p class="text-muted">Using GitHub's API, see <a href="https://til.simonwillison.net/markdown/github-markdown-api">Rendering Markdown with the GitHub Markdown API</a></p>
+        
+        <textarea id="input" placeholder="Enter your markdown here..."></textarea>
+        
+        <div class="controls">
+          <button id="render-button">Render</button>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" id="strip_hidden" checked> 
+            Strip hidden and cleanup HTML
+          </label>
+          
+          <label class="checkbox-label">
+            <input type="checkbox" id="gfm_mode"> 
+            Use GitHub Flavored Markdown (GFM)
+          </label>
+        </div>
+        
+        <div id="preview"></div>
+        
+        <h3>HTML Output</h3>
+        <button id="copy-button">Copy HTML</button>
+        
+        <div class="output-container">
+          <textarea id="output"></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <script>
 // Initialize elements
 const button = document.getElementById('render-button');
