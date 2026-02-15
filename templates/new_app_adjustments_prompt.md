@@ -45,8 +45,8 @@ location ^~ /{appName} {
 }
 ```
 
-## Step 3: Update docker-compose-example.yml
-Add service entry to `./docker-compose-example.yml`:
+## Step 3: Update docker-compose-dev.yml
+Add service entry to `./docker-compose-dev.yml`:
 
 ### For Static/Builder Apps:
 Add a builder service:
@@ -163,4 +163,4 @@ uv run generate-colophon --output ./apps/homepage/src/data/colophon.json
 - Runtime Next.js Config: `./apps/gh-dashboard/next.config.ts`
 - Static Next.js Config: `./apps/yaml-formatter/next.config.ts`
 - Nginx Config: `./nginx/conf.d/default.conf`
-- Docker Compose: `./docker-compose-example.yml`
+- Docker Compose: `./docker-compose-dev.yml`

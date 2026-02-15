@@ -1,0 +1,317 @@
+---
+services:
+  # -------------------------
+  # Shared nginx
+  # -------------------------
+  www:
+    container_name: tools_www
+    image: ghcr.io/nginx/nginx-unprivileged:stable
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      homepage-builder:
+        condition: service_started
+      taboo-builder:
+        condition: service_started
+      unit-converter-builder:
+        condition: service_started
+      yaml-formatter-builder:
+        condition: service_started
+      ocr-builder:
+        condition: service_started
+      emoji-identifier-builder:
+        condition: service_started
+      exiftools-builder:
+        condition: service_started
+      ghissue2md-builder:
+        condition: service_started
+      graphviz-visualizer-builder:
+        condition: service_started
+      link-extractor-builder:
+        condition: service_started
+      qr-builder:
+        condition: service_started
+      render-markdown-builder:
+        condition: service_started
+      bingo-creator-builder:
+        condition: service_started
+      clip2gist:
+        condition: service_started
+      gh-dashboard:
+        condition: service_started
+      www2s:
+        condition: service_started
+      www2epub:
+        condition: service_started
+      anki2epub:
+        condition: service_started
+    networks:
+      - backend
+    volumes:
+      - "./nginx/conf.d/:/etc/nginx/conf.d/"
+      - "tools_homepage:/var/www/html/homepage:ro"
+      - "tools_taboo:/var/www/html/taboo:ro"
+      - "tools_unit-converter:/var/www/html/unit-converter:ro"
+      - "tools_yaml-formatter:/var/www/html/yaml-formatter:ro"
+      - "tools_ocr:/var/www/html/ocr:ro"
+      - "tools_emoji-identifier:/var/www/html/emoji-identifier:ro"
+      - "tools_exiftools:/var/www/html/exiftools:ro"
+      - "tools_ghissue2md:/var/www/html/ghissue2md:ro"
+      - "tools_graphviz-visualizer:/var/www/html/graphviz-visualizer:ro"
+      - "tools_link-extractor:/var/www/html/link-extractor:ro"
+      - "tools_qr:/var/www/html/qr:ro"
+      - "tools_render-markdown:/var/www/html/render-markdown:ro"
+      - "tools_bingo-creator:/var/www/html/bingo-creator:ro"
+
+  # -------------------------
+  # Runtime apps
+  # -------------------------
+  clip2gist:
+    container_name: tools_clip2gist
+    build:
+      context: ./apps/clip2gist
+      dockerfile: Dockerfile
+    image: tools_clip2gist:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/clip2gist/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file: ./apps/clip2gist/app.env
+    networks:
+      - backend
+
+  gh-dashboard:
+    container_name: tools_gh-dashboard
+    build:
+      context: ./apps/gh-dashboard
+      dockerfile: Dockerfile
+    image: tools_gh-dashboard:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/gh-dashboard/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file: ./apps/gh-dashboard/app.env
+    networks:
+      - backend
+
+  www2s:
+    container_name: tools_www2s
+    build:
+      context: ./apps/www2s
+      dockerfile: Dockerfile
+    image: tools_www2s:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/www2s/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file: ./apps/www2s/app.env
+    networks:
+      - backend
+
+  www2epub:
+    container_name: tools_www2epub
+    build:
+      context: ./apps/www2epub
+      dockerfile: Dockerfile
+    image: tools_www2epub:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/www2epub/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+
+  anki2epub:
+    container_name: tools_anki2epub
+    build:
+      context: ./apps/anki2epub
+      dockerfile: Dockerfile
+    image: tools_anki2epub:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/anki2epub/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+
+  # -------------------------
+  # Builder services
+  # -------------------------
+  homepage-builder:
+    container_name: tools_homepage-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/homepage
+      dockerfile: Dockerfile
+    image: tools_homepage-builder:latest
+    volumes:
+      - tools_homepage:/app/out
+    command: ["sleep", "5"]
+
+  taboo-builder:
+    container_name: tools_taboo-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/taboo
+      dockerfile: Dockerfile
+    image: tools_taboo-builder:latest
+    volumes:
+      - tools_taboo:/app/out
+    command: ["sleep", "5"]
+
+  unit-converter-builder:
+    container_name: tools_unit-converter-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/unit-converter
+      dockerfile: Dockerfile
+    image: tools_unit-converter-builder:latest
+    volumes:
+      - tools_unit-converter:/app/out
+    command: ["sleep", "5"]
+
+  yaml-formatter-builder:
+    container_name: tools_yaml-formatter-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/yaml-formatter
+      dockerfile: Dockerfile
+    image: tools_yaml-formatter-builder:latest
+    volumes:
+      - tools_yaml-formatter:/app/out
+    command: ["sleep", "5"]
+
+  ocr-builder:
+    container_name: tools_ocr-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/ocr
+      dockerfile: Dockerfile
+    image: tools_ocr-builder:latest
+    volumes:
+      - tools_ocr:/app/out
+    command: ["sleep", "5"]
+
+  emoji-identifier-builder:
+    container_name: tools_emoji-identifier-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/emoji-identifier
+      dockerfile: Dockerfile
+    image: tools_emoji-identifier-builder:latest
+    volumes:
+      - tools_emoji-identifier:/app/out
+    command: ["sleep", "5"]
+
+  exiftools-builder:
+    container_name: tools_exiftools-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/exiftools
+      dockerfile: Dockerfile
+    image: tools_exiftools-builder:latest
+    volumes:
+      - tools_exiftools:/app/out
+    command: ["sleep", "5"]
+
+  ghissue2md-builder:
+    container_name: tools_ghissue2md-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/ghissue2md
+      dockerfile: Dockerfile
+    image: tools_ghissue2md-builder:latest
+    volumes:
+      - tools_ghissue2md:/app/out
+    command: ["sleep", "5"]
+
+  graphviz-visualizer-builder:
+    container_name: tools_graphviz-visualizer-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/graphviz-visualizer
+      dockerfile: Dockerfile
+    image: tools_graphviz-visualizer-builder:latest
+    volumes:
+      - tools_graphviz-visualizer:/app/out
+    command: ["sleep", "5"]
+
+  link-extractor-builder:
+    container_name: tools_link-extractor-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/link-extractor
+      dockerfile: Dockerfile
+    image: tools_link-extractor-builder:latest
+    volumes:
+      - tools_link-extractor:/app/out
+    command: ["sleep", "5"]
+
+  qr-builder:
+    container_name: tools_qr-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/qr
+      dockerfile: Dockerfile
+    image: tools_qr-builder:latest
+    volumes:
+      - tools_qr:/app/out
+    command: ["sleep", "5"]
+
+  render-markdown-builder:
+    container_name: tools_render-markdown-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/render-markdown
+      dockerfile: Dockerfile
+    image: tools_render-markdown-builder:latest
+    volumes:
+      - tools_render-markdown:/app/out
+    command: ["sleep", "5"]
+
+  bingo-creator-builder:
+    container_name: tools_bingo-creator-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/bingo-creator
+      dockerfile: Dockerfile
+    image: tools_bingo-creator-builder:latest
+    volumes:
+      - tools_bingo-creator:/app/out
+    command: ["sleep", "5"]
+
+
+volumes:
+  tools_homepage:
+  tools_taboo:
+  tools_unit-converter:
+  tools_yaml-formatter:
+  tools_ocr:
+  tools_emoji-identifier:
+  tools_exiftools:
+  tools_ghissue2md:
+  tools_graphviz-visualizer:
+  tools_link-extractor:
+  tools_qr:
+  tools_render-markdown:
+  tools_bingo-creator:
+
+networks:
+  backend:
+    driver: bridge

@@ -71,4 +71,4 @@ NEXTAUTH_URL="http://localhost:8080/clip2gist"
 **Important Notes:**
 
 *   Replace the placeholder values (`YOUR_VERY_LONG_AND_RANDOM_SECRET_STRING_HERE`, `your_github_client_id`, `your_github_client_secret`, `http://localhost:8080/clip2gist`) with your actual values.
-*   Ensure your deployment environment correctly loads these environment variables. If using Docker Compose, verify that `app.env` is correctly referenced in `docker-compose-example.yml` for the `clip2gist` service.
+*   Ensure your deployment environment correctly loads these environment variables. If using Docker Compose, verify that `app.env` is correctly referenced in `docker-compose-dev.yml` for the `clip2gist` service.

@@ -36,27 +36,27 @@ test: ## Nothing
 build: ## Build artifacts Docker images
 	docker compose --profile build up --build
 
-up: ## Run Docker Compose project with build Docker image
+up: ## Run Docker Compose project with pre-built Docker images
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
-	docker compose -f docker-compose.yml --profile build --profile runtime up --build -d
+	docker compose -f docker-compose.yml --profile build --profile runtime up -d
 
 down: ## Stop running Docker Compose project
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
 
 dev: ## Run Docker Compose project in dev mode
-	docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
-	docker compose -f docker-compose-example.yml --profile build --profile runtime --progress=plain build --pull
-	docker compose -f docker-compose-example.yml --profile build --profile runtime up
-	docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --pull
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 
 dev-down: ## Stop running Docker Compose project in dev mode
-	docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 
 dev-nc: clean ## Run Docker Compose project in dev mode without cache
-	docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 	rm -rf ./apps/*/.next/; rm -rf ./apps/*/dist/; rm -rf ./apps/*/node_modules/; rm -rf ./apps/*/bin/;
-	docker compose -f docker-compose-example.yml --profile build --profile runtime --progress=plain build --no-cache --pull
-	docker compose -f docker-compose-example.yml --profile build --profile runtime up
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up
 
 pre-commit: pre-commit-install pre-commit-run ## Install and run pre-commit hooks
 
@@ -97,7 +97,7 @@ rebuild-app: ## Rebuild a specific app (usage: make rebuild-app APP=app-name)
 	@# Detect which compose file is in use by checking container labels
 	$(eval COMPOSE_FILE := $(shell docker ps --filter "name=tools_" --format "{{.Names}}" 2>/dev/null | head -1 | xargs -I {} docker container inspect {} --format '{{index .Config.Labels "com.docker.compose.project.configfiles"}}' 2>/dev/null | grep -oE "docker-compose[^,]*" | head -1))
 	@# Default to dev compose if no containers are running
-	$(eval COMPOSE_FILE := $(if $(COMPOSE_FILE),$(COMPOSE_FILE),docker-compose-example.yml))
+	$(eval COMPOSE_FILE := $(if $(COMPOSE_FILE),$(COMPOSE_FILE),docker-compose-dev.yml))
 	@echo "Using compose file: $(COMPOSE_FILE)"
 	@# Stop the specific app container if running
 	docker compose -f $(COMPOSE_FILE) stop $(APP) 2>/dev/null || true

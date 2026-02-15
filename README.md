@@ -14,17 +14,13 @@ This repository leverages `Make` targets to simplify common operations. For thos
 
 ### Production Mode
 
-Runs the full tools stack using `docker-compose.yml` (recommended for stable environments).
+Runs the full tools stack using pre-built images from GitHub Container Registry (`ghcr.io/toozej/tools`).
 
-- **Copy and adjust the example:**
-    *   Copy the example:
+- **Copy and adjust the production compose file:**
     ```bash
-    cp docker-compose-example.yml docker-compose.yml
+    cp docker-compose-prod.yml docker-compose.yml
     ```
-    *   Adjust the example as needed, particularly for either exposing Nginx port or configuring a reverse proxy:
-    ```bash
-    vim docker-compose.yml
-    ```
+    *   Adjust as needed (ports, reverse proxy, env files, etc.)
 - **Start the full tools stack:**
     *   Using `make`:
     ```bash
@@ -32,9 +28,9 @@ Runs the full tools stack using `docker-compose.yml` (recommended for stable env
     ```
     *   Alternatively, using Docker Compose directly:
     ```bash
-    docker compose -f docker-compose.yml --profile build --profile runtime up --build -d
+    docker compose -f docker-compose.yml --profile build --profile runtime up -d
     ```
-- Browse the apps at the configured hostname + port
+- Browse the apps at http://localhost:8080/
 - **Stop the full tools stack:**
     *   Using `make`:
     ```bash
@@ -47,7 +43,7 @@ Runs the full tools stack using `docker-compose.yml` (recommended for stable env
 
 ## Development Usage
 
-For development, `docker-compose-example.yml` is used. This allows you to develop without affecting your production `docker-compose.yml`.
+For development, `docker-compose-dev.yml` is used. This allows you to develop without affecting your production `docker-compose.yml`.
 
 ### Start Development Services
 
@@ -58,7 +54,7 @@ For development, `docker-compose-example.yml` is used. This allows you to develo
     ```
     *   Alternatively, using Docker Compose directly:
     ```bash
-    docker compose -f docker-compose-example.yml --profile build --profile runtime up --build -d
+    docker compose -f docker-compose-dev.yml --profile build --profile runtime up --build -d
     ```
     *   Browse the apps at http://localhost:8080/
 
@@ -71,7 +67,7 @@ For development, `docker-compose-example.yml` is used. This allows you to develo
     ```
     *   Alternatively, using Docker Compose directly:
     ```bash
-    docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+    docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
     ```
 
 ### Clean Rebuild in Development
@@ -84,9 +80,9 @@ To perform a clean rebuild (without cache) in development:
     ```
 -   Alternatively, using Docker Compose directly:
     ```bash
-    docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
-    docker compose -f docker-compose-example.yml --profile build --profile runtime build --no-cache --pull
-    docker compose -f docker-compose-example.yml --profile build --profile runtime up -d
+    docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
+    docker compose -f docker-compose-dev.yml --profile build --profile runtime build --no-cache --pull
+    docker compose -f docker-compose-dev.yml --profile build --profile runtime up -d
     ```
 ### manage
 - install uv

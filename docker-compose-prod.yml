@@ -1,15 +1,10 @@
 ---
 services:
-  # -------------------------
-  # Shared nginx
-  # -------------------------
   www:
     container_name: tools_www
-    #image: nginx:latest
     image: ghcr.io/nginx/nginx-unprivileged:stable
     restart: always
     ports:
-      #- "8080:80"
       - "8080:8080"
     depends_on:
       homepage-builder:
@@ -66,15 +61,9 @@ services:
       - "tools_render-markdown:/var/www/html/render-markdown:ro"
       - "tools_bingo-creator:/var/www/html/bingo-creator:ro"
 
-  # -------------------------
-  # Runtime apps
-  # -------------------------
   clip2gist:
     container_name: tools_clip2gist
-    build:
-      context: ./apps/clip2gist
-      dockerfile: Dockerfile
-    image: tools_clip2gist:latest
+    image: ghcr.io/toozej/tools:clip2gist
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -88,10 +77,7 @@ services:
 
   gh-dashboard:
     container_name: tools_gh-dashboard
-    build:
-      context: ./apps/gh-dashboard
-      dockerfile: Dockerfile
-    image: tools_gh-dashboard:latest
+    image: ghcr.io/toozej/tools:gh-dashboard
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -105,10 +91,7 @@ services:
 
   www2s:
     container_name: tools_www2s
-    build:
-      context: ./apps/www2s
-      dockerfile: Dockerfile
-    image: tools_www2s:latest
+    image: ghcr.io/toozej/tools:www2s
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -122,10 +105,7 @@ services:
 
   www2epub:
     container_name: tools_www2epub
-    build:
-      context: ./apps/www2epub
-      dockerfile: Dockerfile
-    image: tools_www2epub:latest
+    image: ghcr.io/toozej/tools:www2epub
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -138,10 +118,7 @@ services:
 
   anki2epub:
     container_name: tools_anki2epub
-    build:
-      context: ./apps/anki2epub
-      dockerfile: Dockerfile
-    image: tools_anki2epub:latest
+    image: ghcr.io/toozej/tools:anki2epub
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -152,16 +129,10 @@ services:
     networks:
       - backend
 
-  # -------------------------
-  # Builder services
-  # -------------------------
   homepage-builder:
     container_name: tools_homepage-builder
     profiles: ["build"]
-    build:
-      context: ./apps/homepage
-      dockerfile: Dockerfile
-    image: tools_homepage-builder:latest
+    image: ghcr.io/toozej/tools:homepage
     volumes:
       - tools_homepage:/app/out
     command: ["sleep", "5"]
@@ -169,10 +140,7 @@ services:
   taboo-builder:
     container_name: tools_taboo-builder
     profiles: ["build"]
-    build:
-      context: ./apps/taboo
-      dockerfile: Dockerfile
-    image: tools_taboo-builder:latest
+    image: ghcr.io/toozej/tools:taboo
     volumes:
       - tools_taboo:/app/out
     command: ["sleep", "5"]
@@ -180,10 +148,7 @@ services:
   unit-converter-builder:
     container_name: tools_unit-converter-builder
     profiles: ["build"]
-    build:
-      context: ./apps/unit-converter
-      dockerfile: Dockerfile
-    image: tools_unit-converter-builder:latest
+    image: ghcr.io/toozej/tools:unit-converter
     volumes:
       - tools_unit-converter:/app/out
     command: ["sleep", "5"]
@@ -191,10 +156,7 @@ services:
   yaml-formatter-builder:
     container_name: tools_yaml-formatter-builder
     profiles: ["build"]
-    build:
-      context: ./apps/yaml-formatter
-      dockerfile: Dockerfile
-    image: tools_yaml-formatter-builder:latest
+    image: ghcr.io/toozej/tools:yaml-formatter
     volumes:
       - tools_yaml-formatter:/app/out
     command: ["sleep", "5"]
@@ -202,10 +164,7 @@ services:
   ocr-builder:
     container_name: tools_ocr-builder
     profiles: ["build"]
-    build:
-      context: ./apps/ocr
-      dockerfile: Dockerfile
-    image: tools_ocr-builder:latest
+    image: ghcr.io/toozej/tools:ocr
     volumes:
       - tools_ocr:/app/out
     command: ["sleep", "5"]
@@ -213,10 +172,7 @@ services:
   emoji-identifier-builder:
     container_name: tools_emoji-identifier-builder
     profiles: ["build"]
-    build:
-      context: ./apps/emoji-identifier
-      dockerfile: Dockerfile
-    image: tools_emoji-identifier-builder:latest
+    image: ghcr.io/toozej/tools:emoji-identifier
     volumes:
       - tools_emoji-identifier:/app/out
     command: ["sleep", "5"]
@@ -224,10 +180,7 @@ services:
   exiftools-builder:
     container_name: tools_exiftools-builder
     profiles: ["build"]
-    build:
-      context: ./apps/exiftools
-      dockerfile: Dockerfile
-    image: tools_exiftools-builder:latest
+    image: ghcr.io/toozej/tools:exiftools
     volumes:
       - tools_exiftools:/app/out
     command: ["sleep", "5"]
@@ -235,10 +188,7 @@ services:
   ghissue2md-builder:
     container_name: tools_ghissue2md-builder
     profiles: ["build"]
-    build:
-      context: ./apps/ghissue2md
-      dockerfile: Dockerfile
-    image: tools_ghissue2md-builder:latest
+    image: ghcr.io/toozej/tools:ghissue2md
     volumes:
       - tools_ghissue2md:/app/out
     command: ["sleep", "5"]
@@ -246,10 +196,7 @@ services:
   graphviz-visualizer-builder:
     container_name: tools_graphviz-visualizer-builder
     profiles: ["build"]
-    build:
-      context: ./apps/graphviz-visualizer
-      dockerfile: Dockerfile
-    image: tools_graphviz-visualizer-builder:latest
+    image: ghcr.io/toozej/tools:graphviz-visualizer
     volumes:
       - tools_graphviz-visualizer:/app/out
     command: ["sleep", "5"]
@@ -257,10 +204,7 @@ services:
   link-extractor-builder:
     container_name: tools_link-extractor-builder
     profiles: ["build"]
-    build:
-      context: ./apps/link-extractor
-      dockerfile: Dockerfile
-    image: tools_link-extractor-builder:latest
+    image: ghcr.io/toozej/tools:link-extractor
     volumes:
       - tools_link-extractor:/app/out
     command: ["sleep", "5"]
@@ -268,10 +212,7 @@ services:
   qr-builder:
     container_name: tools_qr-builder
     profiles: ["build"]
-    build:
-      context: ./apps/qr
-      dockerfile: Dockerfile
-    image: tools_qr-builder:latest
+    image: ghcr.io/toozej/tools:qr
     volumes:
       - tools_qr:/app/out
     command: ["sleep", "5"]
@@ -279,10 +220,7 @@ services:
   render-markdown-builder:
     container_name: tools_render-markdown-builder
     profiles: ["build"]
-    build:
-      context: ./apps/render-markdown
-      dockerfile: Dockerfile
-    image: tools_render-markdown-builder:latest
+    image: ghcr.io/toozej/tools:render-markdown
     volumes:
       - tools_render-markdown:/app/out
     command: ["sleep", "5"]
@@ -290,14 +228,10 @@ services:
   bingo-creator-builder:
     container_name: tools_bingo-creator-builder
     profiles: ["build"]
-    build:
-      context: ./apps/bingo-creator
-      dockerfile: Dockerfile
-    image: tools_bingo-creator-builder:latest
+    image: ghcr.io/toozej/tools:bingo-creator
     volumes:
       - tools_bingo-creator:/app/out
     command: ["sleep", "5"]
-
 
 volumes:
   tools_homepage:

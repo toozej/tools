@@ -6,8 +6,8 @@ You are an agent tasked with removing a Next.js app from the `tools` repository 
 First, determine:
 - **App Name**: The directory name under `./apps/` that needs to be removed
 
-## Step 1: Remove docker-compose-example.yml Service Block
-In `./docker-compose-example.yml`, remove the entire service block for the removed app:
+## Step 1: Remove docker-compose-dev.yml Service Block
+In `./docker-compose-dev.yml`, remove the entire service block for the removed app:
 
 ### For Static/Builder Apps:
 Remove the builder service block:
@@ -45,7 +45,7 @@ Remove the runtime service block:
 ```
 
 ## Step 2: Remove nginx depends_on and Volumes
-In `./docker-compose-example.yml`, under the `www` (nginx) service:
+In `./docker-compose-dev.yml`, under the `www` (nginx) service:
 
 ### Remove depends_on condition:
 Remove the builder condition from nginx's `depends_on` section:
@@ -60,8 +60,8 @@ Remove the volume mount for the removed app:
       - "tools_{appName}:/var/www/html/{appName}:ro"
 ```
 
-## Step 3: Remove docker-compose-example.yml Volumes Block
-In `./docker-compose-example.yml`, remove the volume entry for the removed app from the volumes section:
+## Step 3: Remove docker-compose-dev.yml Volumes Block
+In `./docker-compose-dev.yml`, remove the volume entry for the removed app from the volumes section:
 ```yaml
 volumes:
   tools_{appName}:
@@ -120,6 +120,6 @@ uv run colophon --output ./apps/homepage/src/data/colophon.json
 - Confirm colophon.json is regenerated without the removed app
 
 ## Reference Files
-- Docker Compose: `./docker-compose-example.yml`
+- Docker Compose: `./docker-compose-dev.yml`
 - Nginx Config: `./nginx/conf.d/default.conf`
 - Main README: `./README.md`

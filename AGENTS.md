@@ -50,8 +50,8 @@ make dev-nc       # Clean rebuild without cache
 
 Or with Docker Compose directly:
 ```bash
-docker compose -f docker-compose-example.yml --profile build --profile runtime up --build -d
-docker compose -f docker-compose-example.yml --profile build --profile runtime down --remove-orphans
+docker compose -f docker-compose-dev.yml --profile build --profile runtime up --build -d
+docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 ```
 
 ### Production
@@ -112,7 +112,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 - Keep changes small and scoped to a single app or shared concern
 - Avoid touching multiple apps in one PR unless explicitly required
 - When adding a new app, update:
-  - `docker-compose.yml` (or `docker-compose-example.yml`)
+  - `docker-compose.yml` (or `docker-compose-dev.yml`)
   - `nginx/conf.d/default.conf`
 - Write clear commit messages describing the app and change
 
@@ -125,7 +125,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 - Run relevant build/test commands before considering work complete
 
 ### ⚠️ Ask first
-- Modifying `docker-compose.yml`, `docker-compose-example.yml`, or nginx configuration
+- Modifying `docker-compose.yml`, `docker-compose-dev.yml`, or nginx configuration
 - Changing templates in `templates/`
 - Modifying CI/CD workflows in `.github/workflows/`
 - Updating shared scripts in `scripts/`
