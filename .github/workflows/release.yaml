@@ -1,5 +1,5 @@
 ---
-name: Build and Push Docker Images
+name: release
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   discover-apps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       apps: ${{ steps.discover.outputs.apps }}
     steps:
@@ -25,7 +25,7 @@ jobs:
         id: discover
         run: |
           # Find all services in docker-compose that have a build context and runtime profile
-          apps=$(yq -r '.services | to_entries[] | select(.value.build != null and .value.profiles != null and ((.value.profiles | contains(["build"])) or (.value.profiles | contains(["runtime"])))) | .key' docker-compose-example.yml | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          apps=$(yq -r '.services | to_entries[] | select(.value.build != null and .value.profiles != null and ((.value.profiles | contains(["build"])) or (.value.profiles | contains(["runtime"])))) | .key' docker-compose-dev.yml | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "apps=$apps" >> "$GITHUB_OUTPUT"
           echo "Found apps: $apps"
 
@@ -67,6 +67,7 @@ jobs:
       - name: Build and push Docker image
         uses: nick-fields/retry@v3
         with:
+          timeout_minutes: 10
           max_attempts: 3
           retry_wait_seconds: 300
           retry_on: error
@@ -96,6 +97,28 @@ jobs:
               --cache-from type=gha \
               --cache-to type=gha,mode=max
 
+  trivy-scan-image-amd64:
+    name: trivy-scan-image
+    needs: [discover-apps, build-and-push-amd64]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: read
+    strategy:
+      matrix:
+        apps: ${{ fromJson(needs.discover-apps.outputs.apps) }}
+        platform: [linux/amd64]
+    steps: &scan-image-steps
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master # nosemgrep: yaml.github-actions.security.third-party-action-not-pinned-to-commit-sha.third-party-action-not-pinned-to-commit-sha
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.apps }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+
   build-and-push-arm64:
     runs-on: ubuntu-24.04-arm
     needs: discover-apps
@@ -107,5 +130,14 @@ jobs:
       matrix:
         apps: ${{ fromJson(needs.discover-apps.outputs.apps) }}
         platform: [linux/arm64]
-
     steps: *build-steps
+
+  trivy-scan-image-arm64:
+    name: trivy-scan-image
+    needs: [discover-apps, build-and-push-arm64]
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        apps: ${{ fromJson(needs.discover-apps.outputs.apps) }}
+        platform: [linux/arm64]
+    steps: *scan-image-steps
