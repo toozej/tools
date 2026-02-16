@@ -2,20 +2,55 @@
 # upgrade-nextjs.sh - Safely upgrade NextJS apps with rollback capability
 # Usage: ./upgrade-nextjs.sh [VERSION]
 # Example: ./upgrade-nextjs.sh 16.1.3
+#
+# Rollback: Use git to rollback changes
+#   git checkout -- apps/<app>/package.json apps/<app>/bun.lock
 
 set -euo pipefail
 
 #======================================
 # CONFIGURATION
 #======================================
-NEXTJS_VERSION="${1:-16.1.3}"
-REACT_VERSION="${2:-19.2.3}"
+NEXTJS_VERSION="${1:-16.1.6}"
+REACT_VERSION="${2:-19.2.1}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 LOG_FILE="${SCRIPT_DIR}/upgrade-$(date +%Y%m%d_%H%M%S).log"
-BACKUP_DIR="${SCRIPT_DIR}/.upgrade-backup-$(date +%Y%m%d_%H%M%S)"
 
-# Apps to upgrade (space-separated, or auto-detect)
-APPS=("clip2gist" "gh-dashboard" "unit-converter" "www2epub" "www2s" "yaml-formatter")
+# Apps to upgrade (auto-detected by default, or override with space-separated list)
+# To override: APPS=("clip2gist" "gh-dashboard") ./upgrade-nextjs.sh
+APPS=()
+
+#======================================
+# APP DETECTION
+#======================================
+detect_nextjs_apps() {
+    local apps=()
+    local apps_dir="apps"
+
+    if [[ ! -d "$apps_dir" ]]; then
+        log_error "apps/ directory not found. Are you running from the repo root?"
+        exit 1
+    fi
+
+    # Find all package.json files in apps/ subdirectories
+    for pkg_file in "$apps_dir"/*/package.json; do
+        if [[ -f "$pkg_file" ]]; then
+            # Check if the package.json contains "next" as a dependency
+            if grep -q '"next"' "$pkg_file" 2>/dev/null; then
+                # Extract app name from path (apps/<name>/package.json)
+                local app_name
+                app_name=$(dirname "$pkg_file" | xargs basename)
+                apps+=("$app_name")
+            fi
+        fi
+    done
+
+    # Sort the array
+    IFS=$'\n' sorted=($(sort <<<"${apps[*]}")); unset IFS
+
+    echo "${sorted[@]}"
+}
 
 # Colors for output
 RED='\033[0;31m'
@@ -47,8 +82,7 @@ cleanup() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
         log_error "Script exited with error code: $exit_code"
-        log_warn "Backups preserved at: $BACKUP_DIR"
-        log_warn "To rollback, run: ./rollback-upgrade.sh $BACKUP_DIR"
+        log_warn "Use git to rollback changes: git checkout -- apps/<app>/package.json apps/<app>/bun.lock"
     fi
     exit $exit_code
 }
@@ -74,20 +108,6 @@ confirm() {
     [[ "$response" =~ ^[Yy]$ ]]
 }
 
-backup_app() {
-    local app="$1"
-    local app_dir="apps/$app"
-
-    if [[ -d "$app_dir" ]]; then
-        log_info "Backing up $app..."
-        mkdir -p "$BACKUP_DIR/$app"
-        cp "$app_dir/package.json" "$BACKUP_DIR/$app/"
-        [[ -f "$app_dir/bun.lock" ]] && cp "$app_dir/bun.lock" "$BACKUP_DIR/$app/"
-        [[ -f "$app_dir/next.config.ts" ]] && cp "$app_dir/next.config.ts" "$BACKUP_DIR/$app/"
-        [[ -f "$app_dir/next.config.js" ]] && cp "$app_dir/next.config.js" "$BACKUP_DIR/$app/"
-    fi
-}
-
 check_prerequisites() {
     log_info "Checking prerequisites..."
 
@@ -104,11 +124,10 @@ check_prerequisites() {
     fi
 
     # Check for uncommitted changes
-    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-        log_warn "You have uncommitted changes."
-        if ! confirm "Continue anyway?" "n"; then
-            log_info "Aborted by user."
-            exit 0
+    if ! git diff --quiet 2>/dev/null; then
+        log_warn "You have uncommitted changes. Consider committing or stashing before upgrading."
+        if ! confirm "Continue with uncommitted changes?" "n"; then
+            exit 1
         fi
     fi
 
@@ -120,7 +139,14 @@ get_current_version() {
     local app_dir="apps/$app"
 
     if [[ -f "$app_dir/package.json" ]]; then
-        grep -o '"next": *"[^"]*"' "$app_dir/package.json" | sed 's/"next": *"\([^"]*\)"/\1/' || echo "unknown"
+        # Use jq if available for reliable JSON parsing
+        if command -v jq &> /dev/null; then
+            jq -r '.dependencies.next // empty' "$app_dir/package.json" 2>/dev/null || echo "unknown"
+        else
+            # Fallback: extract from dependencies section only
+            # Match "next": "version" in the dependencies block, excluding scripts
+            sed -n '/"dependencies"/,/^  }/p' "$app_dir/package.json" | grep -o '"next": *"[^"]*"' | sed 's/"next": *"\([^"]*\)"/\1/' | head -1 || echo "unknown"
+        fi
     else
         echo "not-found"
     fi
@@ -194,6 +220,9 @@ verify_app() {
 # MAIN EXECUTION
 #======================================
 main() {
+    # Change to repo root to ensure relative paths work
+    cd "$REPO_ROOT"
+
     echo ""
     echo "========================================"
     echo "  NextJS Upgrade Script"
@@ -202,6 +231,22 @@ main() {
     log_info "Target Next.js version: ${NEXTJS_VERSION}"
     log_info "Target React version: ${REACT_VERSION}"
     log_info "Log file: ${LOG_FILE}"
+    echo ""
+
+    # Auto-detect NextJS apps if not provided
+    if [[ ${#APPS[@]} -eq 0 ]]; then
+        log_info "Auto-detecting NextJS apps..."
+        detected_apps=$(detect_nextjs_apps)
+        if [[ -z "$detected_apps" ]]; then
+            log_error "No NextJS apps found in apps/ directory"
+            exit 1
+        fi
+        # Convert space-separated string to array
+        IFS=' ' read -ra APPS <<< "$detected_apps"
+        log_info "Detected ${#APPS[@]} NextJS apps: ${APPS[*]}"
+    else
+        log_info "Using ${#APPS[@]} specified apps: ${APPS[*]}"
+    fi
     echo ""
 
     # Show current state
@@ -220,17 +265,9 @@ main() {
 
     check_prerequisites
 
-    # Phase 1: Backup
+    # Phase 1: Update dependencies
     echo ""
-    log_info "=== Phase 1: Backup ==="
-    for app in "${APPS[@]}"; do
-        backup_app "$app"
-    done
-    log_success "Backups created at: $BACKUP_DIR"
-
-    # Phase 2: Update dependencies
-    echo ""
-    log_info "=== Phase 2: Update Dependencies ==="
+    log_info "=== Phase 1: Update Dependencies ==="
     local failed_apps=()
 
     for app in "${APPS[@]}"; do
@@ -262,9 +299,9 @@ main() {
         fi
     fi
 
-    # Phase 3: Verify
+    # Phase 2: Verify
     echo ""
-    log_info "=== Phase 3: Verification ==="
+    log_info "=== Phase 2: Verification ==="
     local verification_failed=()
 
     for app in "${APPS[@]}"; do
@@ -281,21 +318,18 @@ main() {
 
     if [[ ${#verification_failed[@]} -eq 0 ]]; then
         log_success "All apps upgraded successfully to Next.js v${NEXTJS_VERSION}!"
-        log_info "Backups preserved at: $BACKUP_DIR"
         log_info "Log file: $LOG_FILE"
         echo ""
         log_info "Next steps:"
         echo "  1. Run 'bun run dev' in each app to test manually"
         echo "  2. Commit changes: git add . && git commit -m 'chore: upgrade Next.js to v${NEXTJS_VERSION}'"
-        echo "  3. Remove backups if satisfied: rm -rf $BACKUP_DIR"
     else
         log_error "Verification failed for: ${verification_failed[*]}"
-        log_warn "Backups available at: $BACKUP_DIR"
         log_warn "Check log file for details: $LOG_FILE"
         echo ""
         log_info "To rollback failed apps:"
         for app in "${verification_failed[@]}"; do
-            echo "  cp $BACKUP_DIR/$app/package.json apps/$app/"
+            echo "  git checkout -- apps/$app/package.json apps/$app/bun.lock"
         done
         exit 1
     fi

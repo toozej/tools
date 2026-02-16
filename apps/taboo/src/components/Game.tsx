@@ -37,16 +37,20 @@ const Game: React.FC = () => {
       const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0) {
-      setCurrentTeam((prev) => (prev + 1) % 2);
-      setTimeLeft(60);
-      setTimerRunning(true);
-      if (currentCardIndex >= deck.length - 1) {
-        setGamePhase('end');
-      } else {
-        setCurrentCardIndex((prev) => prev + 1);
-      }
+      // Defer state updates to avoid synchronous setState in effect
+      const timer = setTimeout(() => {
+        setCurrentTeam((prev) => (prev + 1) % 2);
+        setTimeLeft(60);
+        setTimerRunning(true);
+        if (currentCardIndex >= deck.length - 1) {
+          setGamePhase('end');
+        } else {
+          setCurrentCardIndex((prev) => prev + 1);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [timerRunning, timeLeft, currentTeam, currentCardIndex, deck.length]);
+  }, [timerRunning, timeLeft, currentCardIndex, deck.length]);
 
   const guessCorrect = () => {
     setTeams((prev) => prev.map((t, i) => (i === currentTeam ? { ...t, score: t.score + 1 } : t)));
@@ -73,8 +77,7 @@ const Game: React.FC = () => {
   };
 
   const playBuzzer = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     oscillator.connect(gainNode);

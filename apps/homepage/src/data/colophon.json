@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-02-10T21:24:40.682004Z",
-  "total_apps": 18,
+  "generated_at": "2026-02-16T02:29:39.799478Z",
+  "total_apps": 20,
   "apps": [
     {
       "name": "anki2epub",
@@ -231,6 +231,27 @@
       "has_credits": false
     },
     {
+      "name": "json-utils",
+      "title": "JSON Utils",
+      "description": "### 📝 Format & Validate JSON - Auto-format JSON with customizable indentation (2 or 4 spaces) - Real-time validation with error messages - Instant feedback on JSON validity",
+      "tags": [
+        "Tailwind Css",
+        "Typescript",
+        "Bun",
+        "Node.Js",
+        "Yaml",
+        "Json"
+      ],
+      "url": "/json-utils",
+      "credits": [
+        {
+          "name": "nodeca",
+          "url": "https://github.com/nodeca"
+        }
+      ],
+      "has_credits": true
+    },
+    {
       "name": "link-extractor",
       "title": "link-extractor",
       "description": "Extract hyperlinks from pasted web content and export them in multiple formats including HTML, Markdown, and plain text. The tool automatically detects and removes duplicate links while displaying each link's title and URL for easy verification. Copy extracted links in your preferred format with a single click.",
@@ -242,6 +263,29 @@
         {
           "name": "simonw",
           "url": "https://github.com/simonw"
+        }
+      ],
+      "has_credits": true
+    },
+    {
+      "name": "matter",
+      "title": "Matter - Image Border Adder",
+      "description": "Matter allows you to easily add professional-looking borders and mats to your images. Whether you're preparing photos for printing, social media, or just want to give your images a polished look, Matter provides a simple and intuitive interface to customize your borders.",
+      "tags": [
+        "Matter Preview",
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Bun",
+        "Node.Js",
+        "Exif"
+      ],
+      "url": "/matter",
+      "credits": [
+        {
+          "name": "exif-js",
+          "url": "https://github.com/exif-js"
         }
       ],
       "has_credits": true
