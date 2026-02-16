@@ -16,9 +16,12 @@ export async function fetchRepoStatus(username: string): Promise<{
     // Fetch all user repos
     const repos = await getUserRepos(username);
 
+    // Exclude archived repos
+    const activeRepos = repos.filter((repo) => !repo.archived);
+
     // Fetch additional data for each repo in parallel
     const repoStatuses: RepoStatus[] = await Promise.all(
-      repos.map(async (repo): Promise<RepoStatus> => {
+      activeRepos.map(async (repo): Promise<RepoStatus> => {
         const { owner, name } = repo;
 
         // Fetch workflows, releases, and commits in parallel

@@ -25,7 +25,8 @@ jobs:
         id: discover
         run: |
           # Find all services in docker-compose that have a build context and runtime profile
-          apps=$(yq -r '.services | to_entries[] | select(.value.build != null and .value.profiles != null and ((.value.profiles | contains(["build"])) or (.value.profiles | contains(["runtime"])))) | .key' docker-compose-dev.yml | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          # Extract app name from build.context (e.g., ./apps/homepage -> homepage)
+          apps=$(yq -r '.services | to_entries[] | select(.value.build != null and .value.profiles != null and ((.value.profiles | contains(["build"])) or (.value.profiles | contains(["runtime"])))) | .value.build.context | sub("^\\./apps/", "")' docker-compose-dev.yml | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "apps=$apps" >> "$GITHUB_OUTPUT"
           echo "Found apps: $apps"
 

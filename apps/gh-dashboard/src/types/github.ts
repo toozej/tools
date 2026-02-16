@@ -14,6 +14,7 @@ export interface GitHubRepo {
   open_issues_count: number;
   private: boolean;
   language: string | null;
+  archived: boolean;
   owner: {
     login: string;
     avatar_url: string;

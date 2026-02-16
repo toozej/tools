@@ -11,6 +11,9 @@ MAKEFLAGS += --no-builtin-rules
 BUILDER = $(shell whoami)@$(shell hostname)
 NOW = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# Optional app name for app-specific targets
+APP ?=
+
 # Define the repository URL
 REPO_URL := https://github.com/toozej/tools
 
@@ -24,7 +27,7 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build run up down dev dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
+.PHONY: all test build run up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
 
 all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
@@ -51,6 +54,13 @@ dev: ## Run Docker Compose project in dev mode
 
 dev-down: ## Stop running Docker Compose project in dev mode
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
+
+dev-logs: ## Show logs for dev stack (usage: make dev-logs or make dev-logs APP=<app-name>)
+	@if [ -n "$(APP)" ]; then \
+		docker compose -f docker-compose-dev.yml logs -f $(APP) $(APP)-builder 2>/dev/null || docker compose -f docker-compose-dev.yml logs -f $(APP); \
+	else \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f; \
+	fi
 
 dev-nc: clean ## Run Docker Compose project in dev mode without cache
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
