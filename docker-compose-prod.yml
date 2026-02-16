@@ -43,6 +43,10 @@ services:
         condition: service_started
       anki2epub:
         condition: service_started
+      json-utils-builder:
+        condition: service_started
+      matter-builder:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -60,6 +64,8 @@ services:
       - "tools_qr:/var/www/html/qr:ro"
       - "tools_render-markdown:/var/www/html/render-markdown:ro"
       - "tools_bingo-creator:/var/www/html/bingo-creator:ro"
+      - "tools_json-utils:/var/www/html/json-utils:ro"
+      - "tools_matter:/var/www/html/matter:ro"
 
   clip2gist:
     container_name: tools_clip2gist
@@ -233,6 +239,22 @@ services:
       - tools_bingo-creator:/app/out
     command: ["sleep", "5"]
 
+  json-utils-builder:
+    container_name: tools_json-utils-builder
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:json-utils
+    volumes:
+      - tools_json-utils:/app/out
+    command: ["sleep", "5"]
+
+  matter-builder:
+    container_name: tools_matter-builder
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:matter
+    volumes:
+      - tools_matter:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -247,6 +269,8 @@ volumes:
   tools_qr:
   tools_render-markdown:
   tools_bingo-creator:
+  tools_json-utils:
+  tools_matter:
 
 networks:
   backend:

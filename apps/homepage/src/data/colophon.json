@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-16T02:29:39.799478Z",
+  "generated_at": "2026-02-16T06:26:40.427249Z",
   "total_apps": 20,
   "apps": [
     {
       "name": "anki2epub",
       "title": "anki2epub",
-      "description": "- 📁 Multiple Input Methods - Upload .apkg files via drag-and-drop or file browser - Load decks from a direct URL - 📱 E-Ink Device Presets - Optimized formatting for popular e-ink devices: - Xteink X4 (480×800) - Compact layout with smaller fonts - Onyx Boox Page (1264×1680) - High-resolution optimized - Kindle (1264×1680) - Kindle-specific formatting - Kobo Clara Reader (1072×1448) - Kobo-optimized settings - 📖 Two-Page Flashcard Format - Each flashcard generates two pages for easy self-testing: - Question # - The front of the card - Answer # - The back of the card - Navigate to the next page to reveal the answer - 🎨 E-Ink Optimized Styling - High contrast black & white design - Readable serif fonts (Georgia) - Proper margins for comfortable reading - Clean, distraction-free layout - ⚡ Fast & Private - Client-side processing - your decks never leave your browser - No account required - Instant conversion and download",
+      "description": "- Multiple Input Methods - Upload .apkg files via drag-and-drop or file browser - Load decks from a direct URL - E-Ink Device Presets - Optimized formatting for popular e-ink devices: - Xteink X4 (480×800) - Compact layout with smaller fonts - Onyx Boox Page (1264×1680) - High-resolution optimized - Kindle (1264×1680) - Kindle-specific formatting - Kobo Clara Reader (1072×1448) - Kobo-optimized settings - Two-Page Flashcard Format - Each flashcard generates two pages for easy self-testing: - Question # - The front of the card - Answer # - The back of the card - Navigate to the next page to reveal the answer - E-Ink Optimized Styling - High contrast black & white design - Readable serif fonts (Georgia) - Proper margins for comfortable reading - Clean, distraction-free layout - Fast & Private - Client-side processing - your decks never leave your browser - No account required - Instant conversion and download",
       "tags": [
         "Next.Js",
         "Tailwind Css",
@@ -94,7 +94,11 @@
           "url": ""
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
     },
     {
       "name": "bingo-creator",
@@ -113,7 +117,11 @@
           "url": "https://github.com/maxence-charriere"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
     },
     {
       "name": "clip2gist",
@@ -145,7 +153,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "exiftools",
@@ -161,7 +173,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "gh-dashboard",
@@ -194,7 +210,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "graphviz-visualizer",
@@ -211,7 +231,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "homepage",
@@ -233,7 +257,7 @@
     {
       "name": "json-utils",
       "title": "JSON Utils",
-      "description": "### 📝 Format & Validate JSON - Auto-format JSON with customizable indentation (2 or 4 spaces) - Real-time validation with error messages - Instant feedback on JSON validity",
+      "description": "### Format & Validate JSON - Auto-format JSON with customizable indentation (2 or 4 spaces) - Real-time validation with error messages - Instant feedback on JSON validity",
       "tags": [
         "Tailwind Css",
         "Typescript",
@@ -245,11 +269,31 @@
       "url": "/json-utils",
       "credits": [
         {
-          "name": "nodeca",
-          "url": "https://github.com/nodeca"
+          "name": "https",
+          "description": "//github.com/simonw/tools/blob/main/json-to-yaml.html",
+          "url": ""
+        },
+        {
+          "name": "https",
+          "description": "//github.com/simonw/tools/blob/main/json-diff.html",
+          "url": ""
+        },
+        {
+          "name": "https",
+          "description": "//github.com/toozej/tools/blob/main/apps/yaml-formatter/",
+          "url": ""
+        },
+        {
+          "name": "https",
+          "description": "//github.com/simonw/tools/blob/main/incomplete-json-printer.html",
+          "url": ""
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "link-extractor",
@@ -265,14 +309,17 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "matter",
       "title": "Matter - Image Border Adder",
       "description": "Matter allows you to easily add professional-looking borders and mats to your images. Whether you're preparing photos for printing, social media, or just want to give your images a polished look, Matter provides a simple and intuitive interface to customize your borders.",
       "tags": [
-        "Matter Preview",
         "Next.Js",
         "React",
         "Tailwind Css",
@@ -288,7 +335,10 @@
           "url": "https://github.com/exif-js"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "# Credits"
+      }
     },
     {
       "name": "ocr",
@@ -306,7 +356,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "qr",
@@ -323,7 +377,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "render-markdown",
@@ -339,7 +397,11 @@
           "url": "https://github.com/simonw"
         }
       ],
-      "has_credits": true
+      "has_credits": true,
+      "author": {
+        "name": "simonw",
+        "url": "https://github.com/simonw"
+      }
     },
     {
       "name": "taboo",

@@ -109,9 +109,10 @@ class ColophonGenerator:
         title = self._extract_title(readme_content, app_name)
         description = self._extract_description(readme_content)
         tags = self._extract_tags(readme_content)
+        author = self._extract_author(credits_content, readme_content)
         credits = self._parse_credits(credits_content, readme_content)
 
-        return {
+        app_info = {
             "name": app_name,
             "title": title,
             "description": description,
@@ -120,6 +121,10 @@ class ColophonGenerator:
             "credits": credits,
             "has_credits": len(credits) > 0,
         }
+        if author:
+            app_info["author"] = author
+
+        return app_info
 
     def _extract_title(self, readme_content: str, fallback: str) -> str:
         """Extract title from README.md (first H1 heading)."""
@@ -131,6 +136,26 @@ class ColophonGenerator:
         # Fallback to app name, formatted nicely
         return fallback.replace("-", " ").replace("_", " ").title()
 
+    def _clean_description(self, text: str) -> str:
+        """Remove Markdown formatting and emojis from text."""
+        # Remove Markdown links: [text](url) -> text
+        text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+        # Remove bold/italic: **text** or _text_ -> text
+        text = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", text)
+        # Remove inline code: `text` -> text
+        text = re.sub(r"`([^`]+)`", r"\1", text)
+        # Remove emojis (Unicode ranges for emojis)
+        text = re.sub(
+            r"[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF"
+            r"\U0001F1E0-\U0001F1FF\U00002702-\U000027B0\U000024C2-\U0001F251"
+            r"\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF]",
+            "",
+            text,
+        )
+        # Normalize whitespace
+        text = " ".join(text.split())
+        return text.strip()
+
     def _extract_description(self, readme_content: str) -> str:
         """Extract description from README.md."""
         # Handle special case for apps copied from simonw/tools
@@ -140,11 +165,7 @@ class ColophonGenerator:
             # Description is on line 4 (index 4) for simonw/tools format
             description = lines[4].strip()
             if description:
-                # Clean up markdown formatting
-                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-                description = re.sub(r"`([^`]+)`", r"\1", description)
-                description = " ".join(description.split())
+                description = self._clean_description(description)
                 return description if description else "No description available."
 
         # Remove the title (first H1)
@@ -159,13 +180,7 @@ class ColophonGenerator:
         for pattern in desc_patterns:
             match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
             if match:
-                description = match.group(1).strip()
-                # Clean up markdown formatting
-                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-                description = re.sub(r"`([^`]+)`", r"\1", description)
-                # Normalize whitespace
-                description = " ".join(description.split())
+                description = self._clean_description(match.group(1).strip())
                 if description:
                     return description
 
@@ -183,13 +198,7 @@ class ColophonGenerator:
             if para.startswith("[") or para.startswith("!"):
                 continue
 
-            # Clean up markdown formatting
-            description = para
-            description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-            description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-            description = re.sub(r"`([^`]+)`", r"\1", description)
-
-            return description.strip()
+            return self._clean_description(para)
 
         return "No description available."
 
@@ -315,6 +324,72 @@ class ColophonGenerator:
                     usernames.append({"name": username, "url": full_url})
 
         return usernames
+
+    def _extract_author(self, credits_content: str, readme_content: str = "") -> dict | None:
+        """Extract author from CREDITS.md Author section, or fall back to README.md.
+
+        Returns a dict with 'name' and optionally 'url', or None if not found.
+        """
+        # First, look for Author section in CREDITS.md
+        if credits_content.strip():
+            author_match = re.search(
+                r"##\s+Authors?\s*\n+(.+?)(?=\n##|\Z)",
+                credits_content,
+                re.IGNORECASE | re.DOTALL,
+            )
+            if author_match:
+                author_section = author_match.group(1).strip()
+                author = self._parse_author_content(author_section)
+                if author:
+                    return author
+
+            # Also check for author patterns in CREDITS.md content (even without Author section)
+            author = self._parse_author_content(credits_content)
+            if author:
+                return author
+
+        # Fallback: extract GitHub usernames from README
+        if readme_content:
+            github_users = self._extract_github_usernames(readme_content)
+            if github_users:
+                # Return the first one as the primary author
+                return github_users[0]
+
+        return None
+
+    def _parse_author_content(self, content: str) -> dict | None:
+        """Parse author content to extract name and URL."""
+        # Look for markdown link pattern: [name](url)
+        link_match = re.search(r"\[([^\]]+)\]\((https?://[^\)]+)\)", content)
+        if link_match:
+            return {
+                "name": link_match.group(1).strip(),
+                "url": link_match.group(2).strip(),
+            }
+
+        # Look for GitHub URL pattern
+        github_match = re.search(
+            r"(?:https?://)?(?:www\.)?github\.com/([^/\s\)]+)",
+            content,
+            re.IGNORECASE,
+        )
+        if github_match:
+            username = github_match.group(1).strip().rstrip("/")
+            return {"name": username, "url": f"https://github.com/{username}"}
+
+        # Fallback: just use the first line as author name
+        first_line = content.split("\n")[0].strip()
+        # Clean up common prefixes
+        first_line = re.sub(
+            r"^(Created (by|with\s+\S+\s+by)|Written by|Author:?)\s*",
+            "",
+            first_line,
+            flags=re.IGNORECASE,
+        )
+        if first_line:
+            return {"name": first_line}
+
+        return None
 
     def _parse_credits(self, credits_content: str, readme_content: str = "") -> list[dict]:
         """Parse CREDITS.md and extract credit entries with links.

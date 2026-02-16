@@ -36,6 +36,10 @@ services:
         condition: service_started
       bingo-creator-builder:
         condition: service_started
+      json-utils-builder:
+        condition: service_started
+      matter-builder:
+        condition: service_started
       clip2gist:
         condition: service_started
       gh-dashboard:
@@ -63,6 +67,8 @@ services:
       - "tools_qr:/var/www/html/qr:ro"
       - "tools_render-markdown:/var/www/html/render-markdown:ro"
       - "tools_bingo-creator:/var/www/html/bingo-creator:ro"
+      - "tools_json-utils:/var/www/html/json-utils:ro"
+      - "tools_matter:/var/www/html/matter:ro"
 
   # -------------------------
   # Runtime apps
@@ -296,6 +302,28 @@ services:
       - tools_bingo-creator:/app/out
     command: ["sleep", "5"]
 
+  json-utils-builder:
+    container_name: tools_json-utils-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/json-utils
+      dockerfile: Dockerfile
+    image: tools_json-utils-builder:latest
+    volumes:
+      - tools_json-utils:/app/out
+    command: ["sleep", "5"]
+
+  matter-builder:
+    container_name: tools_matter-builder
+    profiles: ["build"]
+    build:
+      context: ./apps/matter
+      dockerfile: Dockerfile
+    image: tools_matter-builder:latest
+    volumes:
+      - tools_matter:/app/out
+    command: ["sleep", "5"]
+
 
 volumes:
   tools_homepage:
@@ -311,6 +339,8 @@ volumes:
   tools_qr:
   tools_render-markdown:
   tools_bingo-creator:
+  tools_json-utils:
+  tools_matter:
 
 networks:
   backend:
