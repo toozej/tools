@@ -1,5 +1,11 @@
 # CREDITS
 
+## Author
+
+Made by [toozej](https://github.com/toozej)
+
+## Inspiration
+
 - JSON to YAML 
     - https://github.com/simonw/tools/blob/main/json-to-yaml.html
 - JSON Diff

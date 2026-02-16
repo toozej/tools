@@ -1,7 +1,8 @@
 # tools
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/toozej/tools/cicd.yaml)
-![Docker Pulls](https://img.shields.io/docker/pulls/toozej/tools)
+![GitHub Actions CI Workflow Status](https://img.shields.io/github/actions/workflow/status/toozej/tools/ci.yaml)
+![GitHub Actions Release Workflow Status](https://img.shields.io/github/actions/workflow/status/toozej/tools/release.yaml)
+![Docker Pulls](https://ghcr-badge.elias.eu.org/shield/toozej/tools/tools)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/toozej/tools/total)
 
 Tools and web-apps

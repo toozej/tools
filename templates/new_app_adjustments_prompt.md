@@ -45,10 +45,11 @@ location ^~ /{appName} {
 }
 ```
 
-## Step 3: Update docker-compose-dev.yml
+## Step 3: Update docker-compose files
+### Step 3a 
 Add service entry to `./docker-compose-dev.yml`:
 
-### For Static/Builder Apps:
+#### For Static/Builder Apps:
 Add a builder service:
 ```yaml
   {appName}-builder:
@@ -66,7 +67,7 @@ Add a builder service:
 - Add builder as nginx `depends_on` with `condition: service_started`
 - Add `"tools_{appName}:/var/www/html/{appName}:ro"` to nginx volumes section
 
-### For Runtime Apps:
+#### For Runtime Apps:
 Add a runtime service:
 ```yaml
   {appName}:
@@ -75,6 +76,42 @@ Add a runtime service:
       context: ./apps/{appName}
       dockerfile: Dockerfile
     image: tools_{appName}:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/{appName}/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+```
+- Add `depends_on` condition for runtime service in nginx
+
+### Step 3b: 
+Add service entry to `./docker-compose-prod.yml` and `./docker-compose.yml`:
+
+#### For Static/Builder Apps:
+Add a builder service:
+```yaml
+  {appName}-builder:
+    container_name: tools_{appName}-builder
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:{appName}
+    volumes:
+      - tools_{appName}:/app/out
+    command: ["sleep", "5"]
+```
+- Add `tools_{appName}:` to volumes section near bottom of file
+- Add builder as nginx `depends_on` with `condition: service_started`
+- Add `"tools_{appName}:/var/www/html/{appName}:ro"` to nginx volumes section
+
+#### For Runtime Apps:
+Add a runtime service:
+```yaml
+  {appName}:
+    container_name: tools_{appName}
+    image: ghcr.io/toozej/tools:{appName}
     restart: always
     profiles: ["runtime"]
     healthcheck:

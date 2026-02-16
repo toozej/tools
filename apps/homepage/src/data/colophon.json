@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-16T06:26:40.427249Z",
-  "total_apps": 20,
+  "generated_at": "2026-02-16T08:38:08.788052Z",
+  "total_apps": 21,
   "apps": [
     {
       "name": "anki2epub",
       "title": "anki2epub",
-      "description": "- Multiple Input Methods - Upload .apkg files via drag-and-drop or file browser - Load decks from a direct URL - E-Ink Device Presets - Optimized formatting for popular e-ink devices: - Xteink X4 (480×800) - Compact layout with smaller fonts - Onyx Boox Page (1264×1680) - High-resolution optimized - Kindle (1264×1680) - Kindle-specific formatting - Kobo Clara Reader (1072×1448) - Kobo-optimized settings - Two-Page Flashcard Format - Each flashcard generates two pages for easy self-testing: - Question # - The front of the card - Answer # - The back of the card - Navigate to the next page to reveal the answer - E-Ink Optimized Styling - High contrast black & white design - Readable serif fonts (Georgia) - Proper margins for comfortable reading - Clean, distraction-free layout - Fast & Private - Client-side processing - your decks never leave your browser - No account required - Instant conversion and download",
+      "description": "Multiple Input Methods. Upload .apkg files via drag-and-drop or file browser. Load decks from a direct URL. E-Ink Device Presets. Optimized formatting for popular e-ink devices:. Xteink X4 (480×800). Compact layout with smaller fonts. Onyx Boox Page (1264×1680). High-resolution optimized. Kindle (1264×1680). Kindle-specific formatting. Kobo Clara Reader (1072×1448). Kobo-optimized settings. Two-Page Flashcard Format. Each flashcard generates two pages for easy self-testing:. Question #. The front of the card. Answer #. The back of the card. Navigate to the next page to reveal the answer. E-Ink Optimized Styling. High contrast black & white design. Readable serif fonts (Georgia). Proper margins for comfortable reading. Clean, distraction-free layout. Fast & Private. Client-side processing. Your decks never leave your browser. No account required. Instant conversion and download.",
       "tags": [
         "Next.Js",
         "Tailwind Css",
@@ -20,78 +20,51 @@
       "credits": [
         {
           "name": "Next.js",
+          "url": "https://nextjs.org/",
           "description": "The React Framework for the Web",
-          "url": "https://nextjs.org/"
-        },
-        {
-          "name": "[Next.js](https",
-          "description": "//nextjs.org/) - The React Framework for the Web",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "TypeScript",
+          "url": "https://www.typescriptlang.org/",
           "description": "JavaScript with syntax for types",
-          "url": "https://www.typescriptlang.org/"
-        },
-        {
-          "name": "[TypeScript](https",
-          "description": "//www.typescriptlang.org/) - JavaScript with syntax for types",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "Tailwind CSS",
+          "url": "https://tailwindcss.com/",
           "description": "A utility-first CSS framework",
-          "url": "https://tailwindcss.com/"
-        },
-        {
-          "name": "[Tailwind CSS](https",
-          "description": "//tailwindcss.com/) - A utility-first CSS framework",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "Bun",
+          "url": "https://bun.sh/",
           "description": "Fast all-in-one JavaScript runtime",
-          "url": "https://bun.sh/"
-        },
-        {
-          "name": "[Bun](https",
-          "description": "//bun.sh/) - Fast all-in-one JavaScript runtime",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "JSZip",
+          "url": "https://stuk.github.io/jszip/",
           "description": "Create, read and edit .zip files with Javascript",
-          "url": "https://stuk.github.io/jszip/"
-        },
-        {
-          "name": "[JSZip](https",
-          "description": "//stuk.github.io/jszip/) - Create, read and edit .zip files with Javascript",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "sql.js",
+          "url": "https://sql.js.org/",
           "description": "SQLite compiled to JavaScript",
-          "url": "https://sql.js.org/"
-        },
-        {
-          "name": "[sql.js](https",
-          "description": "//sql.js.org/) - SQLite compiled to JavaScript",
-          "url": ""
+          "category": "Open Source Libraries"
         },
         {
           "name": "epub-gen-memory",
+          "url": "https://github.com/CharliePops/epub-gen-memory",
           "description": "Generate EPUB files in memory",
-          "url": "https://github.com/CharliePops/epub-gen-memory"
+          "category": "Open Source Libraries"
         },
         {
-          "name": "[epub-gen-memory](https",
-          "description": "//github.com/CharliePops/epub-gen-memory) - Generate EPUB files in memory",
-          "url": ""
-        },
-        {
-          "name": "The [Anki](https",
-          "description": "//apps.ankiweb.net/) team for creating an amazing spaced repetition system",
-          "url": ""
+          "name": "Anki",
+          "url": "https://apps.ankiweb.net/",
+          "description": "The Anki team for creating an amazing spaced repetition system",
+          "category": "Special Thanks"
         }
       ],
       "has_credits": true,
@@ -103,7 +76,7 @@
     {
       "name": "bingo-creator",
       "title": "Bingo Creator",
-      "description": "- Custom Bingo Cards: Create bingo cards for trips, events, or any occasion - Adjustable Grid Size: Choose from 3x3 to 10x10 grids - PDF Export: Download your bingo cards as PDF files - Local Storage: Your items are saved automatically per trip name - Shuffled Generation: Each card gets a unique arrangement - Free Space: Center cell is automatically set as \"Free Space\" - Offline Support: Works offline once loaded (PWA) - Responsive Design: Works on desktop and mobile devices",
+      "description": "Custom Bingo Cards: Create bingo cards for trips, events, or any occasion. Adjustable Grid Size: Choose from 3x3 to 10x10 grids. PDF Export: Download your bingo cards as PDF files. Local Storage: Your items are saved automatically per trip name. Shuffled Generation: Each card gets a unique arrangement. Free Space: Center cell is automatically set as \"Free Space\". Offline Support: Works offline once loaded (PWA). Responsive Design: Works on desktop and mobile devices.",
       "tags": [
         "Go",
         "Docker",
@@ -199,7 +172,7 @@
     {
       "name": "ghissue2md",
       "title": "ghissue2md",
-      "description": "# Documentation",
+      "description": "No description available.",
       "tags": [
         "Markdown"
       ],
@@ -240,7 +213,7 @@
     {
       "name": "homepage",
       "title": "Tools Collection Homepage",
-      "description": "- Responsive Design: Mobile-first grid layout that adapts from 1 column (mobile) to 2 columns (tablet) to 3 columns (desktop) - Modern UI: Clean cards with gradient accents, hover animations, and smooth transitions - Dark Mode Support: Full dark mode compatibility with automatic system preference detection - Static Generation: Pre-rendered at build time for optimal performance and SEO - Accessible: Semantic HTML and proper link handling for screen readers - Type Safe: Built with TypeScript for robust code quality",
+      "description": "Responsive Design: Mobile-first grid layout that adapts from 1 column (mobile) to 2 columns (tablet) to 3 columns (desktop). Modern UI: Clean cards with gradient accents, hover animations, and smooth transitions. Dark Mode Support: Full dark mode compatibility with automatic system preference detection. Static Generation: Pre-rendered at build time for optimal performance and SEO. Accessible: Semantic HTML and proper link handling for screen readers. Type Safe: Built with TypeScript for robust code quality.",
       "tags": [
         "Next.Js",
         "React",
@@ -257,7 +230,7 @@
     {
       "name": "json-utils",
       "title": "JSON Utils",
-      "description": "### Format & Validate JSON - Auto-format JSON with customizable indentation (2 or 4 spaces) - Real-time validation with error messages - Instant feedback on JSON validity",
+      "description": "Auto-format JSON with customizable indentation (2 or 4 spaces). Real-time validation with error messages. Instant feedback on JSON validity.",
       "tags": [
         "Tailwind Css",
         "Typescript",
@@ -269,30 +242,30 @@
       "url": "/json-utils",
       "credits": [
         {
-          "name": "https",
-          "description": "//github.com/simonw/tools/blob/main/json-to-yaml.html",
-          "url": ""
+          "name": "JSON to YAML",
+          "url": "https://github.com/simonw/tools/blob/main/json-to-yaml.html",
+          "category": "Inspiration"
         },
         {
-          "name": "https",
-          "description": "//github.com/simonw/tools/blob/main/json-diff.html",
-          "url": ""
+          "name": "JSON Diff",
+          "url": "https://github.com/simonw/tools/blob/main/json-diff.html",
+          "category": "Inspiration"
         },
         {
-          "name": "https",
-          "description": "//github.com/toozej/tools/blob/main/apps/yaml-formatter/",
-          "url": ""
+          "name": "JSON validator and auto-formatter",
+          "url": "https://github.com/toozej/tools/blob/main/apps/yaml-formatter/",
+          "category": "Inspiration"
         },
         {
-          "name": "https",
-          "description": "//github.com/simonw/tools/blob/main/incomplete-json-printer.html",
-          "url": ""
+          "name": "incomplete JSON printer",
+          "url": "https://github.com/simonw/tools/blob/main/incomplete-json-printer.html",
+          "category": "Inspiration"
         }
       ],
       "has_credits": true,
       "author": {
-        "name": "simonw",
-        "url": "https://github.com/simonw"
+        "name": "toozej",
+        "url": "https://github.com/toozej"
       }
     },
     {
@@ -419,6 +392,33 @@
       "has_credits": false
     },
     {
+      "name": "tfps",
+      "title": "TFPS (Terraform Plan Summary)",
+      "description": "File Upload: Upload JSON or binary plan files via file explorer. Paste JSON: Paste plan JSON directly (from terraform show -json output). Paste Text Output: Paste raw terraform plan or terragrunt plan output.",
+      "tags": [
+        "Tailwind Css",
+        "Typescript",
+        "Bun",
+        "Node.Js",
+        "Markdown",
+        "Json"
+      ],
+      "url": "/tfps",
+      "credits": [
+        {
+          "name": "tfplan2md",
+          "url": "https://github.com/oocx/tfplan2md",
+          "description": "A tool for converting Terraform plan JSON files into human-readable Markdown reports",
+          "category": "Inspiration"
+        }
+      ],
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
+    },
+    {
       "name": "unit-converter",
       "title": "Unit Converter Web Application",
       "description": "A responsive web application for unit conversion using natural language input (e.g., \"9 cups to ml\") with optional dropdown selectors for \"from\" and \"to\" units, supporting both imperial and metric systems.",
@@ -451,7 +451,7 @@
     {
       "name": "www2s",
       "title": "Webpage Reader Aloud",
-      "description": "- URL input form - Text extraction from webpages using Readability - Native browser TTS support (SpeechSynthesis API) - Fallback to configurable TTS API - Responsive UI with Tailwind CSS - Self-hostable in Docker with environment variables",
+      "description": "URL input form. Text extraction from webpages using Readability. Native browser TTS support (SpeechSynthesis API). Fallback to configurable TTS API. Responsive UI with Tailwind CSS. Self-hostable in Docker with environment variables.",
       "tags": [
         "React",
         "Tailwind Css",

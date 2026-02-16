@@ -10,6 +10,11 @@ interface Credit {
   url?: string;
 }
 
+interface Author {
+  name: string;
+  url?: string;
+}
+
 interface App {
   name: string;
   title: string;
@@ -18,6 +23,7 @@ interface App {
   url: string;
   credits: Credit[];
   has_credits: boolean;
+  author?: Author;
 }
 
 // Levenshtein distance for fuzzy matching
@@ -81,11 +87,14 @@ function normalizeForSearch(text: string): string {
 }
 
 // Get credit display text
-function getCreditDisplay(app: App): string {
-  if (app.credits && app.credits.length > 0) {
-    return app.credits[0].name;
+function getCreditDisplay(app: App): { name: string; url?: string } {
+  if (app.author) {
+    return { name: app.author.name, url: app.author.url };
   }
-  return "toozej";
+  if (app.credits && app.credits.length > 0) {
+    return { name: app.credits[0].name, url: app.credits[0].url };
+  }
+  return { name: "toozej" };
 }
 
 export default function Home() {
@@ -287,9 +296,24 @@ export default function Home() {
                   {/* Credit Badge */}
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs text-slate-500 dark:text-slate-400">by</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      {getCreditDisplay(app)}
-                    </span>
+                    {(() => {
+                      const credit = getCreditDisplay(app);
+                      return credit.url ? (
+                        <a
+                          href={credit.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {credit.name}
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                          {credit.name}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   {app.tags.length > 0 && (
