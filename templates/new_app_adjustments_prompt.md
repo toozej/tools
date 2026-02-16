@@ -136,8 +136,10 @@ Make these changes in `./apps/{appName}/package.json`:
 3. Update `"devDependencies"` using `bun` or `npm`
 4. Ensure there's a "next" script in `./apps/{appName}/package.json`, then disable telemetry by running `bun next telemetry disable`
 
+## Step 7: Update versions of NextJS and React to the latest versions
+- Run `./scripts/upgrade-nextjs.sh --force --app {appName}`
 
-## Step 7: Create README.md if one doesn't already exist
+## Step 8: Create README.md if one doesn't already exist
 - If a README.md already exists, don't adjust it.
 - If `./apps/{appName}/CONTEXT.md` exists, rename it to `README.md`
 - Otherwise, generate a `README.md` with:
@@ -146,13 +148,13 @@ Make these changes in `./apps/{appName}/package.json`:
   - Any environment variables required
   - API endpoints (if runtime app)
 
-## Step 8: Run Colophon Generation
+## Step 9: Run Colophon Generation
 Execute the colophon generation script:
 ```bash
 uv run generate-colophon --output ./apps/homepage/src/data/colophon.json
 ```
 
-## Step 9: Final Verification
+## Step 10: Final Verification
 - Ensure all file paths are correct
 - Verify Dockerfiles are properly configured (multi-stage for runtime, single-stage for static)
 - Confirm nginx configuration follows existing patterns
