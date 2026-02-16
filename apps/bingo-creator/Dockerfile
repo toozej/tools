@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-bookworm AS builder
+FROM golang:1.26-trixie AS builder
 
 WORKDIR /build
 

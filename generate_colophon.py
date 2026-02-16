@@ -109,9 +109,10 @@ class ColophonGenerator:
         title = self._extract_title(readme_content, app_name)
         description = self._extract_description(readme_content)
         tags = self._extract_tags(readme_content)
+        author = self._extract_author(credits_content, readme_content)
         credits = self._parse_credits(credits_content, readme_content)
 
-        return {
+        app_info = {
             "name": app_name,
             "title": title,
             "description": description,
@@ -120,6 +121,10 @@ class ColophonGenerator:
             "credits": credits,
             "has_credits": len(credits) > 0,
         }
+        if author:
+            app_info["author"] = author
+
+        return app_info
 
     def _extract_title(self, readme_content: str, fallback: str) -> str:
         """Extract title from README.md (first H1 heading)."""
@@ -131,6 +136,35 @@ class ColophonGenerator:
         # Fallback to app name, formatted nicely
         return fallback.replace("-", " ").replace("_", " ").title()
 
+    def _clean_description(self, text: str) -> str:
+        """Remove Markdown formatting and emojis from text, converting lists to sentences."""
+        text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+        text = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", text)
+        text = re.sub(r"`([^`]+)`", r"\1", text)
+        text = re.sub(r"^#+\s+.*$", "", text, flags=re.MULTILINE)
+        text = re.sub(
+            r"[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF"
+            r"\U0001F1E0-\U0001F1FF\U00002702-\U000027B0\U000024C2-\U0001F251"
+            r"\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF]",
+            "",
+            text,
+        )
+
+        def capitalize_after_marker(match: re.Match) -> str:
+            return match.group(1).upper()
+
+        text = re.sub(r"^\s*[-*]\s+([A-Za-z])", capitalize_after_marker, text)
+        text = re.sub(r"\s*[-*]\s+([A-Za-z])", lambda m: f". {m.group(1).upper()}", text)
+
+        text = " ".join(text.split())
+        text = re.sub(r"\s*\.\s*\.\s*", ". ", text)
+        text = text.strip()
+        if text and not text[0].isupper():
+            text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+        if text and not text.endswith("."):
+            text += "."
+        return text
+
     def _extract_description(self, readme_content: str) -> str:
         """Extract description from README.md."""
         # Handle special case for apps copied from simonw/tools
@@ -140,11 +174,7 @@ class ColophonGenerator:
             # Description is on line 4 (index 4) for simonw/tools format
             description = lines[4].strip()
             if description:
-                # Clean up markdown formatting
-                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-                description = re.sub(r"`([^`]+)`", r"\1", description)
-                description = " ".join(description.split())
+                description = self._clean_description(description)
                 return description if description else "No description available."
 
         # Remove the title (first H1)
@@ -159,13 +189,7 @@ class ColophonGenerator:
         for pattern in desc_patterns:
             match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
             if match:
-                description = match.group(1).strip()
-                # Clean up markdown formatting
-                description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-                description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-                description = re.sub(r"`([^`]+)`", r"\1", description)
-                # Normalize whitespace
-                description = " ".join(description.split())
+                description = self._clean_description(match.group(1).strip())
                 if description:
                     return description
 
@@ -183,13 +207,7 @@ class ColophonGenerator:
             if para.startswith("[") or para.startswith("!"):
                 continue
 
-            # Clean up markdown formatting
-            description = para
-            description = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description)
-            description = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", description)
-            description = re.sub(r"`([^`]+)`", r"\1", description)
-
-            return description.strip()
+            return self._clean_description(para)
 
         return "No description available."
 
@@ -316,6 +334,72 @@ class ColophonGenerator:
 
         return usernames
 
+    def _extract_author(self, credits_content: str, readme_content: str = "") -> dict | None:
+        """Extract author from CREDITS.md Author section, or fall back to README.md.
+
+        Returns a dict with 'name' and optionally 'url', or None if not found.
+        """
+        # First, look for Author section in CREDITS.md
+        if credits_content.strip():
+            author_match = re.search(
+                r"##\s+Authors?\s*\n+(.+?)(?=\n##|\Z)",
+                credits_content,
+                re.IGNORECASE | re.DOTALL,
+            )
+            if author_match:
+                author_section = author_match.group(1).strip()
+                author = self._parse_author_content(author_section)
+                if author:
+                    return author
+
+            # Also check for author patterns in CREDITS.md content (even without Author section)
+            author = self._parse_author_content(credits_content)
+            if author:
+                return author
+
+        # Fallback: extract GitHub usernames from README
+        if readme_content:
+            github_users = self._extract_github_usernames(readme_content)
+            if github_users:
+                # Return the first one as the primary author
+                return github_users[0]
+
+        return None
+
+    def _parse_author_content(self, content: str) -> dict | None:
+        """Parse author content to extract name and URL."""
+        # Look for markdown link pattern: [name](url)
+        link_match = re.search(r"\[([^\]]+)\]\((https?://[^\)]+)\)", content)
+        if link_match:
+            return {
+                "name": link_match.group(1).strip(),
+                "url": link_match.group(2).strip(),
+            }
+
+        # Look for GitHub URL pattern
+        github_match = re.search(
+            r"(?:https?://)?(?:www\.)?github\.com/([^/\s\)]+)",
+            content,
+            re.IGNORECASE,
+        )
+        if github_match:
+            username = github_match.group(1).strip().rstrip("/")
+            return {"name": username, "url": f"https://github.com/{username}"}
+
+        # Fallback: just use the first line as author name
+        first_line = content.split("\n")[0].strip()
+        # Clean up common prefixes
+        first_line = re.sub(
+            r"^(Created (by|with\s+\S+\s+by)|Written by|Author:?)\s*",
+            "",
+            first_line,
+            flags=re.IGNORECASE,
+        )
+        if first_line:
+            return {"name": first_line}
+
+        return None
+
     def _parse_credits(self, credits_content: str, readme_content: str = "") -> list[dict]:
         """Parse CREDITS.md and extract credit entries with links.
 
@@ -341,16 +425,15 @@ class ColophonGenerator:
             return []
 
         credits = []
+        matched_lines = set()
 
-        # Split by headings or bullet points
-        sections = re.split(r"\n(?=##\s+|\*\s+|-\s+)", content)
+        sections = re.split(r"\n(?=##\s+)", content)
 
         for section in sections:
             section = section.strip()
             if not section:
                 continue
 
-            # Extract heading if present
             heading_match = re.match(r"##\s+(.+)", section)
             if heading_match:
                 category = heading_match.group(1).strip()
@@ -359,49 +442,119 @@ class ColophonGenerator:
                 category = None
                 content_body = section
 
-            # Extract credit entries (bullet points or lines with links)
-            # Look for patterns like: "- [Name](url) - description" or "- Name: description [link](url)"
-            entry_patterns = [
-                r"[-*]\s*\[([^\]]+)\]\(([^\)]+)\)(?:\s*[-:]\s*(.+))?",  # - [Name](url) - desc
-                r"[-*]\s*(.+?):\s*(.+?)\s*\[([^\]]+)\]\(([^\)]+)\)",  # - Name: desc [link](url)
-                r"[-*]\s*(.+?):\s*(.+)",  # - Name: desc (no link)
-            ]
+            multiline_credits = self._parse_multiline_credits(content_body, category)
+            if multiline_credits:
+                for c in multiline_credits:
+                    line_key = f"{c.get('name', '')}|{c.get('url', '')}"
+                    if line_key not in matched_lines:
+                        credits.append(c)
+                        matched_lines.add(line_key)
+                continue
 
-            for pattern in entry_patterns:
-                matches = re.finditer(pattern, content_body, re.MULTILINE)
-                for match in matches:
-                    if len(match.groups()) == 4:  # Second pattern
-                        name, desc, link_text, url = match.groups()
-                        credit_entry = {
-                            "name": name.strip(),
-                            "description": desc.strip(),
-                            "url": url.strip(),
-                        }
-                    elif len(match.groups()) >= 2 and match.group(2).startswith(
-                        "http"
-                    ):  # First pattern
-                        name, url = match.group(1), match.group(2)
-                        desc = match.group(3) if len(match.groups()) > 2 and match.group(3) else ""
-                        credit_entry = {
-                            "name": name.strip(),
-                            "description": desc.strip() if desc else "",
-                            "url": url.strip(),
-                        }
-                    else:  # Third pattern (no link)
-                        credit_entry = {
-                            "name": match.group(1).strip(),
-                            "description": match.group(2).strip()
-                            if len(match.groups()) > 1
-                            else "",
-                            "url": "",
-                        }
+            lines = content_body.split("\n")
+            for line in lines:
+                line_stripped = line.strip()
+                if not line_stripped or line_stripped.startswith("#"):
+                    continue
 
+                line_key = line_stripped
+                if line_key in matched_lines:
+                    continue
+
+                credit_entry = self._parse_single_credit_line(line_stripped)
+                if credit_entry:
                     if category:
                         credit_entry["category"] = category
-
                     credits.append(credit_entry)
+                    matched_lines.add(line_key)
 
         return credits
+
+    def _parse_multiline_credits(self, content: str, category: str | None) -> list[dict] | None:
+        """Parse multi-line credit format where name and URL are on separate lines.
+
+        Format:
+        - Name
+            - https://url
+        """
+        credits = []
+        lines = content.split("\n")
+        i = 0
+
+        while i < len(lines):
+            line = lines[i].strip()
+
+            if not line or not line.startswith("-"):
+                i += 1
+                continue
+
+            name_match = re.match(r"^[-*]\s+(.+)$", line)
+            if not name_match:
+                i += 1
+                continue
+
+            name = name_match.group(1).strip()
+
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                url_match = re.match(r"^[-*]\s+(https?://[^\s]+)$", next_line)
+                if url_match:
+                    url = url_match.group(1).strip()
+                    credit_entry = {"name": name, "url": url}
+                    if category:
+                        credit_entry["category"] = category
+                    credits.append(credit_entry)
+                    i += 2
+                    continue
+
+            i += 1
+
+        return credits if credits else None
+
+    def _parse_single_credit_line(self, line: str) -> dict | None:
+        """Parse a single credit line and return a credit entry dict."""
+        link_first = re.match(r"^[-*]\s*\[([^\]]+)\]\(([^\)]+)\)(?:\s*[-:–—]\s*(.+))?$", line)
+        if link_first:
+            name, url, desc = link_first.groups()
+            return {
+                "name": name.strip(),
+                "url": url.strip(),
+                "description": desc.strip() if desc else "",
+            }
+
+        link_embedded = re.match(r"^[-*]\s*(.+?)\s*\[([^\]]+)\]\(([^\)]+)\)\s*(.*)$", line)
+        if link_embedded:
+            prefix, name, url, suffix = link_embedded.groups()
+            full_desc = f"{prefix.strip()} {name.strip()} {suffix.strip()}".strip()
+            return {
+                "name": name.strip(),
+                "url": url.strip(),
+                "description": full_desc,
+            }
+
+        link_last = re.match(r"^[-*]\s*(.+?)\s*[-:–—]\s*(.+?)\s*\[([^\]]+)\]\(([^\)]+)\)$", line)
+        if link_last:
+            name, desc, _, url = link_last.groups()
+            return {
+                "name": name.strip(),
+                "description": desc.strip(),
+                "url": url.strip(),
+            }
+
+        no_link = re.match(r"^[-*]\s*(.+?)\s*[-:–—]\s+(.+)$", line)
+        if no_link:
+            name, desc = no_link.groups()
+            if "[" in name or "](" in name:
+                return None
+            if re.search(r"\b[eE]-\w", name):
+                return None
+            return {
+                "name": name.strip(),
+                "description": desc.strip(),
+                "url": "",
+            }
+
+        return None
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""

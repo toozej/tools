@@ -45,10 +45,11 @@ location ^~ /{appName} {
 }
 ```
 
-## Step 3: Update docker-compose-dev.yml
+## Step 3: Update docker-compose files
+### Step 3a 
 Add service entry to `./docker-compose-dev.yml`:
 
-### For Static/Builder Apps:
+#### For Static/Builder Apps:
 Add a builder service:
 ```yaml
   {appName}-builder:
@@ -66,7 +67,7 @@ Add a builder service:
 - Add builder as nginx `depends_on` with `condition: service_started`
 - Add `"tools_{appName}:/var/www/html/{appName}:ro"` to nginx volumes section
 
-### For Runtime Apps:
+#### For Runtime Apps:
 Add a runtime service:
 ```yaml
   {appName}:
@@ -75,6 +76,42 @@ Add a runtime service:
       context: ./apps/{appName}
       dockerfile: Dockerfile
     image: tools_{appName}:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/{appName}/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+```
+- Add `depends_on` condition for runtime service in nginx
+
+### Step 3b: 
+Add service entry to `./docker-compose-prod.yml` and `./docker-compose.yml`:
+
+#### For Static/Builder Apps:
+Add a builder service:
+```yaml
+  {appName}-builder:
+    container_name: tools_{appName}-builder
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:{appName}
+    volumes:
+      - tools_{appName}:/app/out
+    command: ["sleep", "5"]
+```
+- Add `tools_{appName}:` to volumes section near bottom of file
+- Add builder as nginx `depends_on` with `condition: service_started`
+- Add `"tools_{appName}:/var/www/html/{appName}:ro"` to nginx volumes section
+
+#### For Runtime Apps:
+Add a runtime service:
+```yaml
+  {appName}:
+    container_name: tools_{appName}
+    image: ghcr.io/toozej/tools:{appName}
     restart: always
     profiles: ["runtime"]
     healthcheck:
@@ -136,8 +173,10 @@ Make these changes in `./apps/{appName}/package.json`:
 3. Update `"devDependencies"` using `bun` or `npm`
 4. Ensure there's a "next" script in `./apps/{appName}/package.json`, then disable telemetry by running `bun next telemetry disable`
 
+## Step 7: Update versions of NextJS and React to the latest versions
+- Run `./scripts/upgrade-nextjs.sh --force --app {appName}`
 
-## Step 7: Create README.md if one doesn't already exist
+## Step 8: Create README.md if one doesn't already exist
 - If a README.md already exists, don't adjust it.
 - If `./apps/{appName}/CONTEXT.md` exists, rename it to `README.md`
 - Otherwise, generate a `README.md` with:
@@ -146,13 +185,13 @@ Make these changes in `./apps/{appName}/package.json`:
   - Any environment variables required
   - API endpoints (if runtime app)
 
-## Step 8: Run Colophon Generation
+## Step 9: Run Colophon Generation
 Execute the colophon generation script:
 ```bash
 uv run generate-colophon --output ./apps/homepage/src/data/colophon.json
 ```
 
-## Step 9: Final Verification
+## Step 10: Final Verification
 - Ensure all file paths are correct
 - Verify Dockerfiles are properly configured (multi-stage for runtime, single-stage for static)
 - Confirm nginx configuration follows existing patterns

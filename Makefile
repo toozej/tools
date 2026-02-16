@@ -57,7 +57,7 @@ dev-down: ## Stop running Docker Compose project in dev mode
 
 dev-logs: ## Show logs for dev stack (usage: make dev-logs or make dev-logs APP=<app-name>)
 	@if [ -n "$(APP)" ]; then \
-		docker compose -f docker-compose-dev.yml logs -f $(APP) $(APP)-builder 2>/dev/null || docker compose -f docker-compose-dev.yml logs -f $(APP); \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f $(APP) $(APP)-builder 2>/dev/null || docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f $(APP); \
 	else \
 		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f; \
 	fi

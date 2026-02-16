@@ -3,18 +3,16 @@
 import { useState, useEffect } from 'react';
 import yaml from 'js-yaml';
 
+function getYamlInputFromStorage(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('yaml-input') ?? '';
+}
+
 export default function YamlValidator() {
-  const [yamlInput, setYamlInput] = useState('');
+  const [yamlInput, setYamlInput] = useState(getYamlInputFromStorage);
   const [validationError, setValidationError] = useState('');
   const [formattedYaml, setFormattedYaml] = useState('');
   const [spacing, setSpacing] = useState(2);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('yaml-input');
-    if (saved) {
-      setYamlInput(saved);
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('yaml-input', yamlInput);
