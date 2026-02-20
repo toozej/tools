@@ -7,49 +7,52 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      homepage-builder:
-        condition: service_started
-      taboo-builder:
-        condition: service_started
-      unit-converter-builder:
-        condition: service_started
-      yaml-formatter-builder:
-        condition: service_started
-      ocr-builder:
-        condition: service_started
-      emoji-identifier-builder:
-        condition: service_started
-      exiftools-builder:
-        condition: service_started
-      ghissue2md-builder:
-        condition: service_started
-      graphviz-visualizer-builder:
-        condition: service_started
-      link-extractor-builder:
-        condition: service_started
-      qr-builder:
-        condition: service_started
-      render-markdown-builder:
-        condition: service_started
-      bingo-creator-builder:
-        condition: service_started
       clip2gist:
-        condition: service_started
+        condition: service_healthy
       gh-dashboard:
-        condition: service_started
+        condition: service_healthy
       www2s:
-        condition: service_started
+        condition: service_healthy
       www2epub:
+        condition: service_healthy
+      homepage:
         condition: service_started
-      anki2epub:
+      taboo:
         condition: service_started
-      json-utils-builder:
+      unit-converter:
         condition: service_started
-      matter-builder:
+      yaml-formatter:
+        condition: service_started
+      ocr:
+        condition: service_started
+      emoji-identifier:
+        condition: service_started
+      exiftools:
+        condition: service_started
+      ghissue2md:
+        condition: service_started
+      graphviz-visualizer:
+        condition: service_started
+      link-extractor:
+        condition: service_started
+      qr:
+        condition: service_started
+      render-markdown:
+        condition: service_started
+      bingo-creator:
+        condition: service_started
+      json-utils:
+        condition: service_started
+      matter:
+        condition: service_started
+      tfps:
+        condition: service_started
+      anki-converter:
         condition: service_started
     networks:
       - backend
     volumes:
+      - "./nginx/html/:/usr/share/nginx/html/:ro"
       - "./nginx/conf.d/:/etc/nginx/conf.d/"
       - "tools_homepage:/var/www/html/homepage:ro"
       - "tools_taboo:/var/www/html/taboo:ro"
@@ -66,7 +69,12 @@ services:
       - "tools_bingo-creator:/var/www/html/bingo-creator:ro"
       - "tools_json-utils:/var/www/html/json-utils:ro"
       - "tools_matter:/var/www/html/matter:ro"
+      - "tools_tfps:/var/www/html/tfps:ro"
+      - "tools_anki-converter:/var/www/html/anki-converter:ro"
 
+  # -------------------------
+  # Runtime apps
+  # -------------------------
   clip2gist:
     container_name: tools_clip2gist
     image: ghcr.io/toozej/tools:clip2gist
@@ -122,137 +130,143 @@ services:
     networks:
       - backend
 
-  anki2epub:
-    container_name: tools_anki2epub
-    image: ghcr.io/toozej/tools:anki2epub
-    restart: always
-    profiles: ["runtime"]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/anki2epub/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    networks:
-      - backend
-
-  homepage-builder:
-    container_name: tools_homepage-builder
+  # -------------------------
+  # Builder services
+  # -------------------------
+  homepage:
+    container_name: tools_homepage
     profiles: ["build"]
     image: ghcr.io/toozej/tools:homepage
     volumes:
       - tools_homepage:/app/out
     command: ["sleep", "5"]
 
-  taboo-builder:
-    container_name: tools_taboo-builder
+  taboo:
+    container_name: tools_taboo
     profiles: ["build"]
     image: ghcr.io/toozej/tools:taboo
     volumes:
       - tools_taboo:/app/out
     command: ["sleep", "5"]
 
-  unit-converter-builder:
-    container_name: tools_unit-converter-builder
+  unit-converter:
+    container_name: tools_unit-converter
     profiles: ["build"]
     image: ghcr.io/toozej/tools:unit-converter
     volumes:
       - tools_unit-converter:/app/out
     command: ["sleep", "5"]
 
-  yaml-formatter-builder:
-    container_name: tools_yaml-formatter-builder
+  yaml-formatter:
+    container_name: tools_yaml-formatter
     profiles: ["build"]
     image: ghcr.io/toozej/tools:yaml-formatter
     volumes:
       - tools_yaml-formatter:/app/out
     command: ["sleep", "5"]
 
-  ocr-builder:
-    container_name: tools_ocr-builder
+  ocr:
+    container_name: tools_ocr
     profiles: ["build"]
     image: ghcr.io/toozej/tools:ocr
     volumes:
       - tools_ocr:/app/out
     command: ["sleep", "5"]
 
-  emoji-identifier-builder:
-    container_name: tools_emoji-identifier-builder
+  emoji-identifier:
+    container_name: tools_emoji-identifier
     profiles: ["build"]
     image: ghcr.io/toozej/tools:emoji-identifier
     volumes:
       - tools_emoji-identifier:/app/out
     command: ["sleep", "5"]
 
-  exiftools-builder:
-    container_name: tools_exiftools-builder
+  exiftools:
+    container_name: tools_exiftools
     profiles: ["build"]
     image: ghcr.io/toozej/tools:exiftools
     volumes:
       - tools_exiftools:/app/out
     command: ["sleep", "5"]
 
-  ghissue2md-builder:
-    container_name: tools_ghissue2md-builder
+  ghissue2md:
+    container_name: tools_ghissue2md
     profiles: ["build"]
     image: ghcr.io/toozej/tools:ghissue2md
     volumes:
       - tools_ghissue2md:/app/out
     command: ["sleep", "5"]
 
-  graphviz-visualizer-builder:
-    container_name: tools_graphviz-visualizer-builder
+  graphviz-visualizer:
+    container_name: tools_graphviz-visualizer
     profiles: ["build"]
     image: ghcr.io/toozej/tools:graphviz-visualizer
     volumes:
       - tools_graphviz-visualizer:/app/out
     command: ["sleep", "5"]
 
-  link-extractor-builder:
-    container_name: tools_link-extractor-builder
+  link-extractor:
+    container_name: tools_link-extractor
     profiles: ["build"]
     image: ghcr.io/toozej/tools:link-extractor
     volumes:
       - tools_link-extractor:/app/out
     command: ["sleep", "5"]
 
-  qr-builder:
-    container_name: tools_qr-builder
+  qr:
+    container_name: tools_qr
     profiles: ["build"]
     image: ghcr.io/toozej/tools:qr
     volumes:
       - tools_qr:/app/out
     command: ["sleep", "5"]
 
-  render-markdown-builder:
-    container_name: tools_render-markdown-builder
+  render-markdown:
+    container_name: tools_render-markdown
     profiles: ["build"]
     image: ghcr.io/toozej/tools:render-markdown
     volumes:
       - tools_render-markdown:/app/out
     command: ["sleep", "5"]
 
-  bingo-creator-builder:
-    container_name: tools_bingo-creator-builder
+  bingo-creator:
+    container_name: tools_bingo-creator
     profiles: ["build"]
     image: ghcr.io/toozej/tools:bingo-creator
     volumes:
       - tools_bingo-creator:/app/out
     command: ["sleep", "5"]
 
-  json-utils-builder:
-    container_name: tools_json-utils-builder
+  json-utils:
+    container_name: tools_json-utils
     profiles: ["build"]
     image: ghcr.io/toozej/tools:json-utils
     volumes:
       - tools_json-utils:/app/out
     command: ["sleep", "5"]
 
-  matter-builder:
-    container_name: tools_matter-builder
+  matter:
+    container_name: tools_matter
     profiles: ["build"]
     image: ghcr.io/toozej/tools:matter
     volumes:
       - tools_matter:/app/out
+    command: ["sleep", "5"]
+
+  tfps:
+    container_name: tools_tfps
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:tfps
+    volumes:
+      - tools_tfps:/app/out
+    command: ["sleep", "5"]
+
+  anki-converter:
+    container_name: tools_anki-converter
+    profiles: ["build"]
+    image: ghcr.io/toozej/tools:anki-converter
+    volumes:
+      - tools_anki-converter:/app/out
     command: ["sleep", "5"]
 
 volumes:
@@ -271,6 +285,8 @@ volumes:
   tools_bingo-creator:
   tools_json-utils:
   tools_matter:
+  tools_tfps:
+  tools_anki-converter:
 
 networks:
   backend:

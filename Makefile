@@ -46,18 +46,30 @@ up: ## Run Docker Compose project with pre-built Docker images
 down: ## Stop running Docker Compose project
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
 
-dev: ## Run Docker Compose project in dev mode
+dev: ## Run Docker Compose project in dev mode optionally with a specific app (usage: make dev APP=namehere)
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
+	@if [ -z "$(APP)" ]; then \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --pull; \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime up; \
+		exit 0; \
+	fi
+	@echo "Starting nginx and homepage..."
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up -d www homepage
+	@echo "Starting app: $(APP)"
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull $(APP)
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up  $(APP)
+
+dev-up: ## Start running Docker Compose project in dev mode
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --pull
-	docker compose -f docker-compose-dev.yml --profile build --profile runtime up
-	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up -d
 
 dev-down: ## Stop running Docker Compose project in dev mode
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
 
 dev-logs: ## Show logs for dev stack (usage: make dev-logs or make dev-logs APP=<app-name>)
 	@if [ -n "$(APP)" ]; then \
-		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f $(APP) $(APP)-builder 2>/dev/null || docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f $(APP); \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f $(APP); \
 	else \
 		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f; \
 	fi
@@ -110,21 +122,21 @@ rebuild-app: ## Rebuild a specific app (usage: make rebuild-app APP=app-name)
 	$(eval COMPOSE_FILE := $(if $(COMPOSE_FILE),$(COMPOSE_FILE),docker-compose-dev.yml))
 	@echo "Using compose file: $(COMPOSE_FILE)"
 	@# Stop the specific app container if running
-	docker compose -f $(COMPOSE_FILE) stop $(APP) 2>/dev/null || true
-	docker compose -f $(COMPOSE_FILE) stop $(APP)-builder 2>/dev/null || true
+	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime stop $(APP) 2>/dev/null || true
+	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime stop $(APP) 2>/dev/null || true
 	@# Remove the app containers
-	docker compose -f $(COMPOSE_FILE) rm -f $(APP) 2>/dev/null || true
-	docker compose -f $(COMPOSE_FILE) rm -f $(APP)-builder 2>/dev/null || true
+	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime rm -f $(APP) 2>/dev/null || true
+	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime rm -f $(APP) 2>/dev/null || true
 	@# Remove the volume for the app (for builder apps)
 	docker volume rm tools_$(APP) 2>/dev/null || echo "No volume tools_$(APP) to remove"
 	@# Remove the built images
 	docker image rm --force tools_$(APP):latest 2>/dev/null || echo "No image tools_$(APP):latest to remove"
-	docker image rm --force tools_$(APP)-builder:latest 2>/dev/null || echo "No image tools_$(APP)-builder:latest to remove"
+	docker image rm --force tools_$(APP):latest 2>/dev/null || echo "No image tools_$(APP):latest to remove"
 	@# Rebuild the app with no cache and pull latest base images
 	@echo "Rebuilding $(APP) with --no-cache --pull..."
-	docker compose -f $(COMPOSE_FILE) build --no-cache --pull $(APP) 2>/dev/null || \
-		docker compose -f $(COMPOSE_FILE) --profile build --profile runtime build --no-cache --pull $(APP)-builder 2>/dev/null || \
-		docker compose -f $(COMPOSE_FILE) --profile build --profile runtime build --no-cache --pull $(APP) 2>/dev/null || echo "Failed to rebuild $(APP)"
+	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime build --no-cache --pull $(APP) 2>/dev/null || \
+		docker compose -f $(COMPOSE_FILE) --profile build --profile runtime build --no-cache --pull $(APP) 2>/dev/null || \
+		echo "Failed to rebuild $(APP)"
 	@# Restart the www container to pick up changes
 	@echo "Restarting www container..."
 	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime restart www
