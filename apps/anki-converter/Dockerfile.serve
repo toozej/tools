@@ -1,0 +1,18 @@
+FROM ghcr.io/nginx/nginx-unprivileged:stable
+
+# The unprivileged nginx image runs as user 'nginx' (uid 101)
+
+# 1. Copy assets into a dedicated folder
+COPY --chown=nginx:nginx bin/ /usr/share/nginx/html/anki-converter/
+COPY --chown=nginx:nginx static/ /usr/share/nginx/html/anki-converter/static/
+
+# 2. Add the root redirect
+COPY --chown=nginx:nginx redirect.html /usr/share/nginx/html/index.html
+
+# 3. Add custom nginx configuration
+# The unprivileged image looks in /etc/nginx/conf.d/
+COPY --chown=nginx:nginx nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
