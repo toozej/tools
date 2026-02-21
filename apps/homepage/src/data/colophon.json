@@ -1,69 +1,30 @@
 {
-  "generated_at": "2026-02-16T08:38:08.788052Z",
+  "generated_at": "2026-02-20T21:59:37.788507Z",
   "total_apps": 21,
   "apps": [
     {
-      "name": "anki2epub",
-      "title": "anki2epub",
+      "name": "anki-converter",
+      "title": "anki-converter",
       "description": "Multiple Input Methods. Upload .apkg files via drag-and-drop or file browser. Load decks from a direct URL. E-Ink Device Presets. Optimized formatting for popular e-ink devices:. Xteink X4 (480×800). Compact layout with smaller fonts. Onyx Boox Page (1264×1680). High-resolution optimized. Kindle (1264×1680). Kindle-specific formatting. Kobo Clara Reader (1072×1448). Kobo-optimized settings. Two-Page Flashcard Format. Each flashcard generates two pages for easy self-testing:. Question #. The front of the card. Answer #. The back of the card. Navigate to the next page to reveal the answer. E-Ink Optimized Styling. High contrast black & white design. Readable serif fonts (Georgia). Proper margins for comfortable reading. Clean, distraction-free layout. Fast & Private. Client-side processing. Your decks never leave your browser. No account required. Instant conversion and download.",
       "tags": [
-        "Next.Js",
-        "Tailwind Css",
-        "Typescript",
         "Go",
-        "Bun",
-        "Node.Js",
+        "Docker",
         "Readability",
-        "Epub"
+        "Epub",
+        "Webassembly"
       ],
-      "url": "/anki2epub",
+      "url": "/anki-converter",
       "credits": [
-        {
-          "name": "Next.js",
-          "url": "https://nextjs.org/",
-          "description": "The React Framework for the Web",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "TypeScript",
-          "url": "https://www.typescriptlang.org/",
-          "description": "JavaScript with syntax for types",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "Tailwind CSS",
-          "url": "https://tailwindcss.com/",
-          "description": "A utility-first CSS framework",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "Bun",
-          "url": "https://bun.sh/",
-          "description": "Fast all-in-one JavaScript runtime",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "JSZip",
-          "url": "https://stuk.github.io/jszip/",
-          "description": "Create, read and edit .zip files with Javascript",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "sql.js",
-          "url": "https://sql.js.org/",
-          "description": "SQLite compiled to JavaScript",
-          "category": "Open Source Libraries"
-        },
-        {
-          "name": "epub-gen-memory",
-          "url": "https://github.com/CharliePops/epub-gen-memory",
-          "description": "Generate EPUB files in memory",
-          "category": "Open Source Libraries"
-        },
         {
           "name": "Anki",
           "url": "https://apps.ankiweb.net/",
           "description": "The Anki team for creating an amazing spaced repetition system",
+          "category": "Special Thanks"
+        },
+        {
+          "name": "epub-to-xtc-converter",
+          "url": "https://github.com/bigbag/epub-to-xtc-converter/",
+          "description": "epub-to-xtc-converter for the libraries to convert epub to xtc",
           "category": "Special Thanks"
         }
       ],
@@ -310,7 +271,8 @@
       ],
       "has_credits": true,
       "author": {
-        "name": "# Credits"
+        "name": "toozej",
+        "url": "https://github.com/toozej"
       }
     },
     {
