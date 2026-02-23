@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-02-20T21:59:37.788507Z",
-  "total_apps": 21,
+  "generated_at": "2026-02-23T15:53:57.525407Z",
+  "total_apps": 22,
   "apps": [
     {
       "name": "anki-converter",
@@ -267,6 +267,39 @@
         {
           "name": "exif-js",
           "url": "https://github.com/exif-js"
+        }
+      ],
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
+    },
+    {
+      "name": "md-converter",
+      "title": "md-converter",
+      "description": "Multiple Input Methods. Upload .md files via drag-and-drop or file browser. Load Markdown files from a direct URL. E-Ink Device Presets. Optimized formatting for popular e-ink devices:. Xteink X4 (480×800). Compact layout with smaller fonts. Onyx Boox Page (1264×1680). High-resolution optimized. Kindle (1264×1680). Kindle-specific formatting. Kobo Clara Reader (1072×1448). Kobo-optimized settings. Clean Reading Format. Sections based on Markdown headings. Supports GitHub Flavored Markdown (GFM) features:. Tables. Task lists. Strikethrough. Code blocks. Blockquotes. And more. E-Ink Optimized Styling. High contrast black & white design. Readable serif fonts (Georgia). Proper margins for comfortable reading. Clean, distraction-free layout. Support for Markdown-formatted content (headings, lists, code, etc.). Fast & Private. Client-side processing. Your Markdown files never leave your browser. No account required. Instant conversion and download.",
+      "tags": [
+        "Go",
+        "Docker",
+        "Readability",
+        "Markdown",
+        "Epub",
+        "Webassembly"
+      ],
+      "url": "/md-converter",
+      "credits": [
+        {
+          "name": "Anki",
+          "url": "https://apps.ankiweb.net/",
+          "description": "The Anki team for creating an amazing spaced repetition system",
+          "category": "Special Thanks"
+        },
+        {
+          "name": "epub-to-xtc-converter",
+          "url": "https://github.com/bigbag/epub-to-xtc-converter/",
+          "description": "epub-to-xtc-converter for the libraries to convert epub to xtc",
+          "category": "Special Thanks"
         }
       ],
       "has_credits": true,
