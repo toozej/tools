@@ -31,6 +31,7 @@ services:
       - "tools_matter:/var/www/html/matter:ro"
       - "tools_tfps:/var/www/html/tfps:ro"
       - "tools_anki-converter:/var/www/html/anki-converter:ro"
+      - "tools_md-converter:/var/www/html/md-converter:ro"
 
   # -------------------------
   # Runtime apps
@@ -292,6 +293,17 @@ services:
       - tools_anki-converter:/app/out
     command: ["sleep", "5"]
 
+  md-converter:
+    container_name: tools_md-converter
+    profiles: ["build"]
+    build:
+      context: ./apps/md-converter
+      dockerfile: Dockerfile
+    image: tools_md-converter:latest
+    volumes:
+      - tools_md-converter:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -310,6 +322,7 @@ volumes:
   tools_matter:
   tools_tfps:
   tools_anki-converter:
+  tools_md-converter:
 
 networks:
   backend:
