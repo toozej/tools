@@ -38,7 +38,7 @@ interface PlanOutput {
 }
 
 interface ParsedChange {
-  module: string;
+  resourceModule: string;
   address: string;
   type: string;
   name: string;
@@ -81,10 +81,10 @@ function parseJsonPlan(json: PlanOutput): ParsedChange[] {
 
     // Extract module from address
     const moduleMatch = rc.address.match(/^module\.([^\.]+)/);
-    const module = moduleMatch ? `module.${moduleMatch[1]}` : 'root';
+    const resourceModule = moduleMatch ? `module.${moduleMatch[1]}` : 'root';
 
     changes.push({
-      module,
+      resourceModule,
       address: rc.address,
       type: rc.type,
       name: rc.name,
@@ -143,7 +143,7 @@ function parseTextPlan(text: string): ParsedChange[] {
       const name = parts.slice(1).join('.') || 'unknown';
 
       changes.push({
-        module: currentModule,
+        resourceModule: currentModule,
         address,
         type,
         name,
@@ -173,7 +173,7 @@ function parseTextPlan(text: string): ParsedChange[] {
       }
 
       changes.push({
-        module: currentModule,
+        resourceModule: currentModule,
         address: `${type}.${name}`,
         type,
         name,
@@ -227,9 +227,9 @@ function groupByModule(changes: ParsedChange[]): Map<string, ParsedChange[]> {
   const groups = new Map<string, ParsedChange[]>();
 
   for (const change of changes) {
-    const existing = groups.get(change.module) || [];
+    const existing = groups.get(change.resourceModule) || [];
     existing.push(change);
-    groups.set(change.module, existing);
+    groups.set(change.resourceModule, existing);
   }
 
   return groups;
@@ -260,8 +260,8 @@ function generateMarkdown(changes: ParsedChange[]): string {
   // Group by module
   lines.push('## Changes by Module\n');
 
-  for (const [module, moduleChanges] of groups) {
-    lines.push(`### ${module}\n`);
+  for (const [resourceModule, moduleChanges] of groups) {
+    lines.push(`### ${resourceModule}\n`);
 
     for (const change of moduleChanges) {
       const emoji = getActionEmoji(change.action);
@@ -303,9 +303,9 @@ function generatePlaintext(changes: ParsedChange[]): string {
   lines.push('Changes by Module:');
   lines.push('-'.repeat(50));
 
-  for (const [module, moduleChanges] of groups) {
+  for (const [resourceModule, moduleChanges] of groups) {
     lines.push('');
-    lines.push(`[${module}]`);
+    lines.push(`[${resourceModule}]`);
 
     for (const change of moduleChanges) {
       const label = getActionLabel(change.action).toUpperCase();
