@@ -13,10 +13,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  discover-apps:
+    runs-on: ubuntu-24.04
+    outputs:
+      apps: ${{ steps.discover.outputs.apps }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Get list of apps to build
+        id: discover
+        run: |
+          # Find all services in docker-compose that have a build context and runtime profile
+          # Extract app name from build.context (e.g., ./apps/homepage -> homepage)
+          apps=$(yq -r '.services | to_entries[] | select(.value.build != null and .value.profiles != null and ((.value.profiles | contains(["build"])) or (.value.profiles | contains(["runtime"])))) | .value.build.context | sub("^\\./apps/", "")' docker-compose-dev.yml | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "Found apps: $apps"
+
   checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-go@v6
         with:
           go-version: '^1.26'
@@ -25,9 +43,24 @@ jobs:
         run: |
           pip install pre-commit
           make pre-commit
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: discover-apps
+    strategy:
+      fail-fast: false
+      matrix:
+        apps: ${{ fromJson(needs.discover-apps.outputs.apps) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '^1.26'
+          check-latest: true
       - name: Run tests
         run: |
-          make test
+          make test APP=${{ matrix.apps }}
 
   gitleaks:
     name: gitleaks
