@@ -5,9 +5,23 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
 )
+
+// buildVersion can be overridden at build time with:
+// -ldflags "-X main.buildVersion=<version>"
+var buildVersion = "dev"
+
+func staticSiteVersion() string {
+	if buildVersion != "" && buildVersion != "dev" {
+		return buildVersion
+	}
+	// Fallback for local/dev builds to ensure service worker cache invalidates
+	// whenever a new static bundle is generated.
+	return strconv.FormatInt(time.Now().Unix(), 10)
+}
 
 func main() {
 	// Set up the app routes
@@ -16,6 +30,9 @@ func main() {
 
 	// Start the app only when running in browser
 	app.RunWhenOnBrowser()
+
+	version := staticSiteVersion()
+	fmt.Println("Generating static website with version:", version)
 
 	err := app.GenerateStaticWebsite(".", &app.Handler{
 		Name:        "Bingo Creator",
@@ -35,7 +52,7 @@ func main() {
 		},
 		StartURL:  "/bingo-creator/",
 		Resources: app.PrefixedLocation("/bingo-creator"),
-		Version:   "1.0.0",
+		Version:   version,
 	})
 
 	if err != nil {
