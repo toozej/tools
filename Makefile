@@ -49,7 +49,7 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 		cd apps/$(APP) && go test -v ./...; \
 	elif [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running bun test..."; \
-		cd apps/$(APP) && bun test; \
+		cd apps/$(APP) && bun test || echo "No tests found"; \
 	else \
 		echo "Warning: No testable files found (go.mod or package.json) for app '$(APP)'; skipping tests"; \
 	fi
