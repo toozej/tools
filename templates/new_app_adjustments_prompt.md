@@ -96,7 +96,6 @@ Add a builder service:
 ```yaml
   {appName}-builder:
     container_name: tools_{appName}-builder
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:{appName}
     volumes:
       - tools_{appName}:/app/out
@@ -113,9 +112,8 @@ Add a runtime service:
     container_name: tools_{appName}
     image: ghcr.io/toozej/tools:{appName}
     restart: always
-    profiles: ["runtime"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/{appName}/api/health"]
+      test: ["CMD", "curl", "-f", "http://{appName}:3000/{appName}/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3

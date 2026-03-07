@@ -33,11 +33,82 @@ all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
-test: ## Nothing
-	echo "Tests are run during Docker build process"
+test: ## Run tests for a specific app (usage: make test APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make test APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Running tests for app: $(APP)"
+	@# Determine app language
+	@if [ -f "apps/$(APP)/go.mod" ]; then \
+		echo "Detected Go app, running go test..."; \
+		cd apps/$(APP) && go test -v ./...; \
+	elif [ -f "apps/$(APP)/package.json" ]; then \
+		echo "Detected JavaScript app, running bun test..."; \
+		cd apps/$(APP) && bun test; \
+	else \
+		echo "Warning: No testable files found (go.mod or package.json) for app '$(APP)'; skipping tests"; \
+	fi
 
-build: ## Build artifacts Docker images
-	docker compose --profile build up --build
+build: ## Build a specific app locally (usage: make build APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make build APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Building app: $(APP)"
+	@# Determine app language
+	@if [ -f "apps/$(APP)/go.mod" ]; then \
+		echo "Detected Go app, building WASM and generating static site..."; \
+		cd apps/$(APP) && rm -rf bin/ out/ && \
+		mkdir -p bin/web/ && \
+		GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/ && \
+     	go build -o bin/generate -ldflags="-s -w" ./cmd/web/ && \
+		cd bin/ && ./generate && rm -f ./generate && \
+		cd .. && mkdir -p out/ && cp -r bin/* out/ && cp -r static out/; \
+	elif [ -f "apps/$(APP)/package.json" ]; then \
+		echo "Detected JavaScript app, running bun install and bun run build..."; \
+		cd apps/$(APP) && bun install && bun run build; \
+	elif [ -f "apps/$(APP)/index.html" ]; then \
+		echo "Detected HTML app, no build steps needed"; \
+	else \
+		echo "Warning: No buildable files found (go.mod, package.json, or index.html) for app '$(APP)'; skipping build"; \
+	fi
+
+run: ## Run a specific app locally (usage: make run APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make run APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Running app: $(APP)"
+	@# Determine app language
+	@if [ -f "apps/$(APP)/go.mod" ]; then \
+		echo "Detected Go app, serving out/ directory with Python web server on port 8080 at /$(APP)/..."; \
+		TMP_DIR=$$(mktemp -d); \
+		mkdir -p "$$TMP_DIR/$(APP)"; \
+		cp -r "apps/$(APP)/out"/* "$$TMP_DIR/$(APP)/"; \
+		cd "$$TMP_DIR" && python3 -m http.server 8080; \
+		rm -rf "$$TMP_DIR"; \
+	elif [ -f "apps/$(APP)/package.json" ]; then \
+		echo "Detected JavaScript app, running bun install and bun run dev..."; \
+		cd apps/$(APP) && bun install && bun run dev; \
+	elif [ -f "apps/$(APP)/index.html" ]; then \
+		echo "Detected HTML app, opening in browser..."; \
+		$(OPENER) apps/$(APP)/index.html; \
+	else \
+		echo "Warning: No runnable files found (go.mod, package.json, or index.html) for app '$(APP)'; skipping run"; \
+	fi
 
 up: ## Run Docker Compose project with pre-built Docker images
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
@@ -74,11 +145,20 @@ dev-logs: ## Show logs for dev stack (usage: make dev-logs or make dev-logs APP=
 		docker compose -f docker-compose-dev.yml --profile build --profile runtime logs -f; \
 	fi
 
-dev-nc: clean ## Run Docker Compose project in dev mode without cache
+dev-nc: clean ## Run Docker Compose project in dev mode without cache optionally with a specific app (usage: make dev-nc APP=namehere)
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime down --remove-orphans
-	rm -rf ./apps/*/.next/; rm -rf ./apps/*/dist/; rm -rf ./apps/*/node_modules/; rm -rf ./apps/*/bin/;
-	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull
-	docker compose -f docker-compose-dev.yml --profile build --profile runtime up
+	@if [ -z "$(APP)" ]; then \
+		rm -rf ./apps/*/.next/; rm -rf ./apps/*/dist/; rm -rf ./apps/*/node_modules/; rm -rf ./apps/*/bin/; \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull; \
+		docker compose -f docker-compose-dev.yml --profile build --profile runtime up; \
+		exit 0; \
+	fi
+	rm -rf ./apps/$(APP)/.next/; rm -rf ./apps/$(APP)/dist/; rm -rf ./apps/$(APP)/node_modules/; rm -rf ./apps/$(APP)/bin/;
+	@echo "Starting nginx and homepage..."
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up -d www homepage
+	@echo "Starting app: $(APP)"
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull $(APP)
+	docker compose -f docker-compose-dev.yml --profile build --profile runtime up $(APP)
 
 pre-commit: pre-commit-install pre-commit-run ## Install and run pre-commit hooks
 
