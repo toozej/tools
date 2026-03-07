@@ -5,14 +5,32 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
 )
 
+// buildVersion can be overridden at build time with:
+// -ldflags "-X main.buildVersion=<version>"
+var buildVersion = "dev"
+
+func staticSiteVersion() string {
+	if buildVersion != "" && buildVersion != "dev" {
+		return buildVersion
+	}
+	// Fallback for local/dev builds to ensure service worker cache invalidates
+	// whenever a new static bundle is generated.
+	return strconv.FormatInt(time.Now().Unix(), 10)
+}
+
 func main() {
 	app.Route("/", func() app.Composer { return &home{} })
 	app.RunWhenOnBrowser()
+
+	version := staticSiteVersion()
+	fmt.Println("Generating static website with version:", version)
 
 	err := app.GenerateStaticWebsite(".", &app.Handler{
 		Name:        "anki-converter",
@@ -32,7 +50,7 @@ func main() {
 		},
 		StartURL:  "/anki-converter/",
 		Resources: app.PrefixedLocation("/anki-converter"),
-		Version:   "1.0.0",
+		Version:   version,
 	})
 	if err != nil {
 		log.Fatal(err)
