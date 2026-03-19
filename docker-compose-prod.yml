@@ -7,6 +7,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      lomo-homes-viewer:
+        condition: service_healthy
       clip2gist:
         condition: service_healthy
       gh-dashboard:
@@ -51,6 +53,8 @@ services:
         condition: service_started
       md-converter:
         condition: service_started
+      contact-sheet-creator:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -74,17 +78,32 @@ services:
       - "tools_tfps:/var/www/html/tfps:ro"
       - "tools_anki-converter:/var/www/html/anki-converter:ro"
       - "tools_md-converter:/var/www/html/md-converter:ro"
+      - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
 
   # -------------------------
   # Runtime apps
   # -------------------------
+  lomo-homes-viewer:
+    container_name: tools_lomo-homes-viewer
+    hostname: lomo-homes-viewer
+    image: ghcr.io/toozej/tools:lomo-homes-viewer
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://lomo-homes-viewer:3000/lomo-homes-viewer/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file: ./apps/lomo-homes-viewer/app.env
+    networks:
+      - backend
+
   clip2gist:
     container_name: tools_clip2gist
+    hostname: clip2gist
     image: ghcr.io/toozej/tools:clip2gist
     restart: always
-    profiles: ["runtime"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/clip2gist/api/health"]
+      test: ["CMD", "curl", "-f", "http://clip2gist:3000/clip2gist/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -94,11 +113,11 @@ services:
 
   gh-dashboard:
     container_name: tools_gh-dashboard
+    hostname: gh-dashboard
     image: ghcr.io/toozej/tools:gh-dashboard
     restart: always
-    profiles: ["runtime"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/gh-dashboard/api/health"]
+      test: ["CMD", "curl", "-f", "http://gh-dashboard:3000/gh-dashboard/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -108,11 +127,11 @@ services:
 
   www2s:
     container_name: tools_www2s
+    hostname: www2s
     image: ghcr.io/toozej/tools:www2s
     restart: always
-    profiles: ["runtime"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/www2s/api/health"]
+      test: ["CMD", "curl", "-f", "http://www2s:3000/www2s/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -122,11 +141,11 @@ services:
 
   www2epub:
     container_name: tools_www2epub
+    hostname: www2epub
     image: ghcr.io/toozej/tools:www2epub
     restart: always
-    profiles: ["runtime"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/www2epub/api/health"]
+      test: ["CMD", "curl", "-f", "http://www2epub:3000/www2epub/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -138,7 +157,6 @@ services:
   # -------------------------
   homepage:
     container_name: tools_homepage
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:homepage
     volumes:
       - tools_homepage:/app/out
@@ -146,7 +164,6 @@ services:
 
   taboo:
     container_name: tools_taboo
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:taboo
     volumes:
       - tools_taboo:/app/out
@@ -154,7 +171,6 @@ services:
 
   unit-converter:
     container_name: tools_unit-converter
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:unit-converter
     volumes:
       - tools_unit-converter:/app/out
@@ -162,7 +178,6 @@ services:
 
   yaml-formatter:
     container_name: tools_yaml-formatter
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:yaml-formatter
     volumes:
       - tools_yaml-formatter:/app/out
@@ -170,7 +185,6 @@ services:
 
   ocr:
     container_name: tools_ocr
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:ocr
     volumes:
       - tools_ocr:/app/out
@@ -178,7 +192,6 @@ services:
 
   emoji-identifier:
     container_name: tools_emoji-identifier
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:emoji-identifier
     volumes:
       - tools_emoji-identifier:/app/out
@@ -186,7 +199,6 @@ services:
 
   exiftools:
     container_name: tools_exiftools
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:exiftools
     volumes:
       - tools_exiftools:/app/out
@@ -194,7 +206,6 @@ services:
 
   ghissue2md:
     container_name: tools_ghissue2md
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:ghissue2md
     volumes:
       - tools_ghissue2md:/app/out
@@ -202,7 +213,6 @@ services:
 
   graphviz-visualizer:
     container_name: tools_graphviz-visualizer
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:graphviz-visualizer
     volumes:
       - tools_graphviz-visualizer:/app/out
@@ -210,7 +220,6 @@ services:
 
   link-extractor:
     container_name: tools_link-extractor
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:link-extractor
     volumes:
       - tools_link-extractor:/app/out
@@ -218,7 +227,6 @@ services:
 
   qr:
     container_name: tools_qr
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:qr
     volumes:
       - tools_qr:/app/out
@@ -226,7 +234,6 @@ services:
 
   render-markdown:
     container_name: tools_render-markdown
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:render-markdown
     volumes:
       - tools_render-markdown:/app/out
@@ -234,7 +241,6 @@ services:
 
   bingo-creator:
     container_name: tools_bingo-creator
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:bingo-creator
     volumes:
       - tools_bingo-creator:/app/out
@@ -242,7 +248,6 @@ services:
 
   json-utils:
     container_name: tools_json-utils
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:json-utils
     volumes:
       - tools_json-utils:/app/out
@@ -250,7 +255,6 @@ services:
 
   matter:
     container_name: tools_matter
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:matter
     volumes:
       - tools_matter:/app/out
@@ -258,7 +262,6 @@ services:
 
   tfps:
     container_name: tools_tfps
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:tfps
     volumes:
       - tools_tfps:/app/out
@@ -266,7 +269,6 @@ services:
 
   anki-converter:
     container_name: tools_anki-converter
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:anki-converter
     volumes:
       - tools_anki-converter:/app/out
@@ -274,10 +276,16 @@ services:
 
   md-converter:
     container_name: tools_md-converter
-    profiles: ["build"]
     image: ghcr.io/toozej/tools:md-converter
     volumes:
       - tools_md-converter:/app/out
+    command: ["sleep", "5"]
+
+  contact-sheet-creator:
+    container_name: tools_contact-sheet-creator
+    image: ghcr.io/toozej/tools:contact-sheet-creator
+    volumes:
+      - tools_contact-sheet-creator:/app/out
     command: ["sleep", "5"]
 
 volumes:
@@ -299,6 +307,7 @@ volumes:
   tools_tfps:
   tools_anki-converter:
   tools_md-converter:
+  tools_contact-sheet-creator:
 
 networks:
   backend:

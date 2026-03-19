@@ -1,0 +1,15 @@
+[build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "make -C ../.. build APP=bingo-creator"
+full_bin = "make -C ../.. run APP=bingo-creator"
+
+# Watch these filename extensions.
+include_ext = ["go", "tpl", "tmpl", "html"]
+
+# Ignore these filename extensions or directories.
+exclude_dir = ["assets", "tmp", "vendor", "testdata", "out", "bin"]
+
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true

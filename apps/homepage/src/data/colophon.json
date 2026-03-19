@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-02-23T15:53:57.525407Z",
-  "total_apps": 22,
+  "generated_at": "2026-03-19T22:56:32.688824Z",
+  "total_apps": 24,
   "apps": [
     {
       "name": "anki-converter",
@@ -74,6 +74,35 @@
       "url": "/clip2gist",
       "credits": [],
       "has_credits": false
+    },
+    {
+      "name": "contact-sheet-creator",
+      "title": "Contact Sheet Creator",
+      "description": "Drag & drop images to create a contact sheet. Choose between landscape (35mm style) or portrait (half-frame) orientation. Customize rows, columns, and image dimensions. Add header and footer text. Optional film strip border with various film types (TMAX, HP5 PLUS, Portra, etc.). All processing happens in your browser. Your images never leave your device.",
+      "tags": [
+        "Go",
+        "Webassembly"
+      ],
+      "url": "/contact-sheet-creator",
+      "credits": [
+        {
+          "name": "bild",
+          "url": "https://github.com/anthonynsimon/bild",
+          "description": "Pure Go image processing library",
+          "category": "Libraries"
+        },
+        {
+          "name": "go-app",
+          "url": "https://github.com/maxence-charriere/go-app",
+          "description": "Go WASM UI framework",
+          "category": "Libraries"
+        }
+      ],
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
     },
     {
       "name": "emoji-identifier",
@@ -247,6 +276,24 @@
       "author": {
         "name": "simonw",
         "url": "https://github.com/simonw"
+      }
+    },
+    {
+      "name": "lomo-homes-viewer",
+      "title": "Lomography Homes Viewer",
+      "description": "Search by Lomography URL or username. Grid view for browsing photo thumbnails with lazy loading. Feed view — infinite-scrolling single-image layout with full-size photos. Lightbox for individual photo inspection. Lazy loading via IntersectionObserver — new batches are fetched as you scroll. Automatic retries with exponential backoff for failed image loads and rate-limited pages.",
+      "tags": [
+        "Docker",
+        "Bun",
+        "Node.Js",
+        "Json"
+      ],
+      "url": "/lomo-homes-viewer",
+      "credits": [],
+      "has_credits": false,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
       }
     },
     {
