@@ -27,7 +27,7 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build run up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
+.PHONY: all test build run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
 
 all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
@@ -95,11 +95,14 @@ run: ## Run a specific app locally (usage: make run APP=namehere)
 	@# Determine app language
 	@if [ -f "apps/$(APP)/go.mod" ]; then \
 		echo "Detected Go app, serving out/ directory with Python web server on port 8080 at /$(APP)/..."; \
+		pkill -9 -f "python3 -m http.server 8080" 2>/dev/null || true; \
 		TMP_DIR=$$(mktemp -d); \
 		mkdir -p "$$TMP_DIR/$(APP)"; \
 		cp -r "apps/$(APP)/out"/* "$$TMP_DIR/$(APP)/"; \
-		cd "$$TMP_DIR" && python3 -m http.server 8080; \
-		rm -rf "$$TMP_DIR"; \
+		(cd "$$TMP_DIR" && python3 -m http.server 8080) & \
+		SRV_PID=$$!; \
+		trap 'echo "Cleaning up Python server (PID: $$SRV_PID) and temp dir..."; kill $$SRV_PID 2>/dev/null || true; rm -rf "$$TMP_DIR"; exit 0' EXIT SIGINT SIGTERM; \
+		wait $$SRV_PID; \
 	elif [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running bun install and bun run dev..."; \
 		cd apps/$(APP) && bun install && bun run dev; \
@@ -108,6 +111,27 @@ run: ## Run a specific app locally (usage: make run APP=namehere)
 		$(OPENER) apps/$(APP)/index.html; \
 	else \
 		echo "Warning: No runnable files found (go.mod, package.json, or index.html) for app '$(APP)'; skipping run"; \
+	fi
+
+iterate: ## Run `make build run` via `air` any time a .go or .tmpl file changes
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make run APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Running app: $(APP)"
+	@# Determine app language
+	@if [ -f "apps/$(APP)/go.mod" ]; then \
+		echo "Detected Go app, running air..."; \
+		(cd apps/$(APP) && air) & \
+		AIR_PID=$$!; \
+		trap 'echo "Stopping Air (PID: $$AIR_PID) and cleaning up processes..."; kill $$AIR_PID 2>/dev/null || true; pkill -9 -f "python3 -m http.server 8080" 2>/dev/null || true; exit 0' EXIT SIGINT SIGTERM; \
+		wait $$AIR_PID; \
+	else \
+		echo "Warning: No runnable files found (go.mod) for app '$(APP)'; skipping run"; \
 	fi
 
 up: ## Run Docker Compose project with pre-built Docker images
@@ -168,6 +192,8 @@ pre-commit-install: ## Install pre-commit hooks and necessary binaries
 	command -v shellcheck || brew install shellcheck || apt install -y shellcheck || sudo dnf install -y ShellCheck || sudo apt install -y shellcheck
 	# checkmake
 	go install github.com/checkmake/checkmake/cmd/checkmake@latest
+	# air
+	go install github.com/air-verse/air@latest
 	# actionlint
 	command -v actionlint || brew install actionlint || go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	# syft

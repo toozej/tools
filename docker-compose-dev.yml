@@ -32,6 +32,7 @@ services:
       - "tools_tfps:/var/www/html/tfps:ro"
       - "tools_anki-converter:/var/www/html/anki-converter:ro"
       - "tools_md-converter:/var/www/html/md-converter:ro"
+      - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
 
   # -------------------------
   # Runtime apps
@@ -100,6 +101,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - backend
+
+  lomo-homes-viewer:
+    container_name: tools_lomo-homes-viewer
+    build:
+      context: ./apps/lomo-homes-viewer
+      dockerfile: Dockerfile
+    image: tools_lomo-homes-viewer:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/lomo-homes-viewer/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file: ./apps/lomo-homes-viewer/app.env
     networks:
       - backend
 
@@ -304,6 +322,17 @@ services:
       - tools_md-converter:/app/out
     command: ["sleep", "5"]
 
+  contact-sheet-creator:
+    container_name: tools_contact-sheet-creator
+    profiles: ["build"]
+    build:
+      context: ./apps/contact-sheet-creator
+      dockerfile: Dockerfile
+    image: tools_contact-sheet-creator:latest
+    volumes:
+      - tools_contact-sheet-creator:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -323,6 +352,7 @@ volumes:
   tools_tfps:
   tools_anki-converter:
   tools_md-converter:
+  tools_contact-sheet-creator:
 
 networks:
   backend:
