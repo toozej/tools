@@ -4,6 +4,13 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { vi, expect, describe, test, beforeEach } from 'vitest';
 
+// Mock next/navigation
+const mockPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 global.fetch = vi.fn();
 
 describe('Home Component', () => {
@@ -18,21 +25,32 @@ describe('Home Component', () => {
 
   test('has input field with correct placeholder', () => {
     render(<Home />);
-    const inputElement = screen.getByPlaceholderText(/e\.g\. https:\/\/www\.lomography\.com\/homes\/aciano\/photos or aciano/i);
+    const inputElement = screen.getByPlaceholderText(
+      /e\.g\. https:\/\/www\.lomography\.com\/homes\/aciano\/photos or aciano/i
+    );
     expect(inputElement).toBeInTheDocument();
   });
 
+  test('has Random Artist and Featured Today buttons', () => {
+    render(<Home />);
+    expect(screen.getByRole('button', { name: /random artist/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /featured today/i })).toBeInTheDocument();
+  });
+
   test('has grid and feed buttons after loading images', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({
-        imageCount: 1,
-        images: [{ thumbnail: 'img1.jpg', photoPage: '/homes/user/photos/123' }],
-        startPage: 1,
-        endPage: 8,
-        hasMore: false,
-      }),
-    } as Response);
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            imageCount: 1,
+            images: [{ thumbnail: 'img1.jpg', photoPage: '/homes/user/photos/123' }],
+            startPage: 1,
+            endPage: 8,
+            hasMore: false,
+          }),
+      })
+    ) as unknown as typeof fetch;
 
     render(<Home />);
 
@@ -47,19 +65,22 @@ describe('Home Component', () => {
   });
 
   test('fetches first batch of images on search', async () => {
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        imageCount: 2,
-        images: [
-          { thumbnail: 'img1.jpg', photoPage: '/homes/user/photos/1' },
-          { thumbnail: 'img2.jpg', photoPage: '/homes/user/photos/2' },
-        ],
-        startPage: 1,
-        endPage: 8,
-        hasMore: false,
-      }),
-    } as Response);
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            imageCount: 2,
+            images: [
+              { thumbnail: 'img1.jpg', photoPage: '/homes/user/photos/1' },
+              { thumbnail: 'img2.jpg', photoPage: '/homes/user/photos/2' },
+            ],
+            startPage: 1,
+            endPage: 8,
+            hasMore: false,
+          }),
+      })
+    ) as unknown as typeof fetch;
 
     render(<Home />);
 
@@ -79,5 +100,23 @@ describe('Home Component', () => {
     expect(imgs).toHaveLength(2);
     expect(imgs[0]).toHaveAttribute('src', 'img1.jpg');
     expect(imgs[1]).toHaveAttribute('src', 'img2.jpg');
+  });
+
+  test('Random Artist button navigates to photos feed', async () => {
+    render(<Home />);
+    const button = screen.getByRole('button', { name: /random artist/i });
+    await userEvent.click(button);
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/\?input=/)
+    );
+  });
+
+  test('Featured Today button navigates to photos feed', async () => {
+    render(<Home />);
+    const button = screen.getByRole('button', { name: /featured today/i });
+    await userEvent.click(button);
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/\?input=/)
+    );
   });
 });

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Fetch photos from a Lomography user's photo pages using async requests.
+"""Fetch photos from a specific Lomography album using async requests.
 
 Usage:
-    fetch_photos.py <username> <start_page> <end_page>
-    fetch_photos.py <username> <page>
+    fetch_album_photos.py <username> <album_id> <start_page> <end_page>
+    fetch_album_photos.py <username> <album_id> <page>
 
 Features:
     - Concurrent page fetching with aiohttp (up to 8 simultaneous)
-    - Rate limiting to avoid overwhelming the server
-    - Exponential backoff with jitter on failures (429, 5xx, connection errors)
-    - Tolerates empty batches — stops only after consecutive empty batches
+    - Rate limiting and exponential backoff identical to fetch_photos.py
+    - Extracts thumbnail URLs and photo page links from album pages
     - --quick flag: exit early on rate limiting (retries=1, faster failure)
 """
 
@@ -44,9 +43,8 @@ HEADERS = {
     "Connection": "keep-alive",
 }
 
-# Regex to extract photo page links and their associated thumbnail URLs
 PHOTO_LINK_PATTERN = re.compile(
-    r'<a[^>]*href="(/homes/[^"]*?/photos/\d+)[^"]*"[^>]*>'
+    r'<a[^>]*href="(/homes/[^"]+?/albums/\d+[^/]*/\d+)"[^>]*>'
     r"(?:[^<]|<(?!/a>))*?"
     r'<img[^>]*src="(https://cdn\.assets\.lomography\.com[^"]*)"'
     r"(?:[^<]|<(?!/a>))*?</a>",
@@ -55,7 +53,6 @@ PHOTO_LINK_PATTERN = re.compile(
 
 
 def backoff_delay(attempt: int) -> float:
-    """Calculate backoff delay with jitter."""
     base = min(BACKOFF_BASE * (2**attempt), BACKOFF_MAX)
     return base * (0.5 + random.random())
 
@@ -66,16 +63,11 @@ async def fetch_page(
     rate_lock: asyncio.Lock,
     last_request_time: list[float],
     username: str,
+    album_id: str,
     page: int,
     quick_mode: bool = False,
 ) -> tuple[list[dict], bool]:
-    """Fetch a single grid page with rate limiting and exponential backoff.
-
-    Returns a tuple of (photos, rate_limited).
-    photos is a list of {"thumbnail": url, "photoPage": path} dicts.
-    rate_limited is True if we hit a 429 and should stop.
-    """
-    url = f"https://www.lomography.com/homes/{username}/photos?page={page}"
+    url = f"https://www.lomography.com/homes/{username}/albums/{album_id}?page={page}"
     max_retries = 1 if quick_mode else MAX_RETRIES
 
     for attempt in range(max_retries + 1):
@@ -98,7 +90,7 @@ async def fetch_page(
                             return [], True
                         wait = backoff_delay(attempt)
                         print(
-                            f"  Page {page}: HTTP 429, "
+                            f"  Album page {page}: HTTP 429, "
                             f"retry {attempt + 1}/{max_retries + 1} in {wait:.1f}s",
                             file=sys.stderr,
                         )
@@ -110,7 +102,7 @@ async def fetch_page(
                             return [], False
                         wait = backoff_delay(attempt)
                         print(
-                            f"  Page {page}: HTTP {resp.status}, "
+                            f"  Album page {page}: HTTP {resp.status}, "
                             f"retry {attempt + 1}/{max_retries + 1} in {wait:.1f}s",
                             file=sys.stderr,
                         )
@@ -119,7 +111,7 @@ async def fetch_page(
 
                     if resp.status != 200:
                         print(
-                            f"  Page {page}: HTTP {resp.status}, giving up",
+                            f"  Album page {page}: HTTP {resp.status}, giving up",
                             file=sys.stderr,
                         )
                         return [], False
@@ -140,23 +132,23 @@ async def fetch_page(
                 return [], False
             wait = backoff_delay(attempt)
             print(
-                f"  Page {page}: {type(exc).__name__}: {exc}, "
+                f"  Album page {page}: {type(exc).__name__}: {exc}, "
                 f"retry {attempt + 1}/{max_retries + 1} in {wait:.1f}s",
                 file=sys.stderr,
             )
             await asyncio.sleep(wait)
 
-    print(f"  Page {page}: all retries exhausted", file=sys.stderr)
+    print(f"  Album page {page}: all retries exhausted", file=sys.stderr)
     return [], False
 
 
 async def fetch_all_pages(
-    username: str, start_page: int, end_page: int, quick_mode: bool = False
+    username: str,
+    album_id: str,
+    start_page: int,
+    end_page: int,
+    quick_mode: bool = False,
 ) -> dict:
-    """Fetch pages concurrently and collect thumbnail + photo page link pairs.
-
-    Stops early if consecutive batches return zero images or if rate limited.
-    """
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
     rate_lock = asyncio.Lock()
     last_request_time = [0.0]
@@ -169,7 +161,19 @@ async def fetch_all_pages(
 
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT + 5)
     async with aiohttp.ClientSession(connector=connector) as session:
+        # First visit homepage to establish session cookies (bypasses Cloudflare)
+        try:
+            async with session.get(
+                "https://www.lomography.com/",
+                headers=HEADERS,
+                timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+            ):
+                pass
+        except (aiohttp.ClientError, TimeoutError):
+            pass
+
         page = start_page
+        has_found_images = False
         while page <= end_page:
             batch_end = min(page + MAX_CONCURRENT - 1, end_page)
             tasks = [
@@ -179,6 +183,7 @@ async def fetch_all_pages(
                     rate_lock,
                     last_request_time,
                     username,
+                    album_id,
                     p,
                     quick_mode,
                 )
@@ -187,26 +192,38 @@ async def fetch_all_pages(
             results = await asyncio.gather(*tasks)
 
             any_images = False
+            reached_album_end = False
             for p, (pairs, was_rate_limited) in zip(range(page, batch_end + 1), results):
                 if was_rate_limited:
                     rate_limited = True
                     break
                 if pairs:
                     any_images = True
+                    has_found_images = True
                     last_page_reached = p
                     for pair in pairs:
                         thumb = pair["thumbnail"]
                         if thumb not in seen:
                             seen.add(thumb)
                             all_images.append(pair)
+                elif has_found_images:
+                    reached_album_end = True
+                    break
 
             if rate_limited:
+                break
+
+            if reached_album_end:
+                print(
+                    f"Reached end of album at page {last_page_reached}.",
+                    file=sys.stderr,
+                )
                 break
 
             if not any_images:
                 consecutive_empty += 1
                 print(
-                    f"No images found in pages {page}-{batch_end} "
+                    f"No images found in album pages {page}-{batch_end} "
                     f"({consecutive_empty}/{MAX_EMPTY_BATCHES} empty batches).",
                     file=sys.stderr,
                 )
@@ -220,6 +237,7 @@ async def fetch_all_pages(
 
     return {
         "username": username,
+        "albumId": album_id,
         "imageCount": len(all_images),
         "images": all_images,
         "pagesScanned": last_page_reached - start_page + 1,
@@ -228,8 +246,9 @@ async def fetch_all_pages(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Fetch Lomography photos")
+    parser = argparse.ArgumentParser(description="Fetch photos from a Lomography album")
     parser.add_argument("username", help="Lomography username")
+    parser.add_argument("album_id", help="Album ID (with optional slug)")
     parser.add_argument("start_page", type=int, help="Start page number")
     parser.add_argument("end_page", type=int, nargs="?", help="End page number (optional)")
     parser.add_argument(
@@ -241,7 +260,9 @@ def main() -> None:
     args = parser.parse_args()
     end_page = args.end_page if args.end_page else args.start_page
 
-    result = asyncio.run(fetch_all_pages(args.username, args.start_page, end_page, args.quick))
+    result = asyncio.run(
+        fetch_all_pages(args.username, args.album_id, args.start_page, end_page, args.quick)
+    )
     print(json.dumps(result))
 
 

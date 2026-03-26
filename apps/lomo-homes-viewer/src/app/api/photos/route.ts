@@ -62,15 +62,16 @@ function fetchPhotos(username: string, startPage: number, endPage: number): {
   images: PhotoEntry[];
   imageCount: number;
   pagesScanned: number;
+  rateLimited?: boolean;
 } {
   const scriptPath = join(process.cwd(), 'scripts', 'fetch_photos.py');
 
   try {
     const output = execFileSync(
       'python3',
-      [scriptPath, username, String(startPage), String(endPage)],
+      [scriptPath, username, String(startPage), String(endPage), '--quick'],
       {
-        timeout: 120_000,
+        timeout: 30_000,
         encoding: 'utf-8',
         maxBuffer: 50 * 1024 * 1024,
       }
@@ -81,10 +82,11 @@ function fetchPhotos(username: string, startPage: number, endPage: number): {
       images: result.images || [],
       imageCount: result.imageCount || 0,
       pagesScanned: result.pagesScanned || 0,
+      rateLimited: result.rateLimited || false,
     };
   } catch (error) {
     console.error('Error running fetch_photos.py:', error);
-    return { images: [], imageCount: 0, pagesScanned: 0 };
+    return { images: [], imageCount: 0, pagesScanned: 0, rateLimited: false };
   }
 }
 
@@ -117,6 +119,13 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`Fetching pages ${startPage}-${endPage} for user ${username}...`);
     const result = fetchPhotos(username, startPage, endPage);
+
+    if (result.rateLimited) {
+      return Response.json(
+        { error: 'Rate limited by Lomography. Please try again later.', images: result.images },
+        { status: 429 }
+      );
+    }
 
     console.log(
       `Found ${result.imageCount} images across ${result.pagesScanned} pages for user ${username}`

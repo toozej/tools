@@ -44,14 +44,25 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 	fi
 	@echo "Running tests for app: $(APP)"
 	@# Determine app language
-	@if [ -f "apps/$(APP)/go.mod" ]; then \
+	@FAILED=0; \
+	if [ -f "apps/$(APP)/go.mod" ]; then \
 		echo "Detected Go app, running go test..."; \
-		cd apps/$(APP) && go test -v ./...; \
-	elif [ -f "apps/$(APP)/package.json" ]; then \
+		(cd apps/$(APP) && go test -v ./...) || FAILED=1; \
+	fi; \
+	if [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running bun test..."; \
-		cd apps/$(APP) && bun test || echo "No tests found"; \
-	else \
-		echo "Warning: No testable files found (go.mod or package.json) for app '$(APP)'; skipping tests"; \
+		(cd apps/$(APP) && bun test) || FAILED=1; \
+	fi; \
+	if [ -f "apps/$(APP)/index.html" ]; then \
+		echo "Detected HTML app, no tests to run"; \
+	fi; \
+	PYTEST_FILES=$$(cd apps/$(APP) && find . -name "test_*.py" -o -name "*_test.py" 2>/dev/null); \
+	if [ -n "$$PYTEST_FILES" ]; then \
+		echo "Detected Python tests, running pytest..."; \
+		(cd apps/$(APP) && uv run --with pytest --with pytest-asyncio --with aiohttp pytest -v $$PYTEST_FILES) || FAILED=1; \
+	fi; \
+	if [ "$$FAILED" -ne 0 ]; then \
+		echo "Some tests failed"; exit 1; \
 	fi
 
 build: ## Build a specific app locally (usage: make build APP=namehere)
