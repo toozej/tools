@@ -1,69 +1,52 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { PhotoEntry } from './api/photos/route';
+import {
+  ImageWithRetry,
+  FeedImage,
+  Lightbox,
+  ViewModeToggle,
+  useFullsizeResolver,
+} from '../components/shared';
 
-const MAX_IMAGE_RETRIES = 3;
-const IMAGE_RETRY_DELAY = 1000;
+const KNOWN_ARTISTS = [
+  'aciano', 'rik041', 'sirio174', 'mylatehope',
+  'adi_totp', 'lomodesbro', 'anelace', 'lomovanrenier',
+  'dearjme', 'yoavcoren', 'neanderthalis',
+  'vikk', 'bravopires', 'herbert-4',
+];
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function getTodayKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
 }
 
-function ImageWithRetry({
-  src,
-  alt,
-  className,
-  loading,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  loading?: 'lazy' | 'eager';
-}) {
-  const [retryCount, setRetryCount] = useState(0);
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setCurrentSrc(src);
-    setRetryCount(0);
-    setFailed(false);
-  }, [src]);
-
-  const handleError = async () => {
-    if (retryCount < MAX_IMAGE_RETRIES) {
-      await sleep(IMAGE_RETRY_DELAY * (retryCount + 1));
-      setRetryCount((prev) => prev + 1);
-      setCurrentSrc(`${src}?retry=${retryCount + 1}`);
-    } else {
-      setFailed(true);
-    }
-  };
-
-  if (failed) {
-    return (
-      <div
-        className={`${className ?? ''} flex items-center justify-center bg-neutral-700 text-neutral-400 text-xs`}
-      >
-        Failed to load
-      </div>
-    );
+function getFeaturedArtist(): string {
+  const key = getTodayKey();
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
   }
+  return KNOWN_ARTISTS[Math.abs(hash) % KNOWN_ARTISTS.length];
+}
 
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={currentSrc}
-      alt={alt}
-      className={className}
-      loading={loading}
-      onError={handleError}
-    />
-  );
+function getRandomArtist(): string {
+  return KNOWN_ARTISTS[Math.floor(Math.random() * KNOWN_ARTISTS.length)];
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-neutral-900" />}>
+      <HomeInner />
+    </Suspense>
+  );
+}
+
+function HomeInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [input, setInput] = useState('');
   const [images, setImages] = useState<PhotoEntry[]>([]);
   const [nextPage, setNextPage] = useState(1);
@@ -77,64 +60,12 @@ export default function Home() {
   const [totalCount, setTotalCount] = useState(0);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Full-size URL resolution state
-  const [fullsizeUrls, setFullsizeUrls] = useState<Map<string, string>>(new Map());
-  const resolvingRef = useRef<Set<string>>(new Set());
+  const { fullsizeUrls, resolveFullsize, clearFullsize } =
+    useFullsizeResolver();
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadFnRef = useRef<(() => Promise<void>) | null>(null);
-
-  // Resolve a photo's full-size URL
-  const resolveFullsize = useCallback(async (photo: PhotoEntry) => {
-    if (fullsizeUrls.has(photo.photoPage) || resolvingRef.current.has(photo.photoPage)) {
-      return;
-    }
-    resolvingRef.current.add(photo.photoPage);
-
-    try {
-      const resp = await fetch(
-        `/lomo-homes-viewer/api/photo-detail?photoPage=${encodeURIComponent(photo.photoPage)}`
-      );
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data.fullsize) {
-        setFullsizeUrls((prev) => {
-          const next = new Map(prev);
-          next.set(photo.photoPage, data.fullsize);
-          return next;
-        });
-      }
-    } catch {
-      // Silently fail — fallback to thumbnail
-    } finally {
-      resolvingRef.current.delete(photo.photoPage);
-    }
-  }, [fullsizeUrls]);
-
-  // Pre-load full-size URLs for feed view — resolve all loaded images
-  // in batches of 5 so they're ready before the user scrolls to them.
-  useEffect(() => {
-    if (viewMode !== 'feed' || images.length === 0) return;
-
-    const pending = images.filter(
-      (img) => !fullsizeUrls.has(img.photoPage) && !resolvingRef.current.has(img.photoPage)
-    );
-    if (pending.length === 0) return;
-
-    let cancelled = false;
-    const BATCH_SIZE = 5;
-
-    async function resolveBatch() {
-      for (let i = 0; i < pending.length && !cancelled; i += BATCH_SIZE) {
-        const batch = pending.slice(i, i + BATCH_SIZE);
-        await Promise.all(batch.map((img) => resolveFullsize(img)));
-      }
-    }
-
-    resolveBatch();
-    return () => { cancelled = true; };
-  }, [images, viewMode, fullsizeUrls, resolveFullsize]);
 
   const loadNextBatch = useCallback(async () => {
     if (loading || !hasMore || !input.trim()) return;
@@ -212,17 +143,63 @@ export default function Home() {
     setHasMore(true);
     setError(null);
     setTotalCount(0);
-    setFullsizeUrls(new Map());
-    resolvingRef.current.clear();
+    clearFullsize();
     Promise.resolve().then(() => {
       loadFnRef.current?.();
     });
   };
 
+  // Auto-search when navigated with ?input= param
+  const autoSearchDone = useRef(false);
+  useEffect(() => {
+    if (autoSearchDone.current) return;
+    const urlInput = searchParams.get('input');
+    if (urlInput && !hasSearched) {
+      autoSearchDone.current = true;
+      setInput(urlInput);
+      // Use a microtask so the input state is set before handleSearch reads it
+      Promise.resolve().then(() => {
+        setHasSearched(true);
+        setImages([]);
+        setNextPage(1);
+        setHasMore(true);
+        setError(null);
+        setTotalCount(0);
+        clearFullsize();
+        // loadFnRef reads input from the closure, so we need to trigger after state update
+        setTimeout(() => loadFnRef.current?.(), 0);
+      });
+    }
+  }, [searchParams, hasSearched, clearFullsize]);
+
+  const handleArtistClick = (artist: string) => {
+    setInput(artist);
+    setHasSearched(true);
+    setImages([]);
+    setNextPage(1);
+    setHasMore(true);
+    setError(null);
+    setTotalCount(0);
+    clearFullsize();
+    router.push(`/?input=${encodeURIComponent(artist)}`);
+    Promise.resolve().then(() => {
+      loadFnRef.current?.();
+    });
+  };
+
+  const handleRandomArtist = () => {
+    const artist = getRandomArtist();
+    handleArtistClick(artist);
+  };
+
+  const handleFeaturedArtist = () => {
+    const artist = getFeaturedArtist();
+    handleArtistClick(artist);
+  };
+
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
     setLightboxOpen(true);
-    // Resolve full-size for the lightbox image
     resolveFullsize(images[index]);
   };
 
@@ -235,25 +212,18 @@ export default function Home() {
       <header className="bg-neutral-800 border-b border-neutral-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg sm:text-xl font-semibold truncate">Lomography Photo Viewer</h1>
+            <h1 className="text-lg sm:text-xl font-semibold truncate">
+              Lomography Photo Viewer
+            </h1>
             {images.length > 0 && (
-              <div className="flex items-center gap-1 sm:gap-2 bg-neutral-700 rounded-lg p-1 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
-                  onClick={() => setViewMode('feed')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'feed' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:text-white'
-                  }`}
+                  onClick={() => router.push(`/artist/${encodeURIComponent(input.trim())}`)}
+                  className="px-3 py-1.5 bg-neutral-600 hover:bg-neutral-500 rounded-md text-sm font-medium transition-colors"
                 >
-                  Feed
+                  View Albums
                 </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:text-white'
-                  }`}
-                >
-                  Grid
-                </button>
+                <ViewModeToggle viewMode={viewMode} onSetViewMode={setViewMode} />
               </div>
             )}
           </div>
@@ -264,31 +234,56 @@ export default function Home() {
       <section className="bg-neutral-800 border-b border-neutral-700 py-6 sm:py-8">
         <div className="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="bg-neutral-700 rounded-lg p-4 sm:p-6 shadow-lg">
-            <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 text-neutral-200">Enter Lomography URL or Username</h2>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="e.g. https://www.lomography.com/homes/aciano/photos or aciano"
-                className="flex-1 px-4 py-2.5 sm:py-2 bg-neutral-600 border border-neutral-500 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
-              />
+            <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 text-neutral-200">
+              Discover Lomographers
+            </h2>
+
+            {/* Quick action buttons */}
+            <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
               <button
-                onClick={handleSearch}
-                disabled={loading}
-                className="px-6 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 rounded-md font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                onClick={handleRandomArtist}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                    Loading{loadingPage ? ` pages ${loadingPage}+` : ''}...
-                  </>
-                ) : (
-                  'Load Photos'
-                )}
+                🎲 Random Artist
+              </button>
+              <button
+                onClick={handleFeaturedArtist}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                ⭐ Featured Today
               </button>
             </div>
+
+            <div className="border-t border-neutral-600 pt-4">
+              <h3 className="text-sm font-medium mb-2 text-neutral-300">
+                Or search by username
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="e.g. https://www.lomography.com/homes/aciano/photos or aciano"
+                  className="flex-1 px-4 py-2.5 sm:py-2 bg-neutral-600 border border-neutral-500 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="px-6 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 rounded-md font-medium transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      Loading{loadingPage ? ` pages ${loadingPage}+` : ''}...
+                    </>
+                  ) : (
+                    'Load Photos'
+                  )}
+                </button>
+              </div>
+            </div>
+
             {error && (
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-300 text-sm">
                 {error}
@@ -304,8 +299,12 @@ export default function Home() {
           {images.length === 0 && !loading && (
             <div className="text-center py-16">
               <div className="text-6xl mb-4 opacity-20">📷</div>
-              <h3 className="text-xl font-medium text-neutral-300 mb-2">No photos loaded</h3>
-              <p className="text-neutral-400">Enter a Lomography URL or username to view photos</p>
+              <h3 className="text-xl font-medium text-neutral-300 mb-2">
+                No photos loaded
+              </h3>
+              <p className="text-neutral-400">
+                Enter a Lomography URL or username to view photos
+              </p>
             </div>
           )}
 
@@ -344,12 +343,13 @@ export default function Home() {
                   index={index}
                   fullsizeUrl={fullsizeUrls.get(img.photoPage)}
                   onClick={() => openLightbox(index)}
+                  onResolveFullsize={resolveFullsize}
                 />
               ))}
             </div>
           )}
 
-          {/* IntersectionObserver sentinel — triggers loading the next batch */}
+          {/* IntersectionObserver sentinel */}
           <div ref={sentinelRef} className="h-4" aria-hidden="true" />
 
           {loading && images.length > 0 && (
@@ -367,84 +367,24 @@ export default function Home() {
 
       {/* Lightbox */}
       {lightboxOpen && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 sm:p-4">
-          <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/10 backdrop-blur-sm w-11 h-11 rounded-full flex items-center justify-center hover:bg-white/20 active:bg-white/30 transition-colors text-white text-xl leading-none z-10"
-          >
-            ×
-          </button>
-          <div className="relative w-full max-w-6xl max-h-full flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getImageUrl(images[lightboxIndex])}
-              alt={`Photo ${lightboxIndex + 1}`}
-              className="max-w-full max-h-[85vh] object-contain"
-            />
-            <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-md text-sm text-white">
-              {lightboxIndex + 1} / {images.length}
-              {fullsizeUrls.has(images[lightboxIndex]?.photoPage) && (
-                <span className="ml-2 text-green-400">Full size</span>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                const next = (lightboxIndex - 1 + images.length) % images.length;
-                setLightboxIndex(next);
-                resolveFullsize(images[next]);
-              }}
-              className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 bg-black/40 sm:bg-black/50 backdrop-blur-sm w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-black/70 active:bg-black/80 transition-colors text-white text-lg"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => {
-                const next = (lightboxIndex + 1) % images.length;
-                setLightboxIndex(next);
-                resolveFullsize(images[next]);
-              }}
-              className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 bg-black/40 sm:bg-black/50 backdrop-blur-sm w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-black/70 active:bg-black/80 transition-colors text-white text-lg"
-            >
-              →
-            </button>
-          </div>
-        </div>
+        <Lightbox
+          images={images}
+          lightboxIndex={lightboxIndex}
+          fullsizeUrls={fullsizeUrls}
+          onClose={() => setLightboxOpen(false)}
+          onPrev={() => {
+            const next = (lightboxIndex - 1 + images.length) % images.length;
+            setLightboxIndex(next);
+            resolveFullsize(images[next]);
+          }}
+          onNext={() => {
+            const next = (lightboxIndex + 1) % images.length;
+            setLightboxIndex(next);
+            resolveFullsize(images[next]);
+          }}
+          getImageUrl={getImageUrl}
+        />
       )}
     </main>
-  );
-}
-
-/** Feed image card — shows thumbnail initially, swaps to full-size when resolved. */
-function FeedImage({
-  img,
-  index,
-  fullsizeUrl,
-  onClick,
-}: {
-  img: PhotoEntry;
-  index: number;
-  fullsizeUrl?: string;
-  onClick: () => void;
-}) {
-  const src = fullsizeUrl ?? img.thumbnail;
-
-  return (
-    <div
-      className="bg-neutral-800 rounded-lg overflow-hidden cursor-pointer"
-      onClick={onClick}
-    >
-      <div className="w-full flex items-center justify-center bg-black">
-        <ImageWithRetry
-          src={src}
-          alt={`Photo ${index + 1}`}
-          className="w-full h-auto max-h-[90vh] object-contain"
-          loading="lazy"
-        />
-      </div>
-      <div className="px-4 py-2 text-sm text-neutral-400 flex items-center justify-between">
-        <span>{index + 1}</span>
-        {fullsizeUrl && <span className="text-green-500">Full size</span>}
-      </div>
-    </div>
   );
 }

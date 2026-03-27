@@ -4,6 +4,7 @@ import {
   getRepoWorkflowRuns,
   getRepoReleases,
   getRepoCommits,
+  getOpenPullRequestCount,
   getRateLimitInfo,
 } from "@/lib/github";
 
@@ -24,11 +25,12 @@ export async function fetchRepoStatus(username: string): Promise<{
       activeRepos.map(async (repo): Promise<RepoStatus> => {
         const { owner, name } = repo;
 
-        // Fetch workflows, releases, and commits in parallel
-        const [workflowRuns, releases, commits] = await Promise.allSettled([
+        // Fetch workflows, releases, commits, and PR count in parallel
+        const [workflowRuns, releases, commits, prCount] = await Promise.allSettled([
           getRepoWorkflowRuns(owner.login, name, undefined),
           getRepoReleases(owner.login, name),
           getRepoCommits(owner.login, name, undefined),
+          getOpenPullRequestCount(owner.login, name),
         ]);
 
         // Get main branch workflow run
@@ -55,12 +57,18 @@ export async function fetchRepoStatus(username: string): Promise<{
           }
         }
 
+        // Get open PR count (from search API)
+        const openPRs = prCount.status === "fulfilled" ? prCount.value : 0;
+        // Open issues = total open_issues_count - open PRs (GitHub counts PRs in open_issues_count)
+        const openIssues = Math.max(0, repo.open_issues_count - openPRs);
+
         return {
           repo,
           mainWorkflowRun,
           latestRelease,
           latestCommit,
-          openPullRequests: repo.open_issues_count,
+          openPullRequests: openPRs,
+          openIssues,
           buildStatus,
         };
       })

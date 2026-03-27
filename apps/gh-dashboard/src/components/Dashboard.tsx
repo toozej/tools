@@ -514,31 +514,34 @@ export default function Dashboard() {
 
       {/* Repository table */}
       {!state.isLoading && sortedRepos.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Repository
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Build Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Latest Action
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Release
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Latest Commit
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Open PRs
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Open Issues
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Updated
                     </th>
                   </tr>
@@ -546,7 +549,7 @@ export default function Dashboard() {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {sortedRepos.map((repoStatus) => (
                     <tr key={repoStatus.repo.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 relative">
                             <a href={repoStatus.repo.html_url} target="_blank" rel="noopener noreferrer">
@@ -576,7 +579,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2" title={`Build status: ${repoStatus.buildStatus}`}>
                           <StatusIcon status={repoStatus.buildStatus} />
                           <span className={`text-sm font-medium capitalize ${
@@ -589,7 +592,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {repoStatus.mainWorkflowRun ? (
                           <div className="flex items-center gap-2">
                             <WorkflowStatusIcon run={repoStatus.mainWorkflowRun} />
@@ -606,7 +609,7 @@ export default function Dashboard() {
                           <span className="text-gray-400 text-sm">No runs</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {repoStatus.latestRelease ? (
                           <a
                             href={repoStatus.latestRelease.html_url}
@@ -620,7 +623,7 @@ export default function Dashboard() {
                           <span className="text-gray-400 text-sm">No release</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {repoStatus.latestCommit ? (
                           <div className="text-sm">
                             <a
@@ -640,7 +643,7 @@ export default function Dashboard() {
                           <span className="text-gray-400 text-sm">No commits</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {repoStatus.openPullRequests !== undefined ? (
                           <a
                             href={`${repoStatus.repo.html_url}/pulls`}
@@ -658,7 +661,25 @@ export default function Dashboard() {
                           <span className="text-gray-400 text-sm">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {repoStatus.openIssues !== undefined ? (
+                          <a
+                            href={`${repoStatus.repo.html_url}/issues`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              repoStatus.openIssues > 0
+                                ? "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                            }`}
+                          >
+                            {repoStatus.openIssues}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500 dark:text-gray-400" title={formatDateTime(repoStatus.repo.updated_at)}>
                           {formatDate(repoStatus.repo.updated_at)}
                         </div>

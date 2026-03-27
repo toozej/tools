@@ -125,7 +125,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 - Run relevant build/test commands before considering work complete
 
 ### ⚠️ Ask first
-- Modifying `docker-compose.yml`, `docker-compose-dev.yml`, or nginx configuration
+- Modifying `docker-compose.yml`, `docker-compose-dev.yml`, `docker-compose-prod.yml`, or nginx configuration
 - Changing templates in `templates/`
 - Modifying CI/CD workflows in `.github/workflows/`
 - Updating shared scripts in `scripts/`

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { execFileSync } from 'child_process';
 import { join } from 'path';
 
-const PHOTO_PATH_RE = /^\/homes\/[a-zA-Z0-9_-]+\/photos\/\d+/;
+const PHOTO_PATH_RE = /^\/homes\/[a-zA-Z0-9_-]+\/(?:photos|albums\/[\w-]+)\/\d+/;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
