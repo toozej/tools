@@ -181,6 +181,13 @@ export async function getRepo(
   return fetchWithRateLimit<GitHubRepo>(`/repos/${owner}/${repo}`);
 }
 
+export async function getOpenPullRequestCount(owner: string, repo: string): Promise<number> {
+  const data = await fetchWithRateLimit<{ total_count: number }>(
+    `/search/issues?q=repo:${owner}/${repo}+type:pr+state:open&per_page=1`
+  );
+  return data.total_count;
+}
+
 export async function getAuthenticatedUser(): Promise<{ login: string }> {
   return fetchWithRateLimit<{ login: string }>("/user");
 }

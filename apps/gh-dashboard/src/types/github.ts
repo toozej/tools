@@ -75,6 +75,7 @@ export interface RepoStatus {
   latestRelease: GitHubRelease | null;
   latestCommit: GitHubCommit | null;
   openPullRequests: number;
+  openIssues: number;
   buildStatus: "passing" | "failing" | "unknown" | "running";
 }
 
