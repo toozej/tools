@@ -53,6 +53,7 @@ jobs:
         apps: ${{ fromJson(needs.discover-apps.outputs.apps) }}
     steps:
       - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
       - uses: oven-sh/setup-bun@v2
         if: hashFiles(format('apps/{0}/package.json', matrix.apps)) != ''
       - uses: actions/setup-go@v6
