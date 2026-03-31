@@ -1,0 +1,82 @@
+---
+name: retry-failed-jobs
+
+on:
+  workflow_run:
+    workflows: ["release"]
+    types:
+      - completed
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  retry-failed:
+    runs-on: ubuntu-24.04
+    # Only retry if the triggering workflow failed and this is not already a retry
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.run_attempt == 1
+    steps:
+      - name: Retry transient failures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.event.workflow_run.repository.full_name }}
+        run: |
+          set -euo pipefail
+
+          TRANSIENT_PATTERNS=(
+            "panic: Segmentation fault"
+            "Bun has crashed"
+            "permission_denied"
+            "denied: permission_denied"
+            "failed to push.*denied"
+            "connection reset by peer"
+            "EOF"
+            "transport: error while dialing"
+            "500 Internal Server Error"
+            "502 Bad Gateway"
+            "503 Service Unavailable"
+            "429 Too Many Requests"
+            "rate limit"
+          )
+
+          echo "Checking run $RUN_ID for transient failures..."
+
+          # Get failed job IDs
+          failed_jobs=$(gh run view "$RUN_ID" --repo "$REPO" \
+            --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .databaseId')
+
+          if [ -z "$failed_jobs" ]; then
+            echo "No failed jobs found. Nothing to retry."
+            exit 0
+          fi
+
+          retryable=false
+          for job_id in $failed_jobs; do
+            log_file=$(mktemp)
+            gh api "repos/$REPO/actions/jobs/$job_id/logs" \
+              -H "Accept: application/vnd.github+raw" > "$log_file" 2>/dev/null || true
+
+            for pattern in "${TRANSIENT_PATTERNS[@]}"; do
+              if grep -qi "$pattern" "$log_file" 2>/dev/null; then
+                job_name=$(gh api "repos/$REPO/actions/jobs/$job_id" --jq '.name')
+                echo "Retryable error in $job_name: matched '$pattern'"
+                retryable=true
+                break
+              fi
+            done
+
+            rm -f "$log_file"
+          done
+
+          if [ "$retryable" = false ]; then
+            echo "No transient failures detected. Not retrying."
+            exit 0
+          fi
+
+          echo "Retrying failed jobs..."
+          gh run rerun "$RUN_ID" --repo "$REPO" --failed
+          echo "Retry initiated successfully."
