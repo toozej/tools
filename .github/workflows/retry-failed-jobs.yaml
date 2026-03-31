@@ -45,12 +45,12 @@ jobs:
 
           echo "Checking run $RUN_ID for transient failures..."
 
-          # Get failed job IDs
+          # Get failed or cancelled job IDs
           failed_jobs=$(gh run view "$RUN_ID" --repo "$REPO" \
-            --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .databaseId')
+            --json jobs --jq '.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled") | .databaseId')
 
           if [ -z "$failed_jobs" ]; then
-            echo "No failed jobs found. Nothing to retry."
+            echo "No failed or cancelled jobs found. Nothing to retry."
             exit 0
           fi
 

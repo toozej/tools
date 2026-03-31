@@ -27,7 +27,7 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
 
 all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
@@ -150,6 +150,18 @@ iterate: ## Run `make build run` via `air` any time a .go or .tmpl file changes
 		echo "Warning: No runnable files found (go.mod) for app '$(APP)'; skipping run"; \
 	fi
 
+build-docker: ## Build Docker image for a specific app (usage: make build-docker APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make build-docker APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Building Docker image for app: $(APP)"
+	@docker build -t ghcr.io/toozej/tools:$(APP) --no-cache --pull --progress=plain apps/$(APP)
+
 up: ## Run Docker Compose project with pre-built Docker images
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
 	docker compose -f docker-compose.yml --profile build --profile runtime up -d
@@ -200,38 +212,6 @@ dev-nc: clean ## Run Docker Compose project in dev mode without cache optionally
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime --progress=plain build --no-cache --pull $(APP)
 	docker compose -f docker-compose-dev.yml --profile build --profile runtime up $(APP)
 
-pre-commit: pre-commit-install pre-commit-run ## Install and run pre-commit hooks
-
-pre-commit-install: ## Install pre-commit hooks and necessary binaries
-	command -v apt && apt-get update || echo "package manager not apt"
-	# shellcheck
-	command -v shellcheck || brew install shellcheck || apt install -y shellcheck || sudo dnf install -y ShellCheck || sudo apt install -y shellcheck
-	# checkmake
-	go install github.com/checkmake/checkmake/cmd/checkmake@latest
-	# air
-	go install github.com/air-verse/air@latest
-	# actionlint
-	command -v actionlint || brew install actionlint || go install github.com/rhysd/actionlint/cmd/actionlint@latest
-	# syft
-	command -v syft || curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-	# semgrep
-	command -v semgrep || brew install semgrep || python3 -m pip install --break-system-packages --upgrade semgrep
-	# install and update pre-commits
-	# determine if on Debian 12 and if so use pip to install more modern pre-commit version
-	grep --silent "VERSION=\"12 (bookworm)\"" /etc/os-release && apt install -y --no-install-recommends python3-pip && python3 -m pip install --break-system-packages --upgrade pre-commit || echo "OS is not Debian 12 bookworm"
-	command -v pre-commit || brew install pre-commit || sudo dnf install -y pre-commit || sudo apt install -y pre-commit
-	pre-commit install
-	pre-commit autoupdate
-
-pre-commit-run: ## Run pre-commit hooks against all files
-	pre-commit run --all-files
-	# manually run the following checks since their pre-commits aren't working or don't exist
-
-clean: ## Remove any locally compiled binaries and profiles
-	@docker image rm --force $$(docker image ls --filter=reference="tools_*:latest" -q) &>/dev/null || echo "No tools_* tagged images to remove"
-	@docker image rm --force $$(docker image ls | grep "<none>" | awk '{print $$3}') &>/dev/null || echo "No '<none>' images to remove"
-	@docker volume rm --force $$(docker volume ls --filter=name="tools_tools_*" -q) &>/dev/null || echo "No volumes to remove"
-
 rebuild-app: ## Rebuild a specific app (usage: make rebuild-app APP=app-name)
 	@if [ -z "$(APP)" ]; then \
 		echo "Error: APP variable is required. Usage: make rebuild-app APP=<app-name>"; \
@@ -263,6 +243,39 @@ rebuild-app: ## Rebuild a specific app (usage: make rebuild-app APP=app-name)
 	@echo "Restarting www container..."
 	docker compose -f $(COMPOSE_FILE) --profile build --profile runtime restart www
 	@echo "Done rebuilding $(APP)"
+
+pre-commit: pre-commit-install pre-commit-run ## Install and run pre-commit hooks
+
+pre-commit-install: ## Install pre-commit hooks and necessary binaries
+	command -v apt && apt-get update || echo "package manager not apt"
+	# shellcheck
+	command -v shellcheck || brew install shellcheck || apt install -y shellcheck || sudo dnf install -y ShellCheck || sudo apt install -y shellcheck
+	# checkmake
+	go install github.com/checkmake/checkmake/cmd/checkmake@latest
+	# air
+	go install github.com/air-verse/air@latest
+	# actionlint
+	command -v actionlint || brew install actionlint || go install github.com/rhysd/actionlint/cmd/actionlint@latest
+	# syft
+	command -v syft || curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+	# semgrep
+	command -v semgrep || brew install semgrep || python3 -m pip install --break-system-packages --upgrade semgrep
+	# install and update pre-commits
+	# determine if on Debian 12 and if so use pip to install more modern pre-commit version
+	grep --silent "VERSION=\"12 (bookworm)\"" /etc/os-release && apt install -y --no-install-recommends python3-pip && python3 -m pip install --break-system-packages --upgrade pre-commit || echo "OS is not Debian 12 bookworm"
+	command -v pre-commit || brew install pre-commit || sudo dnf install -y pre-commit || sudo apt install -y pre-commit
+	pre-commit install
+	pre-commit autoupdate
+
+pre-commit-run: ## Run pre-commit hooks against all files
+	pre-commit run --all-files
+	# manually run the following checks since their pre-commits aren't working or don't exist
+
+clean: ## Remove any locally compiled binaries and profiles
+	@rm -rf ./apps/*/.next/; rm -rf ./apps/*/dist/; rm -rf ./apps/*/node_modules/; rm -rf ./apps/*/bin/;
+	@docker image rm --force $$(docker image ls --filter=reference="tools_*:latest" -q) &>/dev/null || echo "No tools_* tagged images to remove"
+	@docker image rm --force $$(docker image ls | grep "<none>" | awk '{print $$3}') &>/dev/null || echo "No '<none>' images to remove"
+	@docker volume rm --force $$(docker volume ls --filter=name="tools_tools_*" -q) &>/dev/null || echo "No volumes to remove"
 
 help: ## Display help text
 	@grep -E '^[a-zA-Z_-]+ ?:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
