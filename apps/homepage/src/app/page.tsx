@@ -3,99 +3,13 @@
 import { useState, useMemo } from "react";
 import colophonData from "@/data/colophon.json";
 import Link from "next/link";
-
-interface Credit {
-  name: string;
-  description?: string;
-  url?: string;
-}
-
-interface Author {
-  name: string;
-  url?: string;
-}
-
-interface App {
-  name: string;
-  title: string;
-  description: string;
-  tags: string[];
-  url: string;
-  credits: Credit[];
-  has_credits: boolean;
-  author?: Author;
-}
-
-// Levenshtein distance for fuzzy matching
-function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-}
-
-// Calculate similarity score (lower is better, 0 = exact match)
-function calculateSimilarity(query: string, text: string): number {
-  const queryLower = query.toLowerCase().trim();
-  const textLower = text.toLowerCase();
-
-  // Exact substring match gets score 0
-  if (textLower.includes(queryLower)) {
-    return 0;
-  }
-
-  // Levenshtein-based fuzzy matching
-  const distance = levenshteinDistance(queryLower, textLower.substring(0, queryLower.length + 20));
-  return distance;
-}
-
-// Check if query matches tags (normalized)
-function matchesTags(query: string, tags: string[]): boolean {
-  const queryLower = query.toLowerCase().trim();
-  return tags.some((tag) => {
-    const tagLower = tag.toLowerCase();
-    if (tagLower.includes(queryLower)) return true;
-    if (queryLower.includes(tagLower)) return true;
-    return levenshteinDistance(queryLower, tagLower) <= Math.max(2, queryLower.length / 3);
-  });
-}
-
-// Normalize text for search
-function normalizeForSearch(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-}
-
-// Get credit display text
-function getCreditDisplay(app: App): { name: string; url?: string } {
-  if (app.author) {
-    return { name: app.author.name, url: app.author.url };
-  }
-  if (app.credits && app.credits.length > 0) {
-    return { name: app.credits[0].name, url: app.credits[0].url };
-  }
-  return { name: "toozej" };
-}
+import {
+  type App,
+  calculateSimilarity,
+  matchesTags,
+  normalizeForSearch,
+  getCreditDisplay,
+} from "@/lib/search-utils";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");

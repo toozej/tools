@@ -50,8 +50,13 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 		(cd apps/$(APP) && go test -v ./...) || FAILED=1; \
 	fi; \
 	if [ -f "apps/$(APP)/package.json" ]; then \
-		echo "Detected JavaScript app, running bun test..."; \
-		(cd apps/$(APP) && bun test) || FAILED=1; \
+		echo "Detected JavaScript app, running tests..."; \
+		JS_TEST_FILES=$$(find apps/$(APP)/src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -v node_modules); \
+		if [ -n "$$JS_TEST_FILES" ]; then \
+			(cd apps/$(APP) && bun test) || FAILED=1; \
+		else \
+			echo "No test files found, skipping"; \
+		fi; \
 	fi; \
 	if [ -f "apps/$(APP)/index.html" ]; then \
 		echo "Detected HTML app, no tests to run"; \

@@ -54,13 +54,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
+        if: hashFiles(format('apps/{0}/package.json', matrix.apps)) != ''
       - uses: actions/setup-go@v6
+        if: hashFiles(format('apps/{0}/go.mod', matrix.apps)) != ''
         with:
           go-version: '^1.26'
           check-latest: true
       - name: Run tests
         run: |
-          make test APP=${{ matrix.apps }}
+          make build test APP=${{ matrix.apps }}
 
   gitleaks:
     name: gitleaks
