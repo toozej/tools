@@ -84,10 +84,17 @@ describe("github.ts", () => {
     });
 
     test("enableToken re-enables token", () => {
+      const originalToken = process.env.GITHUB_TOKEN;
+      process.env.GITHUB_TOKEN = "test-token";
       disableToken();
       expect(isTokenEnabled()).toBe(false);
       enableToken();
       expect(isTokenEnabled()).toBe(true);
+      if (originalToken) {
+        process.env.GITHUB_TOKEN = originalToken;
+      } else {
+        delete process.env.GITHUB_TOKEN;
+      }
     });
 
     test("hasEnvToken reflects GITHUB_TOKEN env var", () => {

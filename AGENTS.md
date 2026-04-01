@@ -78,9 +78,10 @@ uv run manage remove <name> [--force]
 uv run generate-colophon [--output <path>]
 ```
 
-### Building
+### Building and testing
 ```bash
-make build        # Build static apps
+make build APP=<name>      # Build static apps
+make test APP=<name>       # Run unit tests for apps
 ```
 
 ## Code style

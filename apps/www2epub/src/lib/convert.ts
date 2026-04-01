@@ -105,7 +105,7 @@ img { max-width: 100%; height: auto; }
   return zip.generateAsync({ type: 'blob' });
 }
 
-function generateOpf(title: string, hasImages: boolean): string {
+export function generateOpf(title: string, hasImages: boolean): string {
   return `<?xml version="1.0"?>
 <package version="2.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
@@ -126,7 +126,7 @@ function generateOpf(title: string, hasImages: boolean): string {
 </package>`;
 }
 
-function generateNcx(title: string): string {
+export function generateNcx(title: string): string {
   return `<?xml version="1.0"?>
 <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
   <head>
