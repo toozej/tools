@@ -33,6 +33,7 @@ services:
       - "tools_anki-converter:/var/www/html/anki-converter:ro"
       - "tools_md-converter:/var/www/html/md-converter:ro"
       - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
+      - "tools_xteink-wallpaper-converter:/var/www/html/xteink-wallpaper-converter:ro"
 
   # -------------------------
   # Runtime apps
@@ -333,6 +334,17 @@ services:
       - tools_contact-sheet-creator:/app/out
     command: ["sleep", "5"]
 
+  xteink-wallpaper-converter:
+    container_name: tools_xteink-wallpaper-converter
+    profiles: ["build"]
+    build:
+      context: ./apps/xteink-wallpaper-converter
+      dockerfile: Dockerfile
+    image: tools_xteink-wallpaper-converter:latest
+    volumes:
+      - tools_xteink-wallpaper-converter:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -353,6 +365,7 @@ volumes:
   tools_anki-converter:
   tools_md-converter:
   tools_contact-sheet-creator:
+  tools_xteink-wallpaper-converter:
 
 networks:
   backend:
