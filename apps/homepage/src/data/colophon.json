@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-03-19T22:56:32.688824Z",
-  "total_apps": 24,
+  "generated_at": "2026-04-06T14:55:08.172641Z",
+  "total_apps": 25,
   "apps": [
     {
       "name": "anki-converter",
@@ -281,7 +281,7 @@
     {
       "name": "lomo-homes-viewer",
       "title": "Lomography Homes Viewer",
-      "description": "Search by Lomography URL or username. Grid view for browsing photo thumbnails with lazy loading. Feed view — infinite-scrolling single-image layout with full-size photos. Lightbox for individual photo inspection. Lazy loading via IntersectionObserver — new batches are fetched as you scroll. Automatic retries with exponential backoff for failed image loads and rate-limited pages.",
+      "description": "Search & Discover. Search by Lomography URL or username. Random Artist — jump to a random featured artist's page. Featured Today — deterministic daily artist pick (same artist for the same date). Browse an artist's full album collection. Album Navigation. Artist sub-page showing a grid of all albums with cover images. Click an album to view its photos with the same feed/grid views. View Modes. Grid view for browsing photo thumbnails with lazy loading. Feed view — infinite-scrolling single-image layout with full-size photos. Sort Order (on album detail page). Latest (default, newest first). Oldest (reversed order). Shuffle (randomized order). Lightbox for individual photo inspection. Lazy loading via IntersectionObserver — new batches are fetched as you scroll. Automatic retries with exponential backoff for failed image loads and rate-limited pages.",
       "tags": [
         "Docker",
         "Bun",
@@ -505,6 +505,35 @@
       "url": "/www2s",
       "credits": [],
       "has_credits": false
+    },
+    {
+      "name": "xteink-wallpaper-converter",
+      "title": "XTEink Wallpaper Converter",
+      "description": "Drag & drop images to create a contact sheet. All processing happens in your browser. Your images never leave your device.",
+      "tags": [
+        "Go",
+        "Webassembly"
+      ],
+      "url": "/xteink-wallpaper-converter",
+      "credits": [
+        {
+          "name": "bild",
+          "url": "https://github.com/anthonynsimon/bild",
+          "description": "Pure Go image processing library",
+          "category": "Libraries"
+        },
+        {
+          "name": "go-app",
+          "url": "https://github.com/maxence-charriere/go-app",
+          "description": "Go WASM UI framework",
+          "category": "Libraries"
+        }
+      ],
+      "has_credits": true,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
+      }
     },
     {
       "name": "yaml-formatter",

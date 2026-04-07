@@ -1,0 +1,769 @@
+{
+  "films": {
+    "TMAX 100": {
+      "name": "T-MAX 100 Professional",
+      "category": "bw",
+      "edgeprint_codes": ["5052"],
+      "letter_codes": ["100TMX"],
+      "keywords": ["T-MAX 100", "TMAX 100", "TMX 100"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "TMAX 400": {
+      "name": "T-MAX 400 Professional",
+      "category": "bw",
+      "edgeprint_codes": ["5053"],
+      "letter_codes": ["400TMY", "TMY", "TMY2"],
+      "keywords": ["T-MAX 400", "TMAX 400", "TMX 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "TMAX 3200": {
+      "name": "T-MAX P3200 Professional",
+      "category": "bw",
+      "edgeprint_codes": ["5054"],
+      "letter_codes": ["P3200TMZ"],
+      "keywords": ["T-MAX 3200", "TMAX 3200", "TMX 3200", "P3200"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Tri-X 400": {
+      "name": "TRI-X 400",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["400TX", "TX"],
+      "keywords": ["Tri-X 400", "TRIX 400", "TX 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Tri-X 320": {
+      "name": "TRI-X 320",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["320TXP"],
+      "keywords": ["Tri-X 320", "TRIX 320", "TX 320"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "HP5 PLUS": {
+      "name": "HP5 PLUS",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["HP5"],
+      "keywords": ["HP5 PLUS", "HP5+", "HP5", "HP5 PLUS 400"],
+      "border_color": {"r": 30, "g": 30, "b": 30, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Delta 100": {
+      "name": "Delta 100",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["DELTA 100"],
+      "keywords": ["Delta 100", "DELTA 100"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Delta 400": {
+      "name": "Delta 400",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["DELTA 400"],
+      "keywords": ["Delta 400", "DELTA 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Delta 3200": {
+      "name": "Delta 3200",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["DELTA 3200"],
+      "keywords": ["Delta 3200", "DELTA 3200"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "FP4 PLUS 125": {
+      "name": "FP4 PLUS 125",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["FP4"],
+      "keywords": ["FP4 PLUS", "FP4+", "FP4", "FP4 PLUS 125"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Pan F Plus 50": {
+      "name": "Pan F Plus 50",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["PANF"],
+      "keywords": ["Pan F Plus", "PANF+", "PANF", "PAN F PLUS 50"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "ORTHO PLUS 80": {
+      "name": "ORTHO PLUS 80",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["ORTHO"],
+      "keywords": ["Ortho Plus", "ORTHO PLUS", "ORTHO+", "ORTHO PLUS 80", "ORTHO+ 80"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "XP2 SUPER 400": {
+      "name": "XP2 SUPER 400",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["XP2"],
+      "keywords": ["XP2 Super", "XP2 SUPER", "XP2", "XP2 SUPER 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KENTMERE 100": {
+      "name": "KENTMERE 100",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["K100"],
+      "keywords": ["Kentmere 100", "KENTMERE 100"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KENTMERE 200": {
+      "name": "KENTMERE 200",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["K200"],
+      "keywords": ["Kentmere 200", "KENTMERE 200"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KENTMERE 400": {
+      "name": "KENTMERE 400",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["K400"],
+      "keywords": ["Kentmere 400", "KENTMERE 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "SFX 200": {
+      "name": "SFX 200",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["SFX"],
+      "keywords": ["SFX 200", "SFX", "SFX200"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Acros II": {
+      "name": "Acros II",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["ACROS II"],
+      "keywords": ["Acros II", "ACROS II", "acros ii"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Acros 100": {
+      "name": "Acros 100",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["ACROS 100"],
+      "keywords": ["Acros 100", "ACROS 100"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PLUS-X 125": {
+      "name": "PLUS-X 125",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["125PX"],
+      "keywords": ["Plus-X 125", "PLUS-X 125", "PX 125"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PLUS-X 400": {
+      "name": "PLUS-X 400",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["PX"],
+      "keywords": ["Plus-X 400", "PLUS-X 400", "PX 400"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PLUS-X Pan": {
+      "name": "PLUS-X Pan",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["PX"],
+      "keywords": ["PLUS-X Pan", "PLUS XPAN"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Technical Pan": {
+      "name": "Technical Pan",
+      "category": "bw",
+      "edgeprint_codes": ["2415"],
+      "letter_codes": ["TP"],
+      "keywords": ["Technical Pan", "TECHNICAL PAN", "TP"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "T400 CN": {
+      "name": "T400 CN",
+      "category": "bw",
+      "edgeprint_codes": ["5021"],
+      "letter_codes": ["T400 CN"],
+      "keywords": ["T400 CN", "T400CN"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "BW400CN": {
+      "name": "BW400CN",
+      "category": "bw",
+      "edgeprint_codes": [],
+      "letter_codes": ["BW400CN"],
+      "keywords": ["BW400CN", "bw400cn"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "High Speed Infrared": {
+      "name": "High Speed Infrared",
+      "category": "bw",
+      "edgeprint_codes": ["2481"],
+      "letter_codes": ["HIE"],
+      "keywords": ["High Speed Infrared", "HIE", "Infrared"],
+      "border_color": {"r": 40, "g": 40, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "VeriColor III": {
+      "name": "VERICOLOR III Professional, Type S",
+      "category": "color_negative",
+      "edgeprint_codes": ["5026"],
+      "letter_codes": ["VPS"],
+      "keywords": ["VeriColor III", "VERICOLOR III", "VPS"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 100T": {
+      "name": "PORTRA 100T",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["PORTRA 100T"],
+      "keywords": ["Portra 100T", "PORTRA 100T"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 160NC": {
+      "name": "PORTRA 160NC",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["160NC"],
+      "keywords": ["Portra 160NC", "PORTRA 160NC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 160VC": {
+      "name": "PORTRA 160VC",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["160VC"],
+      "keywords": ["Portra 160VC", "PORTRA 160VC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 400NC": {
+      "name": "PORTRA 400NC",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["400NC"],
+      "keywords": ["Portra 400NC", "PORTRA 400NC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 400UC": {
+      "name": "PORTRA 400UC",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["400UC"],
+      "keywords": ["Portra 400UC", "PORTRA 400UC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "PORTRA 400VC": {
+      "name": "PORTRA 400VC",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["400VC"],
+      "keywords": ["Portra 400VC", "PORTRA 400VC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Kodacolor Gold 100": {
+      "name": "Kodacolor Gold 100",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["GA"],
+      "keywords": ["Kodacolor Gold", "KODACOLOR GOLD", "Gold 100"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Royal Gold 25": {
+      "name": "Royal Gold 25",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["RZ"],
+      "keywords": ["Royal Gold 25", "ROYAL GOLD 25"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Royal Gold 100": {
+      "name": "Royal Gold 100",
+      "category": "color_negative",
+      "edgeprint_codes": ["3101"],
+      "letter_codes": ["RA"],
+      "keywords": ["Royal Gold 100", "ROYAL GOLD 100"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Royal Gold 200": {
+      "name": "Royal Gold 200",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["RB"],
+      "keywords": ["Royal Gold 200", "ROYAL GOLD 200"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Royal Gold 400": {
+      "name": "Royal Gold 400",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["RC"],
+      "keywords": ["Royal Gold 400", "ROYAL GOLD 400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "HD 200": {
+      "name": "High Definition 200",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["HD"],
+      "keywords": ["HD 200", "High Definition 200"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "HD 400": {
+      "name": "High Definition 400",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["HD"],
+      "keywords": ["HD 400", "High Definition 400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAPRESS PLUS 100": {
+      "name": "EKTAPRESS PLUS 100 Professional",
+      "category": "color_negative",
+      "edgeprint_codes": ["5115"],
+      "letter_codes": ["PJA"],
+      "keywords": ["Ektapress Plus 100", "EKTAPRESS PLUS 100"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAPRESS PLUS 200": {
+      "name": "EKTAPRESS PLUS 200 Professional",
+      "category": "color_negative",
+      "edgeprint_codes": ["5016"],
+      "letter_codes": ["PJZ"],
+      "keywords": ["Ektapress Plus 200", "EKTAPRESS PLUS 200"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAPRESS PLUS 400": {
+      "name": "EKTAPRESS PLUS 400 Professional",
+      "category": "color_negative",
+      "edgeprint_codes": ["5113"],
+      "letter_codes": ["PJB"],
+      "keywords": ["Ektapress Plus 400", "EKTAPRESS PLUS 400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAPRESS PLUS 1600": {
+      "name": "EKTAPRESS PLUS 1600 Professional",
+      "category": "color_negative",
+      "edgeprint_codes": ["5030"],
+      "letter_codes": ["PJC"],
+      "keywords": ["Ektapress Plus 1600", "EKTAPRESS PLUS 1600"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAR 25": {
+      "name": "EKTAR 25 Professional",
+      "category": "color_negative",
+      "edgeprint_codes": ["5327"],
+      "letter_codes": ["PHR"],
+      "keywords": ["Ektar 25", "EKTAR 25"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Pro 100": {
+      "name": "Pro 100",
+      "category": "color_negative",
+      "edgeprint_codes": ["5329"],
+      "letter_codes": ["PRN"],
+      "keywords": ["Pro 100", "PRO 100"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Pro 400": {
+      "name": "Pro 400",
+      "category": "color_negative",
+      "edgeprint_codes": ["5080"],
+      "letter_codes": ["PPF"],
+      "keywords": ["Pro 400", "PRO 400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Pro 400 MC": {
+      "name": "Pro 400 MC",
+      "category": "color_negative",
+      "edgeprint_codes": ["5059"],
+      "letter_codes": ["PMC"],
+      "keywords": ["Pro 400 MC", "PRO 400 MC"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "MAX Versatility": {
+      "name": "MAX Versatility",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["G-400"],
+      "keywords": ["MAX Versatility", "MAX", "G-400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Ektar 100": {
+      "name": "EKTAR 100",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["EKTAR 100"],
+      "keywords": ["Ektar 100", "EKTAR 100"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Portra 160": {
+      "name": "PORTRA 160",
+      "category": "color_negative",
+      "edgeprint_codes": ["5059"],
+      "letter_codes": ["PORTRA 160"],
+      "keywords": ["Portra 160", "PORTRA 160"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Portra 400": {
+      "name": "PORTRA 400",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["400NC", "400UC", "400VC"],
+      "keywords": ["Portra 400", "PORTRA 400"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Portra 800": {
+      "name": "PORTRA 800",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["PORTRA 800"],
+      "keywords": ["Portra 800", "PORTRA 800"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "ColorPlus 200": {
+      "name": "ColorPlus 200",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["ColorPlus"],
+      "keywords": ["ColorPlus", "COLORPLUS", "COLOR PLUS"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Gold 200": {
+      "name": "Gold 200",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["GB"],
+      "keywords": ["Gold 200", "GOLD 200"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "UltraMax 400": {
+      "name": "UltraMax 400",
+      "category": "color_negative",
+      "edgeprint_codes": [],
+      "letter_codes": ["GC", "GC 400-8", "GC 400-9"],
+      "keywords": ["UltraMax", "ULTRAMAX"],
+      "border_color": {"r": 50, "g": 45, "b": 40, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 64": {
+      "name": "EKTACHROME 64 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5017"],
+      "letter_codes": ["EPR"],
+      "keywords": ["Ektachrome 64", "EKTACHROME 64"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 64X": {
+      "name": "EKTACHROME 64X Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5025"],
+      "letter_codes": ["EPX"],
+      "keywords": ["Ektachrome 64X", "EKTACHROME 64X"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 64T": {
+      "name": "EKTACHROME 64T Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5018"],
+      "letter_codes": ["EPY"],
+      "keywords": ["Ektachrome 64T", "EKTACHROME 64T"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E100S": {
+      "name": "EKTACHROME E100S",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E100S"],
+      "keywords": ["Ektachrome E100S", "EKTACHROME E100S"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E100G": {
+      "name": "EKTACHROME E100G",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E100G"],
+      "keywords": ["Ektachrome E100G", "EKTACHROME E100G"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E100GX": {
+      "name": "EKTACHROME E100GX",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E100GX"],
+      "keywords": ["Ektachrome E100GX", "EKTACHROME E100GX"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E100SW": {
+      "name": "EKTACHROME E100SW",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E100SW"],
+      "keywords": ["Ektachrome E100SW", "EKTACHROME E100SW"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E100VS": {
+      "name": "EKTACHROME E100VS",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E100VS"],
+      "keywords": ["Ektachrome E100VS", "EKTACHROME E100VS"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 100": {
+      "name": "EKTACHROME 100 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5058"],
+      "letter_codes": ["EPN"],
+      "keywords": ["Ektachrome 100", "EKTACHROME 100"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 100 PLUS": {
+      "name": "EKTACHROME 100 PLUS Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5005"],
+      "letter_codes": ["EPP"],
+      "keywords": ["Ektachrome 100 PLUS", "EKTACHROME 100 PLUS"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 100X": {
+      "name": "EKTACHROME 100X Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5024"],
+      "letter_codes": ["EPZ"],
+      "keywords": ["Ektachrome 100X", "EKTACHROME 100X"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME LUMIERE 100": {
+      "name": "EKTACHROME LUMIERE 100 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5046"],
+      "letter_codes": ["LPP"],
+      "keywords": ["Ektachrome Lumiere 100", "EKTACHROME LUMIERE 100"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME LUMIERE 100X": {
+      "name": "EKTACHROME LUMIERE 100X Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5048"],
+      "letter_codes": ["LPZ"],
+      "keywords": ["Ektachrome Lumiere 100X", "EKTACHROME LUMIERE 100X"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 160T": {
+      "name": "EKTACHROME 160T Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5037"],
+      "letter_codes": ["EPT"],
+      "keywords": ["Ektachrome 160T", "EKTACHROME 160T"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME E200": {
+      "name": "EKTACHROME E200",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["E200"],
+      "keywords": ["Ektachrome E200", "EKTACHROME E200"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 200": {
+      "name": "EKTACHROME 200 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5036"],
+      "letter_codes": ["EPD"],
+      "keywords": ["Ektachrome 200", "EKTACHROME 200"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 320T": {
+      "name": "EKTACHROME 320T Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5042"],
+      "letter_codes": ["EPJ"],
+      "keywords": ["Ektachrome 320T", "EKTACHROME 320T"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME 400X": {
+      "name": "EKTACHROME 400X Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5075"],
+      "letter_codes": ["EPL"],
+      "keywords": ["Ektachrome 400X", "EKTACHROME 400X"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME P1600": {
+      "name": "EKTACHROME P1600 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["EPH"],
+      "keywords": ["Ektachrome P1600", "EKTACHROME P1600"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTACHROME Infrared": {
+      "name": "EKTACHROME Professional Infrared",
+      "category": "color_slide",
+      "edgeprint_codes": ["2236"],
+      "letter_codes": ["EIR"],
+      "keywords": ["Ektachrome Infrared", "EKTACHROME INFRARED", "EIR"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Elite Chrome 100": {
+      "name": "Elite Chrome 100",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["EB"],
+      "keywords": ["Elite Chrome 100", "ELITE CHROME 100"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Elite Chrome Extra Color 100": {
+      "name": "Elite Chrome Extra Color 100",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["EBX"],
+      "keywords": ["Elite Chrome Extra Color 100", "ELITE CHROME EXTRA COLOR 100"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Elite Chrome 200": {
+      "name": "Elite Chrome 200",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["ED"],
+      "keywords": ["Elite Chrome 200", "ELITE CHROME 200"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "Elite Chrome 400": {
+      "name": "Elite Chrome 400",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["EL"],
+      "keywords": ["Elite Chrome 400", "ELITE CHROME 400"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KODACHROME 25": {
+      "name": "KODACHROME 25 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5034"],
+      "letter_codes": ["PKM", "KM"],
+      "keywords": ["Kodachrome 25", "KODACHROME 25", "KM"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KODACHROME 40": {
+      "name": "KODACHROME 40 (Type A)",
+      "category": "color_slide",
+      "edgeprint_codes": ["5070"],
+      "letter_codes": ["KPA"],
+      "keywords": ["Kodachrome 40", "KODACHROME 40", "KPA"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KODACHROME 64": {
+      "name": "KODACHROME 64 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5033"],
+      "letter_codes": ["PKR", "KR"],
+      "keywords": ["Kodachrome 64", "KODACHROME 64", "KR"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "KODACHROME 200": {
+      "name": "KODACHROME 200 Professional",
+      "category": "color_slide",
+      "edgeprint_codes": ["5002"],
+      "letter_codes": ["PKL", "KL"],
+      "keywords": ["Kodachrome 200", "KODACHROME 200", "KL"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    },
+    "EKTAGRAPHIC HC": {
+      "name": "EKTAGRAPHIC HC Slide",
+      "category": "color_slide",
+      "edgeprint_codes": [],
+      "letter_codes": ["HCS"],
+      "keywords": ["Ektagraphic HC", "EKTAGRAPHIC HC", "HCS"],
+      "border_color": {"r": 60, "g": 55, "b": 50, "a": 255},
+      "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
+    }
+  }
+}
