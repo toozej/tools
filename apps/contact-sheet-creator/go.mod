@@ -6,7 +6,7 @@ require (
 	github.com/anthonynsimon/bild v0.13.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/maxence-charriere/go-app/v10 v10.1.11
-	golang.org/x/image v0.37.0
+	golang.org/x/image v0.38.0
 )
 
 require (
