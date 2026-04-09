@@ -19,13 +19,20 @@ Copy the styling configuration from `./apps/homepage/`:
 Update `./nginx/conf.d/default.conf` based on app type:
 
 ### For Static/Builder Apps:
-Add a location block similar to existing static apps:
+Update static app allowlists in nginx (do not add a per-app location block):
 ```nginx
-location ^~ /{appName}/ {
-    alias /var/www/html/{appName}/;
-    try_files $uri $uri/ /{appName}/index.html;
+location ~ ^/(homepage|...|{appName}|...)$ {
+    return 301 $uri/;
+}
+
+location ~ ^/(homepage|...|{appName}|...)/ {
+    try_files $uri $uri/ =404;
+    error_page 403 404 502 503 504 /app-unavailable.html;
 }
 ```
+- Add `{appName}` to both static app regex allowlists:
+  - `# Normalize static app URLs without exposing internal nginx port`
+  - `# Static app location block`
 - Add `if ($http_referer ~* "/{appName}/")` block under `location ^~ /_next/` section if the app is a NodeJS / NextJS app
 - Add volume mount: `"tools_{appName}:/var/www/html/{appName}:ro"`
 

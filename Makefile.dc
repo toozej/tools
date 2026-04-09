@@ -1,0 +1,39 @@
+# Set sane defaults for Make
+SHELL = bash
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
+
+# Set default goal such that `make` runs `make help`
+.DEFAULT_GOAL := help
+
+COMPOSE_FILE ?= docker-compose.yml
+COMPOSE = sudo docker compose -f $(COMPOSE_FILE)
+
+.PHONY: up down volumes pull update test clean all help
+
+up: ## docker compose up -d
+	$(COMPOSE) up -d
+
+down: ## docker compose down --remove-orphans
+	$(COMPOSE) down --remove-orphans
+
+volumes: ## docker compose down --volumes
+	$(COMPOSE) down --volumes
+
+pull: ## docker compose pull
+	$(COMPOSE) pull
+
+update: down volumes pull up ## down, remove volumes, pull new images, up
+
+# required / meta targets below
+
+test:
+	echo ""
+
+all: update ## alias for update
+
+clean: volumes ## alias for volumes
+
+help: ## Display help text
+	@grep -E '^[a-zA-Z_-]+ ?:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
