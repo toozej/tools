@@ -27,7 +27,7 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate
 
 all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
@@ -68,6 +68,46 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 	fi; \
 	if [ "$$FAILED" -ne 0 ]; then \
 		echo "Some tests failed"; exit 1; \
+	fi
+
+check: ## Run lint and typecheck for a JS/TS app (usage: make check APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make check APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@if [ ! -f "apps/$(APP)/package.json" ]; then \
+		echo "App '$(APP)' is not a JS/TS app, skipping check"; \
+	else \
+		echo "Running check for app: $(APP)"; \
+		cd apps/$(APP) && bun install && bun run lint && bun run typecheck; \
+	fi
+
+validate: ## Run check build test for a specific app or all apps (usage: make validate [APP=namehere])
+	@if [ -n "$(APP)" ]; then \
+		if [ ! -d "apps/$(APP)" ]; then \
+			echo "Error: App '$(APP)' not found in apps/ directory"; \
+			exit 1; \
+		fi; \
+		echo "Validating single app: $(APP)"; \
+		make check APP="$(APP)"; \
+		make build APP="$(APP)"; \
+		make test APP="$(APP)"; \
+	else \
+		echo "Validating all apps..."; \
+		for dir in apps/*/; do \
+			APP_NAME=$$(basename "$$dir"); \
+			echo ""; \
+			echo "================================="; \
+			echo "Validating app: $$APP_NAME"; \
+			echo "================================="; \
+			make check APP="$$APP_NAME" || exit 1; \
+			make build APP="$$APP_NAME" || exit 1; \
+			make test APP="$$APP_NAME" || exit 1; \
+		done; \
 	fi
 
 build: ## Build a specific app locally (usage: make build APP=namehere)

@@ -8,12 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "next": "next"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "jsdom": "^27.4.0",
-    "next": "^16.1.6",
+    "next": "^16.2.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -24,8 +25,9 @@
     "@types/node": "^24.10.15",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "bun-types": "^1.2.0",
     "eslint": "^9.39.3",
-    "eslint-config-next": "^16.1.6",
+    "eslint-config-next": "^16.2.2",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }

@@ -11,6 +11,7 @@ A modern, responsive web dashboard for monitoring GitHub repository status. This
 - **Actions History**: Display of recent workflow runs with clickable links to GitHub Actions
 - **Release Tracking**: Most recent release version for each repository
 - **Commit History**: Latest commit hash and message
+- **Open Alerts**: Sum of open Dependabot and open Code Scanning alerts per repository (requires token with `security_events` read access)
 - **Filters & Search**: Filter repositories by name, description, language, and build status
 - **Live Refresh**: Auto-refreshes every 30 seconds with a manual force refresh button
 - **Rate Limit Awareness**: Shows remaining API requests and handles rate limiting gracefully
@@ -70,6 +71,8 @@ src/
   - `GET /repos/{owner}/{repo}/actions/runs` - Get workflow runs
   - `GET /repos/{owner}/{repo}/releases` - Get releases
   - `GET /repos/{owner}/{repo}/commits` - Get commits
+  - `GET /repos/{owner}/{repo}/dependabot/alerts` - Get open Dependabot alerts count
+  - `GET /repos/{owner}/{repo}/code-scanning/alerts` - Get open Code Scanning alerts count
 
 ### Configuration
 

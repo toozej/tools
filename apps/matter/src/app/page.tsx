@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import EXIF from "exif-js";
+import { applyOrientation, isRotatedOrientation, getActualDimensions, calculateTotalDimensions } from "@/lib/orientation";
 
 interface BorderSettings {
   outerWidth: number;
@@ -35,9 +36,8 @@ export default function Home() {
 
   const getExifOrientation = (file: File | Blob): Promise<number> => {
     return new Promise((resolve) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      EXIF.getData(file as any, function (this: any) {
-        const orientation = EXIF.getTag(this, "Orientation");
+      EXIF.getData(file as unknown as string, () => {
+        const orientation = EXIF.getTag(file, "Orientation");
         resolve(orientation || 1);
       });
     });
@@ -207,16 +207,23 @@ export default function Home() {
     img.crossOrigin = "anonymous";
     img.onload = () => {
       // Determine actual dimensions based on orientation
-      const isRotated = [5, 6, 7, 8].includes(image.orientation);
-      const actualWidth = isRotated ? image.height : image.width;
-      const actualHeight = isRotated ? image.width : image.height;
+      const isRotated = isRotatedOrientation(image.orientation);
+      const { width: actualWidth, height: actualHeight } = getActualDimensions(
+        image.width,
+        image.height,
+        image.orientation
+      );
 
       // Calculate total dimensions including borders
       const innerWidth = borderSettings.showInner ? borderSettings.innerWidth : 0;
-      const totalWidth =
-        actualWidth + borderSettings.outerWidth * 2 + innerWidth * 2;
-      const totalHeight =
-        actualHeight + borderSettings.outerWidth * 2 + innerWidth * 2;
+      const { width: totalWidth, height: totalHeight } = calculateTotalDimensions(
+        actualWidth,
+        actualHeight,
+        borderSettings.outerWidth,
+        innerWidth,
+        borderSettings.showInner,
+        image.orientation
+      );
 
       canvas.width = totalWidth;
       canvas.height = totalHeight;

@@ -29,6 +29,7 @@ FORCE_MODE=false
 TARGET_APP=""
 NEXTJS_VERSION=""
 REACT_VERSION=""
+VALIDATE_ONLY=false
 
 # Apps to upgrade (auto-detected by default)
 APPS=()
@@ -74,6 +75,10 @@ parse_args() {
                 REACT_VERSION="$2"
                 shift 2
                 ;;
+            --validate)
+                VALIDATE_ONLY=true
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
@@ -82,6 +87,7 @@ parse_args() {
                 echo "  --force           Skip all confirmations (for LLM agents)"
                 echo "  --next <version>  Override Next.js version (default: latest)"
                 echo "  --react <version> Override React version (default: latest)"
+                echo "  --validate        Run validations only (typecheck, lint, build, test)"
                 echo "  --help, -h        Show this help message"
                 exit 0
                 ;;
@@ -323,6 +329,17 @@ verify_app() {
         log_success "  Build passed"
     fi
 
+    log_info "  Running tests..."
+    test_count=$(find . -type f \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" \) -not -path "*/node_modules/*" | wc -l)
+    if [ "$test_count" -eq 0 ]; then
+        log_success "  No tests found, skipping"
+    elif ! bun test >> "$LOG_FILE" 2>&1; then
+        log_error "  Tests failed for $app"
+        ((errors++))
+    else
+        log_success "  Tests passed"
+    fi
+
     cd - > /dev/null
     return $errors
 }
@@ -386,6 +403,31 @@ main() {
         log_info "Detected ${#APPS[@]} NextJS apps: ${APPS[*]}"
     fi
     echo ""
+
+    if [[ "$VALIDATE_ONLY" == "true" ]]; then
+        log_info "=== Validation Mode ==="
+
+        local validation_failed=()
+
+        for app in "${APPS[@]}"; do
+            if ! verify_app "$app"; then
+                validation_failed+=("$app")
+            fi
+        done
+
+        echo ""
+        echo "========================================"
+        echo "  VALIDATION SUMMARY"
+        echo "========================================"
+
+        if [[ ${#validation_failed[@]} -eq 0 ]]; then
+            log_success "All ${#APPS[@]} apps passed validation!"
+        else
+            log_error "Validation failed for: ${validation_failed[*]}"
+            exit 1
+        fi
+        exit 0
+    fi
 
     log_info "Current versions:"
     local apps_to_process=()

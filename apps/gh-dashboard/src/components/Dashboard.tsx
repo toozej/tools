@@ -542,6 +542,9 @@ export default function Dashboard() {
                       Open Issues
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Open Alerts
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Updated
                     </th>
                   </tr>
@@ -674,6 +677,24 @@ export default function Dashboard() {
                             }`}
                           >
                             {repoStatus.openIssues}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {repoStatus.openAlerts !== null && repoStatus.openAlerts !== undefined ? (
+                          <a
+                            href={`${repoStatus.repo.html_url}/security`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              repoStatus.openAlerts > 0
+                                ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                            }`}
+                          >
+                            {repoStatus.openAlerts}
                           </a>
                         ) : (
                           <span className="text-gray-400 text-sm">-</span>

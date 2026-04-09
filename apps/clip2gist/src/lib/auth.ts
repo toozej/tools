@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import GitHubProvider from 'next-auth/providers/github'
 
 export const authOptions = {

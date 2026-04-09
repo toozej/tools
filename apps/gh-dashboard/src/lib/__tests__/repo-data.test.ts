@@ -38,6 +38,7 @@ function createRepoStatus(
     latestCommit: null,
     openPullRequests: 0,
     openIssues: 0,
+    openAlerts: null,
     buildStatus: "unknown",
     ...statusOverrides,
   };
@@ -280,6 +281,28 @@ describe("repo-data.ts", () => {
       const openIssues = Math.max(0, repo.open_issues_count - openPRs);
       expect(openIssues).toBe(0);
       expect(openPRs).toBe(0);
+    });
+  });
+
+  describe("openAlerts field", () => {
+    test("openAlerts defaults to null", () => {
+      const status = createRepoStatus();
+      expect(status.openAlerts).toBeNull();
+    });
+
+    test("openAlerts can be set to a number", () => {
+      const status = createRepoStatus({}, { openAlerts: 5 });
+      expect(status.openAlerts).toBe(5);
+    });
+
+    test("openAlerts can be zero", () => {
+      const status = createRepoStatus({}, { openAlerts: 0 });
+      expect(status.openAlerts).toBe(0);
+    });
+
+    test("openAlerts null indicates unavailable data", () => {
+      const status = createRepoStatus({}, { openAlerts: null });
+      expect(status.openAlerts).toBeNull();
     });
   });
 
