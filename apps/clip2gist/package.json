@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
-    "next": "^16.2.2",
+    "next": "^16.2.3",
     "next-auth": "^4.24.13",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
@@ -26,7 +26,7 @@
     "@types/react-dom": "^19.2.3",
     "bun-types": "^1.2.4",
     "eslint": "^9.39.3",
-    "eslint-config-next": "^16.2.2",
+    "eslint-config-next": "^16.2.3",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }
