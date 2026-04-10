@@ -17,6 +17,8 @@ import {
   getRepoReleases,
   getRepoCommits,
   getOpenPullRequestCount,
+  getDependabotAlertsCount,
+  getCodeScanningAlertsCount,
   getAuthenticatedUser,
   getRateLimitStatus,
 } from "@/lib/github";
@@ -282,6 +284,168 @@ describe("github.ts", () => {
       expect(calledUrl).toContain("repo:owner/repo");
       expect(calledUrl).toContain("type:pr");
       expect(calledUrl).toContain("state:open");
+    });
+
+    test("getDependabotAlertsCount returns 0 when no alerts", async () => {
+      fetchMock = mock(() =>
+        Promise.resolve(createMockResponse([]))
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-no-alerts");
+
+      expect(count).toBe(0);
+      const calledUrl = fetchMock.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("/repos/owner/repo-no-alerts/dependabot/alerts");
+      expect(calledUrl).toContain("state=open");
+      expect(calledUrl).toContain("per_page=100");
+      const fetchOptions = fetchMock.mock.calls[0][1] as RequestInit;
+      const headers = fetchOptions.headers as Record<string, string>;
+      expect(headers.Accept).toBe("application/vnd.github+json");
+      expect(headers["X-GitHub-Api-Version"]).toBe("2026-03-10");
+    });
+
+    test("getDependabotAlertsCount counts alerts across paginated results", async () => {
+      const firstPageAlerts = Array.from({ length: 100 }, (_, i) => ({ number: i + 1, state: "open" }));
+      const secondPageAlerts = [{ number: 101, state: "open" }, { number: 102, state: "open" }];
+      const response = new Response(JSON.stringify(firstPageAlerts), {
+        status: 200,
+        headers: new Headers({
+          ...Object.fromEntries(createMockHeaders().entries()),
+          link: '<https://api.github.com/repos/owner/repo-link/dependabot/alerts?state=open&per_page=100&after=cursor123>; rel="next"',
+        }),
+      });
+      const secondResponse = new Response(JSON.stringify(secondPageAlerts), {
+        status: 200,
+        headers: createMockHeaders(),
+      });
+      fetchMock = mock(() => Promise.resolve(secondResponse));
+      fetchMock.mockImplementationOnce(() => Promise.resolve(response));
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-link");
+
+      expect(count).toBe(102);
+      const firstUrl = fetchMock.mock.calls[0][0] as string;
+      const secondUrl = fetchMock.mock.calls[1][0] as string;
+      expect(firstUrl).toContain("per_page=100");
+      expect(secondUrl).toContain("after=cursor123");
+    });
+
+    test("getDependabotAlertsCount returns array length for single page results", async () => {
+      const alerts = [{ number: 1, state: "open" }];
+      fetchMock = mock(() => Promise.resolve(createMockResponse(alerts)));
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-no-link");
+
+      expect(count).toBe(1);
+    });
+
+    test("getDependabotAlertsCount returns null on 404", async () => {
+      fetchMock = mock(() =>
+        Promise.resolve(
+          new Response("Not Found", {
+            status: 404,
+            statusText: "Not Found",
+            headers: createMockHeaders(),
+          })
+        )
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-404");
+
+      expect(count).toBeNull();
+    });
+
+    test("getDependabotAlertsCount returns null on 403", async () => {
+      fetchMock = mock(() =>
+        Promise.resolve(
+          new Response("Forbidden", {
+            status: 403,
+            statusText: "Forbidden",
+            headers: createMockHeaders({ "x-ratelimit-remaining": "10" }),
+          })
+        )
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-403");
+
+      expect(count).toBeNull();
+    });
+
+    test("getDependabotAlertsCount returns null on network error", async () => {
+      fetchMock = mock(() => Promise.reject(new Error("Network error")));
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getDependabotAlertsCount("owner", "repo-network-err");
+
+      expect(count).toBeNull();
+    });
+
+    test("getCodeScanningAlertsCount returns 0 when no alerts", async () => {
+      fetchMock = mock(() =>
+        Promise.resolve(createMockResponse([]))
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getCodeScanningAlertsCount("owner", "repo-no-alerts");
+
+      expect(count).toBe(0);
+      const calledUrl = fetchMock.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("/repos/owner/repo-no-alerts/code-scanning/alerts");
+      expect(calledUrl).toContain("state=open");
+      expect(calledUrl).toContain("per_page=100");
+      const fetchOptions = fetchMock.mock.calls[0][1] as RequestInit;
+      const headers = fetchOptions.headers as Record<string, string>;
+      expect(headers.Accept).toBe("application/vnd.github+json");
+      expect(headers["X-GitHub-Api-Version"]).toBe("2026-03-10");
+    });
+
+    test("getCodeScanningAlertsCount counts alerts across paginated results", async () => {
+      const firstPageAlerts = Array.from({ length: 100 }, (_, i) => ({ number: i + 1, state: "open" }));
+      const secondPageAlerts = [{ number: 101, state: "open" }, { number: 102, state: "open" }, { number: 103, state: "open" }];
+      const response = new Response(JSON.stringify(firstPageAlerts), {
+        status: 200,
+        headers: new Headers({
+          ...Object.fromEntries(createMockHeaders().entries()),
+          link: '<https://api.github.com/repos/owner/repo-link/code-scanning/alerts?state=open&per_page=100&after=cursor123>; rel="next"',
+        }),
+      });
+      const secondResponse = new Response(JSON.stringify(secondPageAlerts), {
+        status: 200,
+        headers: createMockHeaders(),
+      });
+      fetchMock = mock(() => Promise.resolve(secondResponse));
+      fetchMock.mockImplementationOnce(() => Promise.resolve(response));
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getCodeScanningAlertsCount("owner", "repo-link");
+
+      expect(count).toBe(103);
+      const firstUrl = fetchMock.mock.calls[0][0] as string;
+      const secondUrl = fetchMock.mock.calls[1][0] as string;
+      expect(firstUrl).toContain("per_page=100");
+      expect(secondUrl).toContain("after=cursor123");
+    });
+
+    test("getCodeScanningAlertsCount returns null on 403", async () => {
+      fetchMock = mock(() =>
+        Promise.resolve(
+          new Response("Forbidden", {
+            status: 403,
+            statusText: "Forbidden",
+            headers: createMockHeaders({ "x-ratelimit-remaining": "10" }),
+          })
+        )
+      );
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const count = await getCodeScanningAlertsCount("owner", "repo-403");
+
+      expect(count).toBeNull();
     });
 
     test("getAuthenticatedUser calls /user endpoint", async () => {

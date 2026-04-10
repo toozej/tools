@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import convert from 'convert-units';
+import convert, { type Unit } from 'convert-units';
 import { unitMap, volumeUnits, parseInput } from '@/lib/converter-utils';
 
 const unitOptions = [
@@ -42,8 +42,7 @@ export default function UnitConverter() {
     const parsed = parseInput(input, fromUnit, toUnit);
     if (parsed) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const converted = convert(parsed.value).from(parsed.from as any).to(parsed.to as any);
+        const converted = convert(parsed.value).from(parsed.from as Unit).to(parsed.to as Unit);
         setResult(`${parsed.value} ${parsed.from} = ${converted.toFixed(2)} ${parsed.to}`);
         setError('');
       } catch {

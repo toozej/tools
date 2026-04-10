@@ -115,6 +115,10 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 - When adding a new app, update:
   - `docker-compose.yml` (or `docker-compose-dev.yml`)
   - `nginx/conf.d/default.conf`
+    - For static apps, update both static app regex allowlists:
+      - `# Normalize static app URLs without exposing internal nginx port`
+      - `# Static app location block`
+    - For static Next.js apps, also add an app-specific referer rule under `location ^~ /_next/`
 - Write clear commit messages describing the app and change
 
 ## Boundaries

@@ -27,7 +27,7 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-deps
 
 all: clean up ## Run default workflow via Docker
 local: pre-commit dev-nc ## Run dev workflow using Docker
@@ -68,6 +68,99 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 	fi; \
 	if [ "$$FAILED" -ne 0 ]; then \
 		echo "Some tests failed"; exit 1; \
+	fi
+
+check: ## Run lint and typecheck for a JS/TS app (usage: make check APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make check APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@if [ ! -f "apps/$(APP)/package.json" ]; then \
+		echo "App '$(APP)' is not a JS/TS app, skipping check"; \
+	else \
+		echo "Running check for app: $(APP)"; \
+		cd apps/$(APP) && bun install && bun run lint && bun run typecheck; \
+	fi
+
+validate: ## Run check build test for one app (usage: make validate APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make validate APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Validating app: $(APP)"
+	@make check APP="$(APP)"
+	@make build APP="$(APP)"
+	@make test APP="$(APP)"
+
+update: ## Update deps and validate all apps, or one app via APP=namehere
+	@if [ -n "$(APP)" ]; then \
+		if [ ! -d "apps/$(APP)" ]; then \
+			echo "Error: App '$(APP)' not found in apps/ directory"; \
+			exit 1; \
+		fi; \
+		echo "Updating dependencies and validating app: $(APP)"; \
+		make update-deps APP="$(APP)"; \
+		make validate APP="$(APP)"; \
+	else \
+		echo "Updating dependencies and validating all apps..."; \
+		for dir in apps/*/; do \
+			APP_NAME=$$(basename "$$dir"); \
+			echo ""; \
+			echo "================================="; \
+			echo "Processing app: $$APP_NAME"; \
+			echo "================================="; \
+			make update-deps APP="$$APP_NAME" || exit 1; \
+			make validate APP="$$APP_NAME" || exit 1; \
+		done; \
+	fi
+
+update-deps: ## Update app dependencies for JS/TS, Go, and Python (usage: make update-deps APP=namehere)
+	@if [ -z "$(APP)" ]; then \
+		echo "Error: APP variable is required. Usage: make update-deps APP=<app-name>"; \
+		exit 1; \
+	fi
+	@if [ ! -d "apps/$(APP)" ]; then \
+		echo "Error: App '$(APP)' not found in apps/ directory"; \
+		exit 1; \
+	fi
+	@echo "Updating dependencies for app: $(APP)"
+	@UPDATED=0; \
+	if [ -f "apps/$(APP)/package.json" ]; then \
+		if grep -q '"next"' "apps/$(APP)/package.json"; then \
+			echo "Detected Next.js app, running scripts/upgrade-nextjs.sh..."; \
+			./scripts/upgrade-nextjs.sh --app "$(APP)" --force; \
+			UPDATED=1; \
+		else \
+			echo "Detected JS/TS app without Next.js, updating JavaScript dependencies..."; \
+			(cd apps/$(APP) && bun update --latest); \
+			UPDATED=1; \
+		fi; \
+	fi; \
+	if [ -f "apps/$(APP)/go.mod" ]; then \
+		echo "Detected Go app, updating Go module dependencies..."; \
+		(cd apps/$(APP) && go get -u ./... && go mod tidy); \
+		UPDATED=1; \
+	fi; \
+	if [ -f "apps/$(APP)/pyproject.toml" ]; then \
+		echo "Detected Python app (pyproject.toml), updating with uv..."; \
+		(cd apps/$(APP) && uv lock --upgrade && uv sync); \
+		UPDATED=1; \
+	fi; \
+	if [ -f "apps/$(APP)/requirements.txt" ]; then \
+		echo "Detected Python requirements.txt, updating with uv pip..."; \
+		(cd apps/$(APP) && uv pip install --upgrade -r requirements.txt); \
+		UPDATED=1; \
+	fi; \
+	if [ "$$UPDATED" -eq 0 ]; then \
+		echo "Warning: No supported dependency files found for app '$(APP)' (expected package.json, go.mod, pyproject.toml, or requirements.txt)"; \
 	fi
 
 build: ## Build a specific app locally (usage: make build APP=namehere)

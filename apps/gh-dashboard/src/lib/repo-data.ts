@@ -5,6 +5,8 @@ import {
   getRepoReleases,
   getRepoCommits,
   getOpenPullRequestCount,
+  getDependabotAlertsCount,
+  getCodeScanningAlertsCount,
   getRateLimitInfo,
 } from "@/lib/github";
 
@@ -26,11 +28,13 @@ export async function fetchRepoStatus(username: string): Promise<{
         const { owner, name } = repo;
 
         // Fetch workflows, releases, commits, and PR count in parallel
-        const [workflowRuns, releases, commits, prCount] = await Promise.allSettled([
+        const [workflowRuns, releases, commits, prCount, dependabotCount, codeScanningCount] = await Promise.allSettled([
           getRepoWorkflowRuns(owner.login, name, undefined),
           getRepoReleases(owner.login, name),
           getRepoCommits(owner.login, name, undefined),
           getOpenPullRequestCount(owner.login, name),
+          getDependabotAlertsCount(owner.login, name),
+          getCodeScanningAlertsCount(owner.login, name),
         ]);
 
         // Get main branch workflow run
@@ -59,8 +63,12 @@ export async function fetchRepoStatus(username: string): Promise<{
 
         // Get open PR count (from search API)
         const openPRs = prCount.status === "fulfilled" ? prCount.value : 0;
-        // Open issues = total open_issues_count - open PRs (GitHub counts PRs in open_issues_count)
         const openIssues = Math.max(0, repo.open_issues_count - openPRs);
+        const openDependabotAlerts = dependabotCount.status === "fulfilled" ? dependabotCount.value : null;
+        const openCodeScanningAlerts = codeScanningCount.status === "fulfilled" ? codeScanningCount.value : null;
+        const openAlerts = openDependabotAlerts !== null && openCodeScanningAlerts !== null
+          ? openDependabotAlerts + openCodeScanningAlerts
+          : null;
 
         return {
           repo,
@@ -69,6 +77,7 @@ export async function fetchRepoStatus(username: string): Promise<{
           latestCommit,
           openPullRequests: openPRs,
           openIssues,
+          openAlerts,
           buildStatus,
         };
       })

@@ -4,125 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DOT File Renderer</title>
-  <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-  background: #f5f5f5;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-h1 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 28px;
-}
-
-.input-section {
-  margin-bottom: 30px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-}
-
-textarea {
-  width: 100%;
-  min-height: 200px;
-  padding: 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 16px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-textarea:focus {
-  outline: none;
-  border-color: #4a90e2;
-}
-
-
-
-.output-section {
-  margin-top: 30px;
-}
-
-#output {
-  border: 2px solid #ddd;
-  border-radius: 4px;
-  padding: 20px;
-  min-height: 200px;
-  background: #fafafa;
-  overflow: auto;
-}
-
-#output svg {
-  max-width: 100%;
-  height: auto;
-}
-
-.error {
-  color: #d32f2f;
-  background: #ffebee;
-  padding: 12px;
-  border-radius: 4px;
-  border-left: 4px solid #d32f2f;
-}
-
-.example-link {
-  color: #4a90e2;
-  cursor: pointer;
-  text-decoration: underline;
-  font-size: 14px;
-  margin-left: 10px;
-}
-
-.example-link:hover {
-  color: #357abd;
-}
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>DOT file renderer</h1>
-    
-    <div class="input-section">
-      <label for="dotInput">
-        Paste your .dot file content here
-        <span class="example-link" id="loadExample">Load example</span>
-      </label>
-      <textarea id="dotInput" placeholder="digraph G {&#10;  A -> B;&#10;  B -> C;&#10;}"></textarea>
-    </div>
+  <div class="page">
+    <div class="container">
+      <div class="hero">
+        <h1 class="title">DOT File Renderer</h1>
+        <p class="subtitle">Render Graphviz DOT files to SVG</p>
+      </div>
 
-    <div class="output-section">
-      <label>Output</label>
-      <div id="output"></div>
+      <div class="card">
+        <div class="input-section">
+          <label for="dotInput">
+            Paste your .dot file content here
+            <span class="example-link" id="loadExample">Load example</span>
+          </label>
+          <textarea id="dotInput" placeholder="digraph G {&#10;  A -> B;&#10;  B -> C;&#10;}"></textarea>
+        </div>
+
+        <div class="output-section">
+          <label>Output</label>
+          <div id="output"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script type="importmap">
-  {
-    "imports": {
-      "@viz-js/viz": "https://cdn.jsdelivr.net/npm/@viz-js/viz@3.9.0/+esm"
+    {
+      "imports": {
+        "@viz-js/viz": "https://cdn.jsdelivr.net/npm/@viz-js/viz@3.9.0/+esm"
+      }
     }
-  }
   </script>
 
   <script type="module">
@@ -212,7 +126,7 @@ async function renderGraph() {
   }
 
   try {
-    output.innerHTML = '<div style="color: #666;">Rendering...</div>';
+    output.innerHTML = '<div class="text-muted">Rendering...</div>';
     const svg = await viz.renderSVGElement(dotContent);
     output.innerHTML = '';
     output.appendChild(svg);

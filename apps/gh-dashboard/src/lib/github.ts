@@ -85,7 +85,8 @@ async function fetchWithRateLimit<T>(endpoint: string, useCache = true): Promise
   }
 
   const headers: HeadersInit = {
-    Accept: "application/vnd.github.v3+json",
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2026-03-10",
   };
 
   // Add auth token if provided (increases rate limit to 5000/hour)
@@ -186,6 +187,126 @@ export async function getOpenPullRequestCount(owner: string, repo: string): Prom
     `/search/issues?q=repo:${owner}/${repo}+type:pr+state:open&per_page=1`
   );
   return data.total_count;
+}
+
+export async function getDependabotAlertsCount(owner: string, repo: string): Promise<number | null> {
+  const token = getToken();
+
+  const cacheKey = `dependabot-count:${owner}/${repo}`;
+  const cached = cache.get(getCacheKey(cacheKey, token));
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data as number | null;
+  }
+
+  if (!token && isRateLimited()) {
+    return null;
+  }
+
+  const headers: HeadersInit = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2026-03-10",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const revalidateSeconds = Math.floor(CACHE_DURATION / 1000);
+  const getNextPageUrl = (linkHeader: string | null): string | null => {
+    if (!linkHeader) return null;
+    const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+    return nextMatch ? nextMatch[1] : null;
+  };
+
+  try {
+    let url: string | null = `${GITHUB_API_BASE}/repos/${owner}/${repo}/dependabot/alerts?state=open&per_page=100`;
+    let total = 0;
+
+    while (url) {
+      const response = await fetch(url, { headers, next: { revalidate: revalidateSeconds } });
+      updateRateLimit(response.headers);
+
+      if (!response.ok) {
+        if (response.status !== 403) {
+          console.warn(`Dependabot alerts request failed for ${owner}/${repo}: ${response.status} ${response.statusText}`);
+        }
+        return null;
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        return null;
+      }
+
+      total += data.length;
+      url = getNextPageUrl(response.headers.get("link"));
+    }
+
+    setCache(cacheKey, total, token);
+    return total;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCodeScanningAlertsCount(owner: string, repo: string): Promise<number | null> {
+  const token = getToken();
+
+  const cacheKey = `code-scanning-count:${owner}/${repo}`;
+  const cached = cache.get(getCacheKey(cacheKey, token));
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data as number | null;
+  }
+
+  if (!token && isRateLimited()) {
+    return null;
+  }
+
+  const headers: HeadersInit = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2026-03-10",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const revalidateSeconds = Math.floor(CACHE_DURATION / 1000);
+  const getNextPageUrl = (linkHeader: string | null): string | null => {
+    if (!linkHeader) return null;
+    const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+    return nextMatch ? nextMatch[1] : null;
+  };
+
+  try {
+    let url: string | null = `${GITHUB_API_BASE}/repos/${owner}/${repo}/code-scanning/alerts?state=open&per_page=100`;
+    let total = 0;
+
+    while (url) {
+      const response = await fetch(url, { headers, next: { revalidate: revalidateSeconds } });
+      updateRateLimit(response.headers);
+
+      if (!response.ok) {
+        if (response.status !== 403 && response.status !== 404) {
+          console.warn(`Code scanning alerts request failed for ${owner}/${repo}: ${response.status} ${response.statusText}`);
+        }
+        return null;
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        return null;
+      }
+
+      total += data.length;
+      url = getNextPageUrl(response.headers.get("link"));
+    }
+
+    setCache(cacheKey, total, token);
+    return total;
+  } catch {
+    return null;
+  }
 }
 
 export async function getAuthenticatedUser(): Promise<{ login: string }> {

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
+    "types": ["bun-types"],
     "lib": [
       "dom",
       "dom.iterable",
@@ -30,6 +31,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "bun-types.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",

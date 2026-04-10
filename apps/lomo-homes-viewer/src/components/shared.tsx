@@ -26,6 +26,7 @@ export function ImageWithRetry({
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentSrc(src);
     setRetryCount(0);
     setFailed(false);
