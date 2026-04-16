@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-06T14:55:08.172641Z",
-  "total_apps": 25,
+  "generated_at": "2026-04-16T21:25:01.811759Z",
+  "total_apps": 26,
   "apps": [
     {
       "name": "anki-converter",
@@ -141,6 +141,21 @@
         "name": "simonw",
         "url": "https://github.com/simonw"
       }
+    },
+    {
+      "name": "film-format-converter",
+      "title": "Lens Focal Length Equivalence Converter",
+      "description": "Calculate equivalent focal lengths when moving lenses between camera systems, film formats, and video sensor sizes. This converter uses diagonal crop factor calculations to maintain identical field of view across different sensor dimensions.",
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript",
+        "Bun"
+      ],
+      "url": "/film-format-converter",
+      "credits": [],
+      "has_credits": false
     },
     {
       "name": "gh-dashboard",
@@ -508,8 +523,8 @@
     },
     {
       "name": "xteink-wallpaper-converter",
-      "title": "XTEink Wallpaper Converter",
-      "description": "Drag & drop images to create a contact sheet. All processing happens in your browser. Your images never leave your device.",
+      "title": "XTeink Wallpaper Converter",
+      "description": "Convert single images or entire directories to BMP wallpaper format. Automatic cropping to fit 480x800 resolution while maintaining aspect ratio. Optional manual crop selection for precise control. Directory uploads create a sleep.zip file with all converted wallpapers. All processing happens in your browser. Your images never leave your device.",
       "tags": [
         "Go",
         "Webassembly"
