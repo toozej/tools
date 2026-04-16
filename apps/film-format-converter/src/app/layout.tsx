@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "unit-converter",
-  description: "Units conversion made easy",
+  title: "film-format-converter",
+  description: "Convert lens focal lengths between different film formats and digital sensor sizes",
 };
 
 export default function RootLayout({
