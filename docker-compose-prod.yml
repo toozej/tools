@@ -57,6 +57,8 @@ services:
         condition: service_started
       xteink-wallpaper-converter:
         condition: service_started
+      film-format-converter:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -82,6 +84,7 @@ services:
       - "tools_md-converter:/var/www/html/md-converter:ro"
       - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
       - "tools_xteink-wallpaper-converter:/var/www/html/xteink-wallpaper-converter:ro"
+      - "tools_film-format-converter:/var/www/html/film-format-converter:ro"
 
   # -------------------------
   # Runtime apps
@@ -298,6 +301,13 @@ services:
       - tools_xteink-wallpaper-converter:/app/out
     command: ["sleep", "5"]
 
+  film-format-converter:
+    container_name: tools_film-format-converter
+    image: ghcr.io/toozej/tools:film-format-converter
+    volumes:
+      - tools_film-format-converter:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -319,6 +329,7 @@ volumes:
   tools_md-converter:
   tools_contact-sheet-creator:
   tools_xteink-wallpaper-converter:
+  tools_film-format-converter:
 
 networks:
   backend:
