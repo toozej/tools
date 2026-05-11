@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^16.2.4",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
@@ -21,7 +21,7 @@
     "@types/react-dom": "^19.2.3",
     "bun-types": "^1.2.0",
     "eslint": "^9.39.3",
-    "eslint-config-next": "^16.2.4",
+    "eslint-config-next": "^16.2.6",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }

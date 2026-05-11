@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { PhotoEntry } from '@/app/api/photos/route';
@@ -21,7 +21,6 @@ export default function AlbumPage() {
   const albumId = params.albumId as string;
 
   const [images, setImages] = useState<PhotoEntry[]>([]);
-  const [displayImages, setDisplayImages] = useState<PhotoEntry[]>([]);
   const [nextPage, setNextPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -40,14 +39,13 @@ export default function AlbumPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadFnRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Apply sort order to images
-  useEffect(() => {
+  const displayImages = useMemo(() => {
     if (sortOrder === 'oldest') {
-      setDisplayImages([...images].reverse());
+      return [...images].reverse();
     } else if (sortOrder === 'trending') {
-      setDisplayImages(shuffleArray(images));
+      return shuffleArray(images);
     } else {
-      setDisplayImages([...images]);
+      return [...images];
     }
   }, [images, sortOrder]);
 
