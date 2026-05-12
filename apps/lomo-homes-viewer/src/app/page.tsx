@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { PhotoEntry } from './api/photos/route';
 import {
@@ -47,7 +47,8 @@ export default function Home() {
 function HomeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [input, setInput] = useState('');
+  const urlInput = useMemo(() => searchParams.get('input') ?? '', [searchParams]);
+  const [input, setInput] = useState(urlInput);
   const [images, setImages] = useState<PhotoEntry[]>([]);
   const [nextPage, setNextPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -58,7 +59,7 @@ function HomeInner() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(() => !!urlInput);
 
   const { fullsizeUrls, resolveFullsize, clearFullsize } =
     useFullsizeResolver();
@@ -66,6 +67,10 @@ function HomeInner() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadFnRef = useRef<(() => Promise<void>) | null>(null);
+  const clearFullsizeRef = useRef(clearFullsize);
+  useEffect(() => {
+    clearFullsizeRef.current = clearFullsize;
+  }, [clearFullsize]);
 
   const loadNextBatch = useCallback(async () => {
     if (loading || !hasMore || !input.trim()) return;
@@ -150,27 +155,13 @@ function HomeInner() {
   };
 
   // Auto-search when navigated with ?input= param
-  const autoSearchDone = useRef(false);
+  const autoSearchDone = useRef(!urlInput);
   useEffect(() => {
     if (autoSearchDone.current) return;
-    const urlInput = searchParams.get('input');
-    if (urlInput && !hasSearched) {
-      autoSearchDone.current = true;
-      setInput(urlInput);
-      // Use a microtask so the input state is set before handleSearch reads it
-      Promise.resolve().then(() => {
-        setHasSearched(true);
-        setImages([]);
-        setNextPage(1);
-        setHasMore(true);
-        setError(null);
-        setTotalCount(0);
-        clearFullsize();
-        // loadFnRef reads input from the closure, so we need to trigger after state update
-        setTimeout(() => loadFnRef.current?.(), 0);
-      });
-    }
-  }, [searchParams, hasSearched, clearFullsize]);
+    autoSearchDone.current = true;
+    clearFullsizeRef.current();
+    loadFnRef.current?.();
+  }, []);
 
   const handleArtistClick = (artist: string) => {
     setInput(artist);
@@ -180,7 +171,7 @@ function HomeInner() {
     setHasMore(true);
     setError(null);
     setTotalCount(0);
-    clearFullsize();
+    clearFullsizeRef.current();
     router.push(`/?input=${encodeURIComponent(artist)}`);
     Promise.resolve().then(() => {
       loadFnRef.current?.();

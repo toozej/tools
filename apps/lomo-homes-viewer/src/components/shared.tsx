@@ -196,12 +196,13 @@ export function useFullsizeResolver() {
     return Math.min(BASE_DELAY * Math.pow(2, count), 30000) * (0.5 + Math.random());
   }
 
+  const processNextRef = useRef<() => void>(() => {});
+
   const processNext = useCallback(() => {
-    // Check for global rate-limit pause
     const now = Date.now();
     if (now < rateLimitedUntilRef.current) {
       setTimeout(
-        processNext,
+        () => processNextRef.current(),
         rateLimitedUntilRef.current - now + 100
       );
       return;
@@ -245,18 +246,20 @@ export function useFullsizeResolver() {
         }
       } finally {
         activeRef.current--;
-        // Space out the next request start
-        setTimeout(processNext, REQUEST_GAP);
+        setTimeout(() => processNextRef.current(), REQUEST_GAP);
       }
     }
 
     fetchFullsize();
   }, []);
 
+  useEffect(() => {
+    processNextRef.current = processNext;
+  }, [processNext]);
+
   const resolveFullsize = useCallback(
     (photo: PhotoEntry) => {
       if (fullsizeUrls.has(photo.photoPage)) return;
-      // Already queued (in queue or active)
       if (
         queueRef.current.some((p) => p.photoPage === photo.photoPage) ||
         retryCountsRef.current.has(photo.photoPage)
@@ -264,9 +267,9 @@ export function useFullsizeResolver() {
         return;
       }
       queueRef.current.push(photo);
-      processNext();
+      processNextRef.current();
     },
-    [fullsizeUrls, processNext]
+    [fullsizeUrls]
   );
 
   const clearFullsize = useCallback(() => {

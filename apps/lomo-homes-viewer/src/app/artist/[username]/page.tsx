@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AlbumEntry } from '@/app/api/albums/route';
@@ -42,9 +42,14 @@ export default function ArtistPage() {
     }
   }, [username]);
 
+  const fetchAlbumsRef = useRef(fetchAlbums);
   useEffect(() => {
-    fetchAlbums();
+    fetchAlbumsRef.current = fetchAlbums;
   }, [fetchAlbums]);
+
+  useEffect(() => {
+    fetchAlbumsRef.current();
+  }, []);
 
   const handleViewAllPhotos = () => {
     router.push(`/?input=${encodeURIComponent(username)}`);

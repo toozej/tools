@@ -17,42 +17,37 @@ import {
 export default function Tfps() {
   const [inputMode, setInputMode] = useState<InputMode>('json');
   const [input, setInput] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<'markdown' | 'plaintext' | null>(null);
   const [expandedChanges, setExpandedChanges] = useState<Set<string>>(new Set());
 
   // Parse the input
-  const parsedChanges = useMemo((): ParsedChange[] => {
-    setError(null);
-
+  const { parsedChanges, parseError } = useMemo(() => {
     if (!input.trim()) {
-      return [];
+      return { parsedChanges: [] as ParsedChange[], parseError: null };
     }
 
     try {
       if (inputMode === 'json' || inputMode === 'file') {
-        // Try to parse as JSON
         const json = JSON.parse(input) as PlanOutput;
 
-        // Validate it looks like a plan
         if (!json.format_version && !json.resource_changes) {
           throw new Error('Input does not appear to be a valid Terraform plan JSON');
         }
 
-        return parseJsonPlan(json);
+        return { parsedChanges: parseJsonPlan(json), parseError: null };
       } else {
-        // Parse as text
-        return parseTextPlan(input);
+        return { parsedChanges: parseTextPlan(input), parseError: null };
       }
     } catch (err) {
+      let message: string;
       if (err instanceof SyntaxError) {
-        setError('Invalid JSON format. Please check your input or switch to text mode.');
+        message = 'Invalid JSON format. Please check your input or switch to text mode.';
       } else if (err instanceof Error) {
-        setError(err.message);
+        message = err.message;
       } else {
-        setError('Failed to parse input');
+        message = 'Failed to parse input';
       }
-      return [];
+      return { parsedChanges: [] as ParsedChange[], parseError: message };
     }
   }, [input, inputMode]);
 
@@ -129,7 +124,6 @@ export default function Tfps() {
   // Clear input
   const clearInput = useCallback(() => {
     setInput('');
-    setError(null);
   }, []);
 
   // Toggle expanded state for a change
@@ -391,12 +385,12 @@ export default function Tfps() {
       </div>
 
       {/* Error Display */}
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl">
-          <p className="font-semibold">Error</p>
-          <p className="text-sm">{error}</p>
-        </div>
-      )}
+  {parseError && (
+    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl">
+      <p className="font-semibold">Error</p>
+      <p className="text-sm">{parseError}</p>
+    </div>
+  )}
 
       {/* Summary */}
       {parsedChanges.length > 0 && (
