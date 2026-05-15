@@ -17,6 +17,9 @@ APP ?=
 # Define the repository URL
 REPO_URL := https://github.com/toozej/tools
 
+# Dependency lockfiles allowed to be committed after update-deps
+DEPENDENCY_FILES := package.json bun.lock go.mod go.sum pyproject.toml uv.lock requirements.txt
+
 # Detect the OS and architecture
 OS := $(shell uname -s)
 ARCH := $(shell uname -m)
@@ -27,9 +30,10 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-deps
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-validate update-deps status push
 
 all: clean up ## Run default workflow via Docker
+update: update-validate status push ## Update deps, validate, show status, and push changes
 local: pre-commit dev-nc ## Run dev workflow using Docker
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
@@ -100,7 +104,7 @@ validate: ## Run check build test for one app (usage: make validate APP=namehere
 	@make build APP="$(APP)"
 	@make test APP="$(APP)"
 
-update: ## Update deps and validate all apps, or one app via APP=namehere
+update-validate: ## Update deps and validate all apps, or one app via APP=namehere
 	@if [ -n "$(APP)" ]; then \
 		if [ ! -d "apps/$(APP)" ]; then \
 			echo "Error: App '$(APP)' not found in apps/ directory"; \
@@ -372,3 +376,118 @@ clean: ## Remove any locally compiled binaries and profiles
 
 help: ## Display help text
 	@grep -E '^[a-zA-Z_-]+ ?:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+status: ## Show git status for apps with pending dependency changes
+	@if [ -n "$(APP)" ]; then \
+		if [ ! -d "apps/$(APP)" ]; then \
+			echo "Error: App '$(APP)' not found in apps/ directory"; \
+			exit 1; \
+		fi; \
+		APP_DIR="apps/$(APP)"; \
+		if [ -n "$$(cd $$APP_DIR && git status --porcelain -- $$APP_DIR)" ]; then \
+			branch=$$(git rev-parse --abbrev-ref HEAD); \
+			echo ""; echo "----------------------------------------"; \
+			echo "App $(APP) has pending changes (branch: $$branch)"; \
+			echo "----------------------------------------"; \
+			git --no-pager diff --stat -- $$APP_DIR; \
+			git --no-pager status -s -- $$APP_DIR; \
+		else \
+			echo "No changes in app: $(APP)"; \
+		fi; \
+	else \
+		FOUND=0; \
+		for dir in apps/*/; do \
+			APP_NAME=$$(basename "$$dir"); \
+			if [ -n "$$(git status --porcelain -- $$dir)" ]; then \
+				if [ "$$FOUND" -eq 0 ]; then \
+					branch=$$(git rev-parse --abbrev-ref HEAD); \
+					echo ""; echo "========================================"; \
+					echo "Pending changes (branch: $$branch)"; \
+					echo "========================================"; \
+					FOUND=1; \
+				fi; \
+				echo ""; echo "----------------------------------------"; \
+				echo "App: $$APP_NAME"; \
+				echo "----------------------------------------"; \
+				git diff --stat -- $$dir; \
+				git status -s -- $$dir; \
+			fi; \
+		done; \
+		if [ "$$FOUND" -eq 0 ]; then \
+			echo "No pending changes in any app"; \
+		fi; \
+	fi
+
+push: ## Commit and push dependency lockfile changes to GitHub
+	@if [ -n "$(APP)" ]; then \
+		if [ ! -d "apps/$(APP)" ]; then \
+			echo "Error: App '$(APP)' not found in apps/ directory"; \
+			exit 1; \
+		fi; \
+		APP_DIR="apps/$(APP)"; \
+		changed=$$(git status --porcelain -- $$APP_DIR | awk '{print $$2}'); \
+		if [ -z "$$changed" ]; then \
+			echo "No changes in app: $(APP)"; \
+		else \
+			for file in $$changed; do \
+				for f in $(DEPENDENCY_FILES); do \
+					basename=$$(basename $$file); \
+					if [ "$$basename" = "$$f" ]; then \
+						git add "$$file"; \
+						echo "Staged: $$file"; \
+						break; \
+					fi; \
+				done; \
+			done; \
+			if git diff --cached --quiet; then \
+				echo "No dependency files to commit for app: $(APP)"; \
+			else \
+				echo "Committing dependency updates for app: $(APP)"; \
+				git commit -m "update deps: $(APP)"; \
+				echo "Pushing to origin..."; \
+				git push origin $$(git rev-parse --abbrev-ref HEAD); \
+			fi; \
+		fi; \
+	else \
+		PUSHED=0; \
+		for dir in apps/*/; do \
+			APP_NAME=$$(basename "$$dir"); \
+			changed=$$(git status --porcelain -- $$dir | awk '{print $$2}'); \
+			if [ -z "$$changed" ]; then \
+				continue; \
+			fi; \
+			STAGED_ANY=0; \
+			for file in $$changed; do \
+				for f in $(DEPENDENCY_FILES); do \
+					basename=$$(basename $$file); \
+					if [ "$$basename" = "$$f" ]; then \
+						git add "$$file"; \
+						STAGED_ANY=1; \
+						break; \
+					fi; \
+				done; \
+			done; \
+			if [ "$$STAGED_ANY" -eq 0 ]; then \
+				continue; \
+			fi; \
+			if git diff --cached --quiet; then \
+				continue; \
+			fi; \
+			if [ "$$PUSHED" -eq 0 ]; then \
+				branch=$$(git rev-parse --abbrev-ref HEAD); \
+				if [ "$$branch" != "main" ]; then \
+					echo "Warning: not on 'main' branch (on '$$branch'), skipping push"; \
+					exit 1; \
+				fi; \
+			fi; \
+			echo "Committing dependency updates for app: $$APP_NAME"; \
+			git commit -m "update deps: $$APP_NAME"; \
+			PUSHED=1; \
+		done; \
+		if [ "$$PUSHED" -eq 1 ]; then \
+			echo "Pushing to origin/main..."; \
+			git push origin main; \
+		else \
+			echo "No dependency file changes to commit and push"; \
+		fi; \
+	fi
