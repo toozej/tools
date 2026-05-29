@@ -35,6 +35,7 @@ services:
       - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
       - "tools_xteink-wallpaper-converter:/var/www/html/xteink-wallpaper-converter:ro"
       - "tools_film-format-converter:/var/www/html/film-format-converter:ro"
+      - "tools_kilo-credit-calculator:/var/www/html/kilo-credit-calculator:ro"
 
   # -------------------------
   # Runtime apps
@@ -357,6 +358,17 @@ services:
       - tools_film-format-converter:/app/out
     command: ["sleep", "5"]
 
+  kilo-credit-calculator:
+    container_name: tools_kilo-credit-calculator
+    profiles: ["build"]
+    build:
+      context: ./apps/kilo-credit-calculator
+      dockerfile: Dockerfile
+    image: tools_kilo-credit-calculator:latest
+    volumes:
+      - tools_kilo-credit-calculator:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -379,6 +391,7 @@ volumes:
   tools_contact-sheet-creator:
   tools_xteink-wallpaper-converter:
   tools_film-format-converter:
+  tools_kilo-credit-calculator:
 
 networks:
   backend:

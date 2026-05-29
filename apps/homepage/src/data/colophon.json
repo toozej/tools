@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-16T21:25:01.811759Z",
-  "total_apps": 26,
+  "generated_at": "2026-05-28T00:09:01.442456Z",
+  "total_apps": 27,
   "apps": [
     {
       "name": "anki-converter",
@@ -272,6 +272,20 @@
         "name": "toozej",
         "url": "https://github.com/toozej"
       }
+    },
+    {
+      "name": "kilo-credit-calculator",
+      "title": "Kilo Credit Calculator",
+      "description": "Calculate credit accumulation based on plan selection (Starter, Pro, Expert). Choose between monthly or annual billing cycles. Visualize bonus streak progression (up to 50% bonus). Adjust monthly credit usage with slider. See month-by-month projection of credits.",
+      "tags": [
+        "Next.Js",
+        "React",
+        "Tailwind Css",
+        "Typescript"
+      ],
+      "url": "/kilo-credit-calculator",
+      "credits": [],
+      "has_credits": false
     },
     {
       "name": "link-extractor",

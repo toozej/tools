@@ -59,6 +59,8 @@ services:
         condition: service_started
       film-format-converter:
         condition: service_started
+      kilo-credit-calculator:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -308,6 +310,13 @@ services:
       - tools_film-format-converter:/app/out
     command: ["sleep", "5"]
 
+  kilo-credit-calculator:
+    container_name: tools_kilo-credit-calculator
+    image: ghcr.io/toozej/tools:kilo-credit-calculator
+    volumes:
+      - tools_kilo-credit-calculator:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -330,6 +339,7 @@ volumes:
   tools_contact-sheet-creator:
   tools_xteink-wallpaper-converter:
   tools_film-format-converter:
+  tools_kilo-credit-calculator:
 
 networks:
   backend:
