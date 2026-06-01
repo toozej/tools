@@ -26,8 +26,10 @@ export interface MonthProjection {
   bonusPercent: number;
   bonusAmount: number;
   monthlyTotal: number;
-  creditsBefore: number;
-  creditsAfterUsage: number;
+  paidCreditsBefore: number;
+  bonusCreditsBefore: number;
+  paidCreditsAfterUsage: number;
+  bonusCreditsAfterUsage: number;
   creditsAtEnd: number;
 }
 
@@ -46,7 +48,7 @@ export function calculateProjection(
   monthlyUsage: number
 ): ProjectionResult {
   const monthsArray: MonthProjection[] = [];
-  let currentCredits = startingCredits;
+  let carriedOverPaidCredits = startingCredits; // Starting credits are considered carried-over paid credits
   let totalPaid = 0;
   let totalBonus = 0;
 
@@ -59,20 +61,45 @@ export function calculateProjection(
     totalPaid += basePrice;
     totalBonus += bonusAmount;
 
-    const creditsAfterUsage = currentCredits - monthlyUsage;
-    const creditsAtEnd = Math.max(0, creditsAfterUsage + monthlyTotal);
+    // Credits available this month:
+    // - carriedOverPaidCredits: paid credits from previous months
+    // - basePrice: newly earned paid credits this month
+    // - bonusAmount: newly earned bonus credits this month (expires if unused)
+    const paidCreditsBefore = carriedOverPaidCredits;
+    const bonusCreditsBefore = 0; // Bonus credits don't carry over, so always 0 at start of month
+
+    // Total paid credits available this month (carried over + newly earned)
+    const totalPaidAvailable = carriedOverPaidCredits + basePrice;
+    
+    // Apply monthly usage: use paid credits first (carried over, then newly earned), then bonus credits
+    let paidCreditsAfterUsage = Math.max(0, totalPaidAvailable - monthlyUsage);
+    let bonusCreditsAfterUsage = 0;
+    let remainingUsage = monthlyUsage;
+
+    if (totalPaidAvailable < monthlyUsage) {
+      // Used all paid credits, now use bonus credits
+      remainingUsage = monthlyUsage - totalPaidAvailable;
+      paidCreditsAfterUsage = 0;
+      bonusCreditsAfterUsage = Math.max(0, bonusAmount - remainingUsage);
+    }
+
+    // Calculate what carries over to next month:
+    // - Paid credits: whatever is left after usage (both carried over and newly earned)
+    // - Bonus credits: 0 (all unused bonus credits expire)
+    const creditsAtEnd = paidCreditsAfterUsage; // Only paid credits carry over
+    carriedOverPaidCredits = paidCreditsAfterUsage;
 
     monthsArray.push({
       month: i,
       bonusPercent,
       bonusAmount,
       monthlyTotal,
-      creditsBefore: currentCredits,
-      creditsAfterUsage: creditsAfterUsage < 0 ? 0 : creditsAfterUsage,
+      paidCreditsBefore,
+      bonusCreditsBefore,
+      paidCreditsAfterUsage,
+      bonusCreditsAfterUsage,
       creditsAtEnd,
     });
-
-    currentCredits = creditsAtEnd;
   }
 
   return {

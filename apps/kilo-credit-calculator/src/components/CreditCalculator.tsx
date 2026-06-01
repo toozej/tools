@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Plan,
   BillingCycle,
@@ -14,25 +14,30 @@ export default function CreditCalculator() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [startingCredits, setStartingCredits] = useState<number>(0);
   const [months, setMonths] = useState<number>(12);
-  const [monthlyUsage, setMonthlyUsage] = useState<number>(0);
+  const [monthlyUsage, setMonthlyUsageRaw] = useState<number>(0);
 
-  // Ensure monthlyUsage doesn't exceed the maximum when plan changes
-  useEffect(() => {
-    const maxUsage = PLAN_PRICES[plan] * 3;
-    if (monthlyUsage > maxUsage) {
-      setMonthlyUsage(maxUsage);
-    }
+  const maxUsage = PLAN_PRICES[plan] * 3;
+  const clampedMonthlyUsage = Math.min(monthlyUsage, maxUsage);
+
+  const setMonthlyUsage = useCallback((value: number) => {
+    setMonthlyUsageRaw(Math.min(value, PLAN_PRICES[plan] * 3));
   }, [plan]);
 
-    const projection = useMemo(() => {
-      return calculateProjection(
-        plan,
-        billingCycle,
-        startingCredits,
-        months,
-        monthlyUsage
-      );
-    }, [plan, billingCycle, startingCredits, months, monthlyUsage]);
+  const setPlanAndClampUsage = useCallback((newPlan: Plan) => {
+    setPlan(newPlan);
+    const newMax = PLAN_PRICES[newPlan] * 3;
+    setMonthlyUsageRaw((prev) => Math.min(prev, newMax));
+  }, []);
+
+  const projection = useMemo(() => {
+    return calculateProjection(
+      plan,
+      billingCycle,
+      startingCredits,
+      months,
+      clampedMonthlyUsage
+    );
+  }, [plan, billingCycle, startingCredits, months, clampedMonthlyUsage]);
 
   const finalCredits = projection.months[projection.months.length - 1]?.creditsAtEnd ?? 0;
 
@@ -43,7 +48,7 @@ export default function CreditCalculator() {
           <label className="block text-sm font-medium mb-2">Plan</label>
           <select
             value={plan}
-            onChange={(e) => setPlan(e.target.value as Plan)}
+            onChange={(e) => setPlanAndClampUsage(e.target.value as Plan)}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
           >
             <option value="starter">Starter - $19/mo</option>
@@ -117,15 +122,15 @@ export default function CreditCalculator() {
              min="0"
              max={PLAN_PRICES[plan] * 3}
              step="1"
-             value={monthlyUsage}
-             onChange={(e) => setMonthlyUsage(parseFloat(e.target.value))}
-             className="flex-1"
-           />
-           <input
-             type="number"
-             min="0"
-             max={PLAN_PRICES[plan] * 3}
-             value={monthlyUsage}
+        value={clampedMonthlyUsage}
+        onChange={(e) => setMonthlyUsage(parseFloat(e.target.value))}
+        className="flex-1"
+      />
+      <input
+        type="number"
+        min="0"
+        max={PLAN_PRICES[plan] * 3}
+        value={clampedMonthlyUsage}
              onChange={(e) => {
                const value = parseFloat(e.target.value) || 0;
                const maxUsage = PLAN_PRICES[plan] * 3;
@@ -183,18 +188,18 @@ export default function CreditCalculator() {
             </tr>
           </thead>
           <tbody>
-            {projection.months.map((m) => (
-              <tr key={m.month} className="border-b border-slate-100 dark:border-slate-800">
-                <td className="py-2 px-2">{m.month}</td>
-                <td className="text-right py-2 px-2 text-green-600 dark:text-green-400">
-                  +{m.bonusPercent}%
-                </td>
-                <td className="text-right py-2 px-2">${m.monthlyTotal.toFixed(2)}</td>
-                <td className="text-right py-2 px-2">${m.creditsBefore.toFixed(2)}</td>
-                <td className="text-right py-2 px-2">${m.creditsAfterUsage.toFixed(2)}</td>
-                <td className="text-right py-2 px-2 font-medium">${m.creditsAtEnd.toFixed(2)}</td>
-              </tr>
-            ))}
+       {projection.months.map((m) => (
+         <tr key={m.month} className="border-b border-slate-100 dark:border-slate-800">
+           <td className="py-2 px-2">{m.month}</td>
+           <td className="text-right py-2 px-2 text-green-600 dark:text-green-400">
+             +{m.bonusPercent}%
+           </td>
+           <td className="text-right py-2 px-2">${m.monthlyTotal.toFixed(2)}</td>
+           <td className="text-right py-2 px-2">${(m.paidCreditsBefore + m.bonusCreditsBefore).toFixed(2)}</td>
+           <td className="text-right py-2 px-2">${(m.paidCreditsAfterUsage + m.bonusCreditsAfterUsage).toFixed(2)}</td>
+           <td className="text-right py-2 px-2 font-medium">${m.creditsAtEnd.toFixed(2)}</td>
+         </tr>
+       ))}
           </tbody>
         </table>
       </div>
