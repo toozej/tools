@@ -49,9 +49,23 @@ describe("calculateProjection", () => {
   test("calculates correct projection for starter plan, monthly billing, no usage", () => {
     const result = calculateProjection("starter", "monthly", 0, 3, 0);
     
-    // Month 1: 50% bonus on $19 = $9.50 bonus, total $28.50
-    // Month 2: 10% bonus on $19 = $1.90 bonus, total $20.90
-    // Month 3: 15% bonus on $19 = $2.85 bonus, total $21.85
+    // Month 1: $19 base paid, $9.50 bonus (expires if unused)
+    // Start: 0 carried over paid credits
+    // Available: 0 carried over + 19 new paid + 9.50 bonus
+    // Use 0 credits
+    // End: 19 carried over paid credits (0 + 19), 9.50 bonus expires
+    
+    // Month 2: $19 base paid, $1.90 bonus (expires if unused)
+    // Start: 19 carried over paid credits
+    // Available: 19 carried over + 19 new paid + 1.90 bonus
+    // Use 0 credits
+    // End: 38 carried over paid credits (19 + 19), 1.90 bonus expires
+    
+    // Month 3: $19 base paid, $2.85 bonus (expires if unused)
+    // Start: 38 carried over paid credits
+    // Available: 38 carried over + 19 new paid + 2.85 bonus
+    // Use 0 credits
+    // End: 57 carried over paid credits (38 + 19), 2.85 bonus expires
     
     expect(result.totalPaid).toBeCloseTo(57); // 19 * 3
     expect(result.totalBonus).toBeCloseTo(14.25); // 9.50 + 1.90 + 2.85
@@ -62,55 +76,80 @@ describe("calculateProjection", () => {
     expect(result.months[0].bonusPercent).toBe(50);
     expect(result.months[0].bonusAmount).toBeCloseTo(9.50);
     expect(result.months[0].monthlyTotal).toBeCloseTo(28.50);
-    expect(result.months[0].creditsBefore).toBe(0);
-    expect(result.months[0].creditsAfterUsage).toBe(0);
-    expect(result.months[0].creditsAtEnd).toBeCloseTo(28.50);
+    expect(result.months[0].paidCreditsBefore).toBe(0);
+    expect(result.months[0].bonusCreditsBefore).toBe(0);
+    expect(result.months[0].paidCreditsAfterUsage).toBeCloseTo(19);
+    expect(result.months[0].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[0].creditsAtEnd).toBeCloseTo(19); // Only paid credits carry over
     
     expect(result.months[1].month).toBe(2);
     expect(result.months[1].bonusPercent).toBe(10);
     expect(result.months[1].bonusAmount).toBeCloseTo(1.90);
     expect(result.months[1].monthlyTotal).toBeCloseTo(20.90);
-    expect(result.months[1].creditsBefore).toBeCloseTo(28.50);
-    expect(result.months[1].creditsAfterUsage).toBeCloseTo(28.50);
-    expect(result.months[1].creditsAtEnd).toBeCloseTo(49.40); // 28.50 + 20.90
+    expect(result.months[1].paidCreditsBefore).toBeCloseTo(19);
+    expect(result.months[1].bonusCreditsBefore).toBe(0);
+    expect(result.months[1].paidCreditsAfterUsage).toBeCloseTo(38);
+    expect(result.months[1].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[1].creditsAtEnd).toBeCloseTo(38); // 19 + 19
     
     expect(result.months[2].month).toBe(3);
     expect(result.months[2].bonusPercent).toBe(15);
     expect(result.months[2].bonusAmount).toBeCloseTo(2.85);
     expect(result.months[2].monthlyTotal).toBeCloseTo(21.85);
-    expect(result.months[2].creditsBefore).toBeCloseTo(49.40);
-    expect(result.months[2].creditsAfterUsage).toBeCloseTo(49.40);
-    expect(result.months[2].creditsAtEnd).toBeCloseTo(71.25); // 49.40 + 21.85
+    expect(result.months[2].paidCreditsBefore).toBeCloseTo(38);
+    expect(result.months[2].bonusCreditsBefore).toBe(0);
+    expect(result.months[2].paidCreditsAfterUsage).toBeCloseTo(57);
+    expect(result.months[2].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[2].creditsAtEnd).toBeCloseTo(57); // 38 + 19
   });
 
   test("calculates correct projection with starting credits and monthly usage", () => {
     const result = calculateProjection("pro", "monthly", 100, 2, 10);
     
-    // Month 1: $49 base, 50% bonus = $24.50 bonus, total $73.50
-    // Start: 100 credits
-    // After usage: 100 - 10 = 90
-    // End: 90 + 73.50 = 163.50
+    // Month 1: $49 base paid, $24.50 bonus (expires if unused)
+    // Start: 100 carried over paid credits
+    // Available: 100 carried over + 49 new paid + 24.50 bonus = 173.50 total
+    // Use 10 credits (all from paid credits first)
+    // End: 139 carried over paid credits (100 + 49 - 10), 24.50 bonus expires
     
-    // Month 2: $49 base, 10% bonus = $4.90 bonus, total $53.90
-    // Start: 163.50 credits
-    // After usage: 163.50 - 10 = 153.50
-    // End: 153.50 + 53.90 = 207.40
+    // Month 2: $49 base paid, $4.90 bonus (expires if unused)
+    // Start: 139 carried over paid credits
+    // Available: 139 carried over + 49 new paid + 4.90 bonus = 192.90 total
+    // Use 10 credits (all from paid credits first)
+    // End: 178 carried over paid credits (139 + 49 - 10), 4.90 bonus expires
     
     expect(result.totalPaid).toBeCloseTo(98); // 49 * 2
     expect(result.totalBonus).toBeCloseTo(29.40); // 24.50 + 4.90
     expect(result.totalValue).toBeCloseTo(127.40); // 98 + 29.40
     
-    expect(result.months[0].creditsAtEnd).toBeCloseTo(163.50);
-    expect(result.months[1].creditsAtEnd).toBeCloseTo(207.40);
-    expect(result.months[1].creditsAtEnd).toBeCloseTo(result.months[0].creditsAtEnd + 53.90 - 10);
+    expect(result.months[0].paidCreditsBefore).toBeCloseTo(100);
+    expect(result.months[0].bonusCreditsBefore).toBeCloseTo(0);
+    expect(result.months[0].paidCreditsAfterUsage).toBeCloseTo(139); // 100 + 49 - 10
+    expect(result.months[0].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[0].creditsAtEnd).toBeCloseTo(139);
+    
+    expect(result.months[1].paidCreditsBefore).toBeCloseTo(139);
+    expect(result.months[1].bonusCreditsBefore).toBeCloseTo(0);
+    expect(result.months[1].paidCreditsAfterUsage).toBeCloseTo(178); // 139 + 49 - 10
+    expect(result.months[1].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[1].creditsAtEnd).toBeCloseTo(178);
   });
 
   test("handles annual billing correctly", () => {
     const result = calculateProjection("starter", "annual", 0, 2, 0);
     
     // Both months should have 50% bonus
-    // Month 1: $19 base, 50% bonus = $9.50 bonus, total $28.50
-    // Month 2: $19 base, 50% bonus = $9.50 bonus, total $28.50
+    // Month 1: $19 base paid, $9.50 bonus (expires if unused)
+    // Start: 0 carried over paid credits
+    // Available: 0 carried over + 19 new paid + 9.50 bonus
+    // Use 0 credits
+    // End: 19 carried over paid credits, 9.50 bonus expires
+    
+    // Month 2: $19 base paid, $9.50 bonus (expires if unused)
+    // Start: 19 carried over paid credits
+    // Available: 19 carried over + 19 new paid + 9.50 bonus
+    // Use 0 credits
+    // End: 38 carried over paid credits (19 + 19), 9.50 bonus expires
     
     expect(result.totalPaid).toBeCloseTo(38); // 19 * 2
     expect(result.totalBonus).toBeCloseTo(19); // 9.50 * 2
@@ -118,18 +157,51 @@ describe("calculateProjection", () => {
     
     expect(result.months[0].bonusPercent).toBe(50);
     expect(result.months[1].bonusPercent).toBe(50);
+    
+    // Month 1 details
+    expect(result.months[0].paidCreditsBefore).toBe(0);
+    expect(result.months[0].bonusCreditsBefore).toBe(0);
+    expect(result.months[0].paidCreditsAfterUsage).toBeCloseTo(19);
+    expect(result.months[0].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[0].creditsAtEnd).toBeCloseTo(19);
+    
+    // Month 2 details
+    expect(result.months[1].paidCreditsBefore).toBeCloseTo(19);
+    expect(result.months[1].bonusCreditsBefore).toBe(0);
+    expect(result.months[1].paidCreditsAfterUsage).toBeCloseTo(38);
+    expect(result.months[1].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[1].creditsAtEnd).toBeCloseTo(38);
   });
 
   test("does not let credits go negative with high usage", () => {
     const result = calculateProjection("starter", "monthly", 10, 2, 50);
     
-    // Month 1: Start with 10 credits, use 50 -> creditsAfterUsage = -40 (< 0) -> creditsAtEnd = 0
-    // Month 2: Start with 0 credits, use 50 -> creditsAfterUsage = -50 (< 0) -> creditsAtEnd = 0
+    // Month 1: $19 base paid, $9.50 bonus (expires if unused)
+    // Start: 10 carried over paid credits
+    // Available: 10 carried over + 19 new paid + 9.50 bonus = 38.50 total
+    // Use 50 credits:
+    //   - First use all 10 carried over paid credits
+    //   - Then use all 19 new paid credits
+    //   - Then use 21 of the 28.50 bonus credits
+    //   - Remaining: 7.50 bonus credits (these expire)
+    // End: 0 carried over paid credits
     
-    expect(result.months[0].creditsAfterUsage).toBe(0);
-    expect(result.months[0].creditsAtEnd).toBe(0);
+    // Month 2: $19 base paid, $9.50 bonus (expires if unused)
+    // Start: 0 carried over paid credits
+    // Available: 0 carried over + 19 new paid + 9.50 bonus = 28.50 total
+    // Use 50 credits:
+    //   - First use all 0 carried over paid credits (none)
+    //   - Then use all 19 new paid credits
+    //   - Then use 31 of the 28.50 bonus credits (but only 28.50 available)
+    //   - Remaining: 0 paid credits, 0 bonus credits (all expire)
+    // End: 0 carried over paid credits
     
-    expect(result.months[1].creditsAfterUsage).toBe(0);
-    expect(result.months[1].creditsAtEnd).toBe(0);
+    expect(result.months[0].paidCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[0].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[0].creditsAtEnd).toBeCloseTo(0);
+    
+    expect(result.months[1].paidCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[1].bonusCreditsAfterUsage).toBeCloseTo(0);
+    expect(result.months[1].creditsAtEnd).toBeCloseTo(0);
   });
 });
