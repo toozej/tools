@@ -522,7 +522,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3" },
-    { name = "gitpython", specifier = ">=3.1.47" },
+    { name = "gitpython", specifier = ">=3.1.50" },
 ]
 
 [[package]]
