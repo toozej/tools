@@ -372,7 +372,7 @@ clean: ## Remove any locally compiled binaries and profiles
 	@rm -rf ./apps/*/.next/; rm -rf ./apps/*/dist/; rm -rf ./apps/*/node_modules/; rm -rf ./apps/*/bin/;
 	@docker image rm --force $$(docker image ls --filter=reference="tools_*:latest" -q) &>/dev/null || echo "No tools_* tagged images to remove"
 	@docker image rm --force $$(docker image ls | grep "<none>" | awk '{print $$3}') &>/dev/null || echo "No '<none>' images to remove"
-	@docker volume rm --force $$(docker volume ls --filter=name="tools_tools_*" -q) &>/dev/null || echo "No volumes to remove"
+	@docker volume rm --force $$(docker volume ls --filter=name="tools_*" -q) &>/dev/null || echo "No volumes to remove"
 
 help: ## Display help text
 	@grep -E '^[a-zA-Z_-]+ ?:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

@@ -1,3 +1,18 @@
+// Detect characters that jsPDF's default Helvetica font cannot reliably render.
+function hasUnsupportedPDFCharacters(text) {
+    return /[^\x00-\xFF]/.test(text || '');
+}
+
+// Normalize spacing for safer text rendering in jsPDF text mode.
+function sanitizeForPDF(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/[\u00A0]/g, ' ')
+        .replace(/[\u2000-\u200F]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 // PDF export function callable from Go WASM
 window.exportBingoPDF = async function(elementId, filename) {
     const element = document.getElementById(elementId);
@@ -55,11 +70,29 @@ window.exportBingoPDF = async function(elementId, filename) {
         
         // Get all cells
         const cells = grid.querySelectorAll('.grid-cell');
-        const cellTexts = [];
-        cells.forEach(cell => {
+        const rawCellTexts = [];
+        const unsupportedCells = [];
+
+        cells.forEach((cell, index) => {
             const textEl = cell.querySelector('.cell-text');
-            cellTexts.push(textEl ? textEl.textContent : cell.textContent);
+            const rawText = textEl ? textEl.textContent : cell.textContent;
+            const normalizedRawText = (rawText || '').trim();
+            rawCellTexts.push(normalizedRawText);
+
+            if (hasUnsupportedPDFCharacters(normalizedRawText)) {
+                unsupportedCells.push({
+                    index,
+                    text: normalizedRawText,
+                });
+            }
         });
+
+        if (unsupportedCells.length > 0) {
+            console.warn(
+                `[bingo-pdf] Found ${unsupportedCells.length} cells with non-Latin1 characters. Using html2canvas image fallback for accurate text rendering.`,
+                unsupportedCells.slice(0, 5),
+            );
+        }
 
         const { jsPDF } = window.jspdf;
         
@@ -85,9 +118,10 @@ window.exportBingoPDF = async function(elementId, filename) {
         title = title.replace(/_/g, ' ');
         
         // Add title at the top
+        const titleForPDF = sanitizeForPDF(title);
         pdf.setFontSize(18);
         pdf.setTextColor(0, 0, 0);
-        pdf.text(title, pageWidth / 2, margin, { align: 'center' });
+        pdf.text(titleForPDF || 'Bingo Card', pageWidth / 2, margin, { align: 'center' });
         
         // Calculate grid dimensions
         const gridWidth = pageWidth - (margin * 2);
@@ -100,6 +134,38 @@ window.exportBingoPDF = async function(elementId, filename) {
         
         // Draw the grid
         const gridStartX = (pageWidth - gridSize) / 2; // Center horizontally
+
+        // If unsupported glyphs are detected, render the grid as an image to preserve exact text.
+        if (unsupportedCells.length > 0) {
+            const canvas = await html2canvas(grid, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+            });
+
+            const imageData = canvas.toDataURL('image/png');
+            const availableWidth = gridWidth;
+            const availableHeight = maxGridHeight;
+            const imageAspect = canvas.width / canvas.height;
+
+            let renderWidth = availableWidth;
+            let renderHeight = renderWidth / imageAspect;
+
+            if (renderHeight > availableHeight) {
+                renderHeight = availableHeight;
+                renderWidth = renderHeight * imageAspect;
+            }
+
+            const imageX = (pageWidth - renderWidth) / 2;
+            const imageY = gridStartY;
+
+            pdf.addImage(imageData, 'PNG', imageX, imageY, renderWidth, renderHeight, undefined, 'FAST');
+            pdf.save(filename);
+            return;
+        }
+
+        const cellTexts = rawCellTexts.map(sanitizeForPDF);
         
         // Set line width for borders
         pdf.setLineWidth(0.02);
