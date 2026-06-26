@@ -13,7 +13,7 @@ require (
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
-	github.com/golang/geo v0.0.0-20260612074446-f1a45663b0f3 // indirect
+	github.com/golang/geo v0.0.0-20260625163123-7c0e84413537 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
