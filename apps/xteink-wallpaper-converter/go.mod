@@ -3,7 +3,7 @@ module xteink-wallpaper-converter
 go 1.26
 
 require (
-	github.com/anthonynsimon/bild v0.15.0
+	github.com/anthonynsimon/bild v0.16.0
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/maxence-charriere/go-app/v10 v10.1.11
 	golang.org/x/image v0.43.0
