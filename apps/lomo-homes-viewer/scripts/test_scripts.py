@@ -451,9 +451,7 @@ class TestLomographyClient:
         mod = _import_lomography_client()
 
         with pytest.raises(mod.LomographyClientError, match="challenge was not solved"):
-            mod.LomographyClient._validate_page(
-                "<html><title>Just a moment...</title></html>", 200
-            )
+            mod.LomographyClient._validate_page("<html><title>Just a moment...</title></html>", 200)
 
     def test_rejects_empty_page(self):
         mod = _import_lomography_client()
@@ -467,17 +465,13 @@ class TestLomographyClient:
         client.endpoint = "http://lomo-flaresolverr:8191/v1"
         client._solver_get = Mock(
             side_effect=[
-                mod.LomographyClientError(
-                    "FlareSolverr failed: Error: The session doesn't exist"
-                ),
+                mod.LomographyClientError("FlareSolverr failed: Error: The session doesn't exist"),
                 "<html>photos</html>",
             ]
         )
         client._create_session = Mock()
 
-        assert client.get("https://www.lomography.com/homes/user/photos") == (
-            "<html>photos</html>"
-        )
+        assert client.get("https://www.lomography.com/homes/user/photos") == ("<html>photos</html>")
         client._create_session.assert_called_once_with()
 
     def test_does_not_retry_unrelated_solver_error(self):
@@ -497,9 +491,7 @@ class TestLomographyClient:
         mod = _import_lomography_client()
         client = mod.LomographyClient()
         client.endpoint = "http://lomo-flaresolverr:8191/v1"
-        client._ensure_session = Mock(
-            side_effect=mod.LomographyClientError("solver unavailable")
-        )
+        client._ensure_session = Mock(side_effect=mod.LomographyClientError("solver unavailable"))
 
         with pytest.raises(mod.LomographyClientError, match="solver unavailable"):
             client.__enter__()

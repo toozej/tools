@@ -49,10 +49,7 @@ def fetch_all_pages(
     try:
         with LomographyClient() as client:
             for page in range(start_page, end_page + 1):
-                url = (
-                    f"https://www.lomography.com/homes/{username}/albums/"
-                    f"{album_id}?page={page}"
-                )
+                url = f"https://www.lomography.com/homes/{username}/albums/{album_id}?page={page}"
                 pairs = extract_photos(client.get(url))
 
                 if not pairs:
@@ -132,11 +129,7 @@ def main() -> None:
     args = parser.parse_args()
 
     end_page = args.end_page if args.end_page else args.start_page
-    print(
-        json.dumps(
-            fetch_all_pages(args.username, args.album_id, args.start_page, end_page)
-        )
-    )
+    print(json.dumps(fetch_all_pages(args.username, args.album_id, args.start_page, end_page)))
 
 
 if __name__ == "__main__":

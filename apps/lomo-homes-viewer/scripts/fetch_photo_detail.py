@@ -7,9 +7,7 @@ import sys
 
 from lomography_client import LomographyClient, LomographyClientError
 
-IMG_PATTERN = re.compile(
-    r'https://cdn\.assets\.lomography\.com/[^\s"<>\']+\.\w+(?:\?[^\s"<>\']*)?'
-)
+IMG_PATTERN = re.compile(r'https://cdn\.assets\.lomography\.com/[^\s"<>\']+\.\w+(?:\?[^\s"<>\']*)?')
 
 
 def extract_fullsize(html: str) -> str | None:

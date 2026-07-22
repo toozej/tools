@@ -50,20 +50,16 @@ class LomographyClient:
 
     def __init__(self) -> None:
         self.endpoint = os.environ.get("FLARESOLVERR_URL", "").strip()
-        self.session_name = os.environ.get(
-            "FLARESOLVERR_SESSION", DEFAULT_SESSION_NAME
-        ).strip()
+        self.session_name = os.environ.get("FLARESOLVERR_SESSION", DEFAULT_SESSION_NAME).strip()
         self.timeout_seconds = int(
             os.environ.get("FLARESOLVERR_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS)
         )
         self.session_ttl_minutes = int(
-            os.environ.get(
-                "FLARESOLVERR_SESSION_TTL_MINUTES", DEFAULT_SESSION_TTL_MINUTES
-            )
+            os.environ.get("FLARESOLVERR_SESSION_TTL_MINUTES", DEFAULT_SESSION_TTL_MINUTES)
         )
         self._lock_file = None
 
-    def __enter__(self) -> "LomographyClient":
+    def __enter__(self) -> LomographyClient:
         if self.endpoint:
             self._lock_file = LOCK_PATH.open("a+", encoding="utf-8")
             fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_EX)
@@ -114,9 +110,7 @@ class LomographyClient:
                 f"Lomography returned HTTP {exc.code}", status=exc.code
             ) from exc
         except urllib.error.URLError as exc:
-            raise LomographyClientError(
-                f"Lomography request failed: {exc.reason}"
-            ) from exc
+            raise LomographyClientError(f"Lomography request failed: {exc.reason}") from exc
 
         self._validate_page(html, status)
         return html
@@ -138,9 +132,7 @@ class LomographyClient:
         html = solution.get("response") or ""
 
         if status == 429:
-            raise LomographyRateLimitError(
-                "Lomography rate limited the request", status=status
-            )
+            raise LomographyRateLimitError("Lomography rate limited the request", status=status)
         if status != 200:
             raise LomographyClientError(
                 f"Lomography returned HTTP {status or 'unknown'} through FlareSolverr",
@@ -157,9 +149,7 @@ class LomographyClient:
             self._create_session()
 
     def _create_session(self) -> None:
-        result = self._call_solver(
-            {"cmd": "sessions.create", "session": self.session_name}
-        )
+        result = self._call_solver({"cmd": "sessions.create", "session": self.session_name})
         session = result.get("session")
         if session != self.session_name:
             raise LomographyClientError(
@@ -176,9 +166,7 @@ class LomographyClient:
         )
 
         try:
-            with urllib.request.urlopen(
-                request, timeout=self.timeout_seconds + 10
-            ) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout_seconds + 10) as response:
                 result = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             raise LomographyClientError(
@@ -189,9 +177,7 @@ class LomographyClient:
                 f"FlareSolverr is unavailable at {self.endpoint}: {exc.reason}"
             ) from exc
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise LomographyClientError(
-                "FlareSolverr returned an invalid response"
-            ) from exc
+            raise LomographyClientError("FlareSolverr returned an invalid response") from exc
 
         if result.get("status") != "ok":
             message = result.get("message") or "unknown FlareSolverr error"
@@ -203,9 +189,7 @@ class LomographyClient:
     def _is_missing_session_error(message: str) -> bool:
         lowered = message.lower()
         return "session" in lowered and (
-            "does not exist" in lowered
-            or "doesn't exist" in lowered
-            or "not found" in lowered
+            "does not exist" in lowered or "doesn't exist" in lowered or "not found" in lowered
         )
 
     @staticmethod
@@ -216,10 +200,6 @@ class LomographyClient:
             "Performing security verification",
         )
         if any(marker in html for marker in challenge_markers):
-            raise LomographyClientError(
-                "Cloudflare challenge was not solved", status=status
-            )
+            raise LomographyClientError("Cloudflare challenge was not solved", status=status)
         if not html.strip():
-            raise LomographyClientError(
-                "Lomography returned an empty page", status=status
-            )
+            raise LomographyClientError("Lomography returned an empty page", status=status)
