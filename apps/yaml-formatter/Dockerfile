@@ -15,6 +15,9 @@ COPY . .
 # Build the application with static export
 RUN bun run build
 
+# Upgrade packages in the final image
+RUN apk upgrade --no-cache
+
 # Create non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 

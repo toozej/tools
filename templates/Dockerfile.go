@@ -21,5 +21,8 @@ RUN GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/
 # Create final output directory and copy all static + generated files to out directory
 RUN mkdir -p /app/out && cp -r bin/* /app/out/ && cp -r static /app/out/
 
+# Upgrade packages in the final image and remove package metadata.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 # The container will exit after copying files to the volume mount

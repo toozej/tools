@@ -1,5 +1,10 @@
 FROM ghcr.io/nginx/nginx-unprivileged:stable
 
+# Upgrade packages in the final image and remove package metadata.
+USER root
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+USER nginx
+
 # The unprivileged nginx image runs as user 'nginx' (uid 101)
 
 # 1. Copy assets into a dedicated folder
