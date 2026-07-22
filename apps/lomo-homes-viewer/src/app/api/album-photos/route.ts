@@ -19,15 +19,16 @@ function fetchAlbumPhotos(
   imageCount: number;
   pagesScanned: number;
   rateLimited?: boolean;
+  upstreamError?: string;
 } {
   const scriptPath = join(process.cwd(), 'scripts', 'fetch_album_photos.py');
 
   try {
     const output = execFileSync(
       'python3',
-      [scriptPath, username, albumId, String(startPage), String(endPage), '--quick'],
+      [scriptPath, username, albumId, String(startPage), String(endPage)],
       {
-        timeout: 30_000,
+        timeout: 120_000,
         encoding: 'utf-8',
         maxBuffer: 50 * 1024 * 1024,
       }
@@ -39,10 +40,17 @@ function fetchAlbumPhotos(
       imageCount: result.imageCount || 0,
       pagesScanned: result.pagesScanned || 0,
       rateLimited: result.rateLimited || false,
+      upstreamError: result.error || undefined,
     };
   } catch (error) {
     console.error('Error running fetch_album_photos.py:', error);
-    return { images: [], imageCount: 0, pagesScanned: 0, rateLimited: false };
+    return {
+      images: [],
+      imageCount: 0,
+      pagesScanned: 0,
+      rateLimited: false,
+      upstreamError: 'Album photo scraper process failed',
+    };
   }
 }
 
@@ -86,6 +94,13 @@ export async function GET(request: NextRequest) {
       return Response.json(
         { error: 'Rate limited by Lomography. Please try again later.', images: result.images },
         { status: 429 }
+      );
+    }
+
+    if (result.upstreamError) {
+      return Response.json(
+        { error: `Unable to fetch Lomography album photos: ${result.upstreamError}` },
+        { status: 502 }
       );
     }
 

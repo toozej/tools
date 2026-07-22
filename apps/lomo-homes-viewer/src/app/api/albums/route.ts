@@ -14,12 +14,13 @@ function fetchAlbums(username: string): {
   albums: AlbumEntry[];
   albumCount: number;
   rateLimited?: boolean;
+  upstreamError?: string;
 } {
   const scriptPath = join(process.cwd(), 'scripts', 'fetch_albums.py');
 
   try {
-    const output = execFileSync('python3', [scriptPath, username, '--quick'], {
-      timeout: 30_000,
+    const output = execFileSync('python3', [scriptPath, username], {
+      timeout: 90_000,
       encoding: 'utf-8',
       maxBuffer: 50 * 1024 * 1024,
     });
@@ -29,10 +30,16 @@ function fetchAlbums(username: string): {
       albums: result.albums || [],
       albumCount: result.albumCount || 0,
       rateLimited: result.rateLimited || false,
+      upstreamError: result.error || undefined,
     };
   } catch (error) {
     console.error('Error running fetch_albums.py:', error);
-    return { albums: [], albumCount: 0, rateLimited: false };
+    return {
+      albums: [],
+      albumCount: 0,
+      rateLimited: false,
+      upstreamError: 'Album scraper process failed',
+    };
   }
 }
 
@@ -58,6 +65,13 @@ export async function GET(request: NextRequest) {
       return Response.json(
         { error: 'Rate limited by Lomography. Please try again later.', albums: result.albums },
         { status: 429 }
+      );
+    }
+
+    if (result.upstreamError) {
+      return Response.json(
+        { error: `Unable to fetch Lomography albums: ${result.upstreamError}` },
+        { status: 502 }
       );
     }
 

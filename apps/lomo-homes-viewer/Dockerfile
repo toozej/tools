@@ -36,8 +36,8 @@ COPY --from=builder /app/scripts ./scripts
 # Set ownership
 RUN chown -R nextjs:nodejs /app
 
-# Upgrade base packages and install curl, python3 + aiohttp for photo fetching
-RUN apk upgrade --no-cache && apk add --no-cache curl python3 py3-aiohttp
+# Upgrade base packages and install the runtime tools used by health checks and scrapers.
+RUN apk upgrade --no-cache && apk add --no-cache curl python3
 
 # Switch to non-root user
 USER nextjs

@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+from unittest.mock import Mock
 
 import pytest
 
@@ -15,8 +16,7 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # ---------------------------------------------------------------------------
-# Regex patterns (duplicated here so we don't need to import modules that
-# have top-level aiohttp imports which complicate test isolation).
+# Regex patterns retained here for focused parser compatibility tests.
 # ---------------------------------------------------------------------------
 
 PHOTO_LINK_PATTERN = re.compile(
@@ -436,9 +436,78 @@ def _import_fetch_album_photos():
         sys.path.pop(0)
 
 
+def _import_lomography_client():
+    sys.path.insert(0, SCRIPTS_DIR)
+    try:
+        import lomography_client
+
+        return lomography_client
+    finally:
+        sys.path.pop(0)
+
+
+class TestLomographyClient:
+    def test_rejects_unsolved_cloudflare_challenge(self):
+        mod = _import_lomography_client()
+
+        with pytest.raises(mod.LomographyClientError, match="challenge was not solved"):
+            mod.LomographyClient._validate_page(
+                "<html><title>Just a moment...</title></html>", 200
+            )
+
+    def test_rejects_empty_page(self):
+        mod = _import_lomography_client()
+
+        with pytest.raises(mod.LomographyClientError, match="empty page"):
+            mod.LomographyClient._validate_page("  ", 200)
+
+    def test_recreates_missing_session_once(self):
+        mod = _import_lomography_client()
+        client = mod.LomographyClient()
+        client.endpoint = "http://lomo-flaresolverr:8191/v1"
+        client._solver_get = Mock(
+            side_effect=[
+                mod.LomographyClientError(
+                    "FlareSolverr failed: Error: The session doesn't exist"
+                ),
+                "<html>photos</html>",
+            ]
+        )
+        client._create_session = Mock()
+
+        assert client.get("https://www.lomography.com/homes/user/photos") == (
+            "<html>photos</html>"
+        )
+        client._create_session.assert_called_once_with()
+
+    def test_does_not_retry_unrelated_solver_error(self):
+        mod = _import_lomography_client()
+        client = mod.LomographyClient()
+        client.endpoint = "http://lomo-flaresolverr:8191/v1"
+        client._solver_get = Mock(
+            side_effect=mod.LomographyClientError("FlareSolverr failed: timeout")
+        )
+        client._create_session = Mock()
+
+        with pytest.raises(mod.LomographyClientError, match="timeout"):
+            client.get("https://www.lomography.com/homes/user/photos")
+        client._create_session.assert_not_called()
+
+    def test_releases_process_lock_when_session_setup_fails(self):
+        mod = _import_lomography_client()
+        client = mod.LomographyClient()
+        client.endpoint = "http://lomo-flaresolverr:8191/v1"
+        client._ensure_session = Mock(
+            side_effect=mod.LomographyClientError("solver unavailable")
+        )
+
+        with pytest.raises(mod.LomographyClientError, match="solver unavailable"):
+            client.__enter__()
+        assert client._lock_file is None
+
+
 class TestFetchPhotosPage:
-    @pytest.mark.asyncio
-    async def test_extracts_photos_from_html(self):
+    def test_extracts_photos_from_html(self):
         mod = _import_fetch_photos()
 
         # Build a mock HTML response with two photo entries
@@ -453,72 +522,31 @@ class TestFetchPhotosPage:
         </body></html>
         """
 
-        # Use aioresponses-style mocking via aiohttp test utilities
-        from aiohttp import web
-        from aiohttp.test_utils import TestServer, TestClient
+        pairs = mod.extract_photos(mock_html)
 
-        async def handler(request):
-            return web.Response(text=mock_html, status=200)
+        assert len(pairs) == 2
+        assert pairs[0]["photoPage"] == "/homes/testuser/photos/100"
+        assert pairs[1]["photoPage"] == "/homes/testuser/photos/200"
+        assert "cdn.assets.lomography.com" in pairs[0]["thumbnail"]
 
-        app = web.Application()
-        app.router.add_get("/homes/{username}/photos", handler)
-        server = TestServer(app)
-        await server.start_server()
-
-        try:
-            client = TestClient(server)
-            await client.start_server()
-
-            # Test the extraction logic directly against the mock HTML
-            pairs = []
-            seen = set()
-            for page_link, thumb_url in mod.PHOTO_LINK_PATTERN.findall(mock_html):
-                if thumb_url not in seen:
-                    seen.add(thumb_url)
-                    pairs.append({"thumbnail": thumb_url, "photoPage": page_link})
-
-            assert len(pairs) == 2
-            assert pairs[0]["photoPage"] == "/homes/testuser/photos/100"
-            assert pairs[1]["photoPage"] == "/homes/testuser/photos/200"
-            assert "cdn.assets.lomography.com" in pairs[0]["thumbnail"]
-        finally:
-            await server.close()
-
-    @pytest.mark.asyncio
-    async def test_returns_empty_for_no_matches(self):
+    def test_returns_empty_for_no_matches(self):
         mod = _import_fetch_photos()
         html = "<html><body><p>No photos here</p></body></html>"
 
-        pairs = []
-        seen = set()
-        for page_link, thumb_url in mod.PHOTO_LINK_PATTERN.findall(html):
-            if thumb_url not in seen:
-                seen.add(thumb_url)
-                pairs.append({"thumbnail": thumb_url, "photoPage": page_link})
+        assert mod.extract_photos(html) == []
 
-        assert pairs == []
-
-    @pytest.mark.asyncio
-    async def test_deduplicates_by_thumbnail(self):
+    def test_deduplicates_by_thumbnail(self):
         mod = _import_fetch_photos()
         html = """
         <a href="/homes/user/photos/1"><img src="https://cdn.assets.lomography.com/a/img.jpg"></a>
         <a href="/homes/user/photos/1"><img src="https://cdn.assets.lomography.com/a/img.jpg"></a>
         <a href="/homes/user/photos/2"><img src="https://cdn.assets.lomography.com/b/img.jpg"></a>
         """
-        pairs = []
-        seen = set()
-        for page_link, thumb_url in mod.PHOTO_LINK_PATTERN.findall(html):
-            if thumb_url not in seen:
-                seen.add(thumb_url)
-                pairs.append({"thumbnail": thumb_url, "photoPage": page_link})
-
-        assert len(pairs) == 2
+        assert len(mod.extract_photos(html)) == 2
 
 
 class TestFetchAlbumsPage:
-    @pytest.mark.asyncio
-    async def test_extracts_albums_from_html(self):
+    def test_extracts_albums_from_html(self):
         mod = _import_fetch_albums()
         html = """
         <html><body>
@@ -529,24 +557,7 @@ class TestFetchAlbumsPage:
         </body></html>
         """
 
-        seen = set()
-        albums = []
-        for album_path, album_id, title in mod.ALBUM_LINK_PATTERN.findall(html):
-            if album_id not in seen:
-                seen.add(album_id)
-                albums.append(
-                    {
-                        "albumId": album_id,
-                        "albumPage": album_path,
-                        "coverImage": "",
-                        "title": title.strip() or f"Album {album_id}",
-                    }
-                )
-
-        cover_images = mod.COVER_IMAGE_PATTERN.findall(html)
-        for i, album in enumerate(albums):
-            if i < len(cover_images):
-                album["coverImage"] = cover_images[i]
+        albums = mod.extract_albums(html)
 
         assert len(albums) == 2
         assert albums[0]["albumId"] == "100"
@@ -554,8 +565,7 @@ class TestFetchAlbumsPage:
         assert albums[0]["title"] == "Album One"
         assert albums[1]["albumId"] == "200"
 
-    @pytest.mark.asyncio
-    async def test_extracts_albums_with_slugs(self):
+    def test_extracts_albums_with_slugs(self):
         mod = _import_fetch_albums()
         html = """
         <html><body>
@@ -564,27 +574,14 @@ class TestFetchAlbumsPage:
         </body></html>
         """
 
-        seen = set()
-        albums = []
-        for album_path, album_id, title in mod.ALBUM_LINK_PATTERN.findall(html):
-            if album_id not in seen:
-                seen.add(album_id)
-                albums.append(
-                    {
-                        "albumId": album_id,
-                        "albumPage": album_path,
-                        "coverImage": "",
-                        "title": title.strip() or f"Album {album_id}",
-                    }
-                )
+        albums = mod.extract_albums(html)
 
         assert len(albums) == 1
         assert albums[0]["albumId"] == "100-spring-2024"
         assert albums[0]["albumPage"] == "/homes/testuser/albums/100-spring-2024"
         assert albums[0]["title"] == "Spring 2024"
 
-    @pytest.mark.asyncio
-    async def test_no_match_for_photo_links(self):
+    def test_no_match_for_photo_links(self):
         mod = _import_fetch_albums()
         html = '<h3><a href="/homes/user/photos/123">Photo</a></h3>'
         matches = mod.ALBUM_LINK_PATTERN.findall(html)

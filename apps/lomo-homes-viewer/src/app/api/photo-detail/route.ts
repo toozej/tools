@@ -19,11 +19,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const output = execFileSync('python3', [scriptPath, photoPage], {
-      timeout: 30_000,
+      timeout: 90_000,
       encoding: 'utf-8',
     });
 
     const result = JSON.parse(output);
+    if (result.error) {
+      return Response.json(
+        { error: `Unable to fetch Lomography photo detail: ${result.error}`, fullsize: null },
+        { status: 502 }
+      );
+    }
     return Response.json({ fullsize: result.fullsize ?? null });
   } catch (error) {
     console.error('Error running fetch_photo_detail.py:', error);

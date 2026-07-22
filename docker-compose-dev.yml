@@ -115,12 +115,40 @@ services:
     image: tools_lomo-homes-viewer:latest
     restart: always
     profiles: ["runtime"]
+    depends_on:
+      lomo-flaresolverr:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/lomo-homes-viewer/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
     env_file: ./apps/lomo-homes-viewer/app.env
+    environment:
+      FLARESOLVERR_URL: http://lomo-flaresolverr:8191/v1
+    networks:
+      - backend
+
+  lomo-flaresolverr:
+    container_name: tools_lomo-flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
+    restart: always
+    profiles: ["runtime"]
+    environment:
+      LOG_LEVEL: info
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8191/', timeout=5)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    shm_size: "512mb"
     networks:
       - backend
 

@@ -7,3 +7,7 @@ All works owned by their owner, etc. etc. this is just intended to be a nicer mo
 ## Inspiration
 
 Instagram-style "infinite" feed scrolling + lazy-loading is a much nicer mobile experience than paginated thumbnails on the current [Lomography Homes](https://www.lomography.com/homes/) pages.
+
+## Dependencies
+
+[FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) (MIT) provides the private browser service used to handle Cloudflare challenges on public Lomography pages.
