@@ -15,7 +15,10 @@ import os
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from typing import Self
 
 DEFAULT_TIMEOUT_SECONDS = 60
 DEFAULT_SESSION_TTL_MINUTES = 30
@@ -59,7 +62,7 @@ class LomographyClient:
         )
         self._lock_file = None
 
-    def __enter__(self) -> LomographyClient:
+    def __enter__(self) -> Self:
         if self.endpoint:
             self._lock_file = LOCK_PATH.open("a+", encoding="utf-8")
             fcntl.flock(self._lock_file.fileno(), fcntl.LOCK_EX)
