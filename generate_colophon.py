@@ -8,7 +8,9 @@ import argparse
 import json
 import re
 import sys
+from datetime import UTC
 from pathlib import Path
+from typing import ClassVar
 
 
 class ColophonGenerator:
@@ -201,10 +203,10 @@ class ColophonGenerator:
             if para.startswith("#"):
                 continue
             # Skip if it's a horizontal rule
-            if para.startswith("---") or para.startswith("***"):
+            if para.startswith(("---", "***")):
                 continue
             # Skip if it's just a link or image
-            if para.startswith("[") or para.startswith("!"):
+            if para.startswith(("[", "!")):
                 continue
 
             return self._clean_description(para)
@@ -213,7 +215,7 @@ class ColophonGenerator:
 
     # Technology patterns for tag extraction: (regex pattern -> canonical tag name)
     # Order matters: more specific patterns should come before general ones
-    TECH_PATTERNS = [
+    TECH_PATTERNS: ClassVar[list[tuple[str, str]]] = [
         # Web frameworks
         (r"next\.js\s*19?", "Next.js"),
         (r"react\s*19?", "React"),
@@ -276,9 +278,8 @@ class ColophonGenerator:
         # Extract technology tags using pattern matching
         content_lower = readme_content.lower()
         for pattern, canonical_tag in self.TECH_PATTERNS:
-            if re.search(pattern, content_lower, re.IGNORECASE):
-                if canonical_tag not in tags:
-                    tags.append(canonical_tag)
+            if re.search(pattern, content_lower, re.IGNORECASE) and canonical_tag not in tags:
+                tags.append(canonical_tag)
 
         # Normalize tags: lowercase, trimmed, deduped
         normalized_tags = []
@@ -558,9 +559,9 @@ class ColophonGenerator:
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def main():
@@ -599,7 +600,7 @@ Examples:
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback

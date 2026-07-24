@@ -216,7 +216,7 @@ class TestAlbumLinkPattern:
         html = '<h3 class="album-title"><a class="link" href="/homes/user/albums/999" target="_blank">My Album</a></h3>'
         matches = ALBUM_LINK_PATTERN.findall(html)
         assert len(matches) == 1
-        path, album_id, title = matches[0]
+        _path, album_id, title = matches[0]
         assert album_id == "999"
         assert title.strip() == "My Album"
 
@@ -224,7 +224,7 @@ class TestAlbumLinkPattern:
         html = '<a href="/homes/user/albums/123">Direct Link Album</a>'
         matches = ALBUM_LINK_FALLBACK_PATTERN.findall(html)
         assert len(matches) == 1
-        path, album_id, title = matches[0]
+        _path, album_id, title = matches[0]
         assert album_id == "123"
         assert title.strip() == "Direct Link Album"
 
@@ -342,6 +342,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert result.returncode != 0
 
@@ -351,6 +352,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert result.returncode != 0
 
@@ -360,6 +362,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert result.returncode != 0
 
@@ -369,6 +372,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert result.returncode != 0
 
@@ -378,6 +382,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert "usage:" in result.stderr
 
@@ -387,6 +392,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert "usage:" in result.stderr
 
@@ -396,6 +402,7 @@ class TestCliArguments:
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
         assert "usage:" in result.stderr
 

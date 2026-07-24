@@ -182,7 +182,7 @@ class ToolsManager:
                 for pattern in server_patterns:
                     if pattern in content:
                         return "server"
-            except Exception:
+            except (OSError, UnicodeDecodeError):
                 pass
 
         for tsx_file in app_dir.rglob("*.tsx"):
@@ -191,7 +191,7 @@ class ToolsManager:
                 for pattern in server_patterns:
                     if pattern in content:
                         return "server"
-            except Exception:
+            except (OSError, UnicodeDecodeError):
                 pass
 
         return "static"
@@ -517,8 +517,7 @@ make up     # Production
         """Copy documentation from simonw/tools and add credit header."""
         # Extract app name from repo_path (strip .html if present)
         app_name = Path(repo_path).stem
-        if app_name.endswith(".html"):
-            app_name = app_name[:-5]
+        app_name = app_name.removesuffix(".html")
 
         docs_filename = f"{app_name}.docs.md"
         simonw_tools_path = self.repo_root / "tmp" / "github" / "simonw" / "tools"
@@ -631,7 +630,7 @@ Examples:
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 

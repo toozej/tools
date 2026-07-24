@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T00:09:01.442456Z",
+  "generated_at": "2026-07-24T18:51:49.007599Z",
   "total_apps": 27,
   "apps": [
     {
@@ -318,8 +318,13 @@
         "Json"
       ],
       "url": "/lomo-homes-viewer",
-      "credits": [],
-      "has_credits": false,
+      "credits": [
+        {
+          "name": "FlareSolverr",
+          "url": "https://github.com/FlareSolverr"
+        }
+      ],
+      "has_credits": true,
       "author": {
         "name": "toozej",
         "url": "https://github.com/toozej"
