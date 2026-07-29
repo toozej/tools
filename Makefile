@@ -30,10 +30,10 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-validate update-deps status push
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-validate update-deps update-root-deps status push
 
 all: clean up ## Run default workflow via Docker
-update: update-validate status push ## Update deps, validate, show status, and push changes
+update: update-root-deps update-validate status push ## Update deps, validate, show status, and push changes
 local: pre-commit dev-nc ## Run dev workflow using Docker
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
@@ -166,6 +166,10 @@ update-deps: ## Update app dependencies for JS/TS, Go, and Python (usage: make u
 	if [ "$$UPDATED" -eq 0 ]; then \
 		echo "Warning: No supported dependency files found for app '$(APP)' (expected package.json, go.mod, pyproject.toml, or requirements.txt)"; \
 	fi
+
+update-root-deps: ## Update root Python dependencies and regenerate uv.lock
+	uv lock --upgrade
+	uv sync
 
 build: ## Build a specific app locally (usage: make build APP=namehere)
 	@if [ -z "$(APP)" ]; then \
@@ -396,6 +400,22 @@ status: ## Show git status for apps with pending dependency changes
 		fi; \
 	else \
 		FOUND=0; \
+		for file in pyproject.toml uv.lock; do \
+			if [ -n "$$(git status --porcelain -- "$$file")" ]; then \
+				if [ "$$FOUND" -eq 0 ]; then \
+					branch=$$(git rev-parse --abbrev-ref HEAD); \
+					echo ""; echo "========================================"; \
+					echo "Pending changes (branch: $$branch)"; \
+					echo "========================================"; \
+					FOUND=1; \
+				fi; \
+				echo ""; echo "----------------------------------------"; \
+				echo "Root dependency file: $$file"; \
+				echo "----------------------------------------"; \
+				git diff --stat -- "$$file"; \
+				git status -s -- "$$file"; \
+			fi; \
+		done; \
 		for dir in apps/*/; do \
 			APP_NAME=$$(basename "$$dir"); \
 			if [ -n "$$(git status --porcelain -- $$dir)" ]; then \
@@ -450,6 +470,24 @@ push: ## Commit and push dependency lockfile changes to GitHub
 		fi; \
 	else \
 		PUSHED=0; \
+		ROOT_DEPS_CHANGED=0; \
+		for file in pyproject.toml uv.lock; do \
+			if [ -n "$$(git status --porcelain -- "$$file")" ]; then \
+				git add "$$file"; \
+				echo "Staged: $$file"; \
+				ROOT_DEPS_CHANGED=1; \
+			fi; \
+		done; \
+		if [ "$$ROOT_DEPS_CHANGED" -eq 1 ]; then \
+			branch=$$(git rev-parse --abbrev-ref HEAD); \
+			if [ "$$branch" != "main" ]; then \
+				echo "Warning: not on 'main' branch (on '$$branch'), skipping push"; \
+				exit 1; \
+			fi; \
+			echo "Committing root dependency updates"; \
+			git commit -m "update root deps" -- pyproject.toml uv.lock; \
+			PUSHED=1; \
+		fi; \
 		for dir in apps/*/; do \
 			APP_NAME=$$(basename "$$dir"); \
 			changed=$$(git status --porcelain -- $$dir | awk '{print $$2}'); \
