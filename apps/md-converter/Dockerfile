@@ -21,13 +21,8 @@ RUN GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/
 # Create final output directory and copy all static + generated files to out directory
 RUN mkdir -p /app/out && cp -r bin/* /app/out/ && cp -r static /app/out/
 
-FROM alpine:3.22
+# Install the patched Debian security build of libexpat and remove package metadata.
+RUN apt-get update && apt-get install -y --only-upgrade libexpat1 && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup -S app && adduser -S app -G app && \
-    mkdir -p /app/out && chown -R app:app /app
-
-COPY --from=builder --chown=app:app /app/out /app/out
-
-USER app
 WORKDIR /app
-CMD ["sleep", "infinity"]
+# The container will exit after copying files to the volume mount
