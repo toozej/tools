@@ -1,0 +1,36 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.8",
+  "timestamp": "2026-07-31T16:30:00Z",
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {"address": "azurerm_resource_group.app", "mode": "managed", "type": "azurerm_resource_group", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "values": {"name": "rg-demo-app", "location": "West Europe", "tags": {"environment": "demo", "owner": "platform"}}},
+        {"address": "azurerm_service_plan.app", "mode": "managed", "type": "azurerm_service_plan", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "depends_on": ["azurerm_resource_group.app"], "values": {"name": "asp-demo-linux", "os_type": "Linux", "sku_name": "B1", "resource_group_name": "rg-demo-app"}},
+        {"address": "azurerm_linux_web_app.app", "mode": "managed", "type": "azurerm_linux_web_app", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "depends_on": ["azurerm_service_plan.app"], "values": {"name": "demo-plan-graph", "https_only": true, "service_plan_id": "synthetic-service-plan-id", "site_config": [{"always_on": false, "application_stack": [{"docker_image_name": "nginx", "docker_registry_url": "https://index.docker.io"}]}], "app_settings": {"WEBSITE_RUN_FROM_PACKAGE": "1", "DEMO_MODE": "true"}}},
+        {"address": "data.azurerm_client_config.current", "mode": "data", "type": "azurerm_client_config", "name": "current", "provider_name": "registry.terraform.io/hashicorp/azurerm", "values": {"tenant_id": "00000000-0000-0000-0000-000000000000", "subscription_id": "11111111-1111-1111-1111-111111111111"}}
+      ]
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.9.8",
+    "values": {
+      "root_module": {
+        "resources": [
+          {"address": "azurerm_resource_group.app", "mode": "managed", "type": "azurerm_resource_group", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "values": {"name": "rg-demo-app", "location": "West Europe", "tags": {"environment": "demo"}}},
+          {"address": "azurerm_service_plan.app", "mode": "managed", "type": "azurerm_service_plan", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "depends_on": ["azurerm_resource_group.app"], "values": {"name": "asp-demo-linux", "os_type": "Linux", "sku_name": "F1", "resource_group_name": "rg-demo-app"}},
+          {"address": "azurerm_linux_web_app.app", "mode": "managed", "type": "azurerm_linux_web_app", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "depends_on": ["azurerm_service_plan.app"], "values": {"name": "demo-plan-graph", "https_only": false, "service_plan_id": "synthetic-service-plan-id", "app_settings": {"WEBSITE_RUN_FROM_PACKAGE": "1"}}},
+          {"address": "azurerm_storage_account.retired", "mode": "managed", "type": "azurerm_storage_account", "name": "retired", "provider_name": "registry.terraform.io/hashicorp/azurerm", "values": {"name": "demoretiredstorage", "account_tier": "Standard", "account_replication_type": "LRS"}}
+        ]
+      }
+    }
+  },
+  "resource_changes": [
+    {"address": "azurerm_resource_group.app", "mode": "managed", "type": "azurerm_resource_group", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "change": {"actions": ["update"], "before": {"tags": {"environment": "demo"}}, "after": {"tags": {"environment": "demo", "owner": "platform"}}}},
+    {"address": "azurerm_service_plan.app", "mode": "managed", "type": "azurerm_service_plan", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "change": {"actions": ["update"], "before": {"sku_name": "F1"}, "after": {"sku_name": "B1"}}},
+    {"address": "azurerm_linux_web_app.app", "mode": "managed", "type": "azurerm_linux_web_app", "name": "app", "provider_name": "registry.terraform.io/hashicorp/azurerm", "change": {"actions": ["update"], "before": {"https_only": false, "app_settings": {"WEBSITE_RUN_FROM_PACKAGE": "1"}}, "after": {"https_only": true, "app_settings": {"WEBSITE_RUN_FROM_PACKAGE": "1", "DEMO_MODE": "true"}}}},
+    {"address": "data.azurerm_client_config.current", "mode": "data", "type": "azurerm_client_config", "name": "current", "provider_name": "registry.terraform.io/hashicorp/azurerm", "change": {"actions": ["read"], "before": null, "after": {"tenant_id": "00000000-0000-0000-0000-000000000000", "subscription_id": "11111111-1111-1111-1111-111111111111"}}},
+    {"address": "azurerm_storage_account.retired", "mode": "managed", "type": "azurerm_storage_account", "name": "retired", "provider_name": "registry.terraform.io/hashicorp/azurerm", "change": {"actions": ["delete"], "before": {"name": "demoretiredstorage", "account_tier": "Standard", "account_replication_type": "LRS"}, "after": null}}
+  ]
+}

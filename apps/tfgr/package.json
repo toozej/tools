@@ -1,0 +1,14 @@
+{
+  "name": "tfgr",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "node --check cmd/tfgr/web/app.js && node --check src/app.test.js",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "eslint": "^10.8.0",
+    "jsdom": "^30.0.1"
+  }
+}

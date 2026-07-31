@@ -1,0 +1,56 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.8",
+  "timestamp": "2026-07-31T16:00:00Z",
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "aws_vpc.demo",
+          "mode": "managed",
+          "type": "aws_vpc",
+          "name": "demo",
+          "provider_name": "registry.terraform.io/hashicorp/aws",
+          "values": {"cidr_block": "10.42.0.0/16", "enable_dns_hostnames": true, "id": "vpc-demo"}
+        },
+        {
+          "address": "aws_security_group.web",
+          "mode": "managed",
+          "type": "aws_security_group",
+          "name": "web",
+          "provider_name": "registry.terraform.io/hashicorp/aws",
+          "depends_on": ["aws_vpc.demo"],
+          "values": {"name": "demo-web", "description": "HTTP and HTTPS", "vpc_id": "vpc-demo", "ingress": [{"from_port": 80, "to_port": 80, "cidr_blocks": ["0.0.0.0/0"]}, {"from_port": 443, "to_port": 443, "cidr_blocks": ["0.0.0.0/0"]}]}
+        },
+        {
+          "address": "aws_instance.web",
+          "mode": "managed",
+          "type": "aws_instance",
+          "name": "web",
+          "provider_name": "registry.terraform.io/hashicorp/aws",
+          "depends_on": ["aws_security_group.web"],
+          "values": {"ami": "ami-0demo2026", "instance_type": "t3.micro", "id": null, "tags": {"Name": "demo-web"}}
+        }
+      ]
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.9.8",
+    "values": {
+      "root_module": {
+        "resources": [
+          {"address": "aws_vpc.demo", "mode": "managed", "type": "aws_vpc", "name": "demo", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"cidr_block": "10.42.0.0/16", "enable_dns_hostnames": true, "id": "vpc-demo"}},
+          {"address": "aws_security_group.web", "mode": "managed", "type": "aws_security_group", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["aws_vpc.demo"], "values": {"name": "demo-web", "description": "HTTP only", "vpc_id": "vpc-demo", "ingress": [{"from_port": 80, "to_port": 80, "cidr_blocks": ["0.0.0.0/0"]}]}},
+          {"address": "aws_s3_bucket.legacy_logs", "mode": "managed", "type": "aws_s3_bucket", "name": "legacy_logs", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"bucket": "demo-legacy-logs", "id": "demo-legacy-logs"}}
+        ]
+      }
+    }
+  },
+  "resource_changes": [
+    {"address": "aws_vpc.demo", "mode": "managed", "type": "aws_vpc", "name": "demo", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["no-op"], "before": {"cidr_block": "10.42.0.0/16", "enable_dns_hostnames": true}, "after": {"cidr_block": "10.42.0.0/16", "enable_dns_hostnames": true}}},
+    {"address": "aws_security_group.web", "mode": "managed", "type": "aws_security_group", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"description": "HTTP only", "ingress": [{"from_port": 80, "to_port": 80}]}, "after": {"description": "HTTP and HTTPS", "ingress": [{"from_port": 80, "to_port": 80}, {"from_port": 443, "to_port": 443}]}}},
+    {"address": "aws_instance.web", "mode": "managed", "type": "aws_instance", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"ami": "ami-0demo2026", "instance_type": "t3.micro", "id": null, "tags": {"Name": "demo-web"}}, "after_unknown": {"id": true}}},
+    {"address": "aws_s3_bucket.legacy_logs", "mode": "managed", "type": "aws_s3_bucket", "name": "legacy_logs", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["delete"], "before": {"bucket": "demo-legacy-logs", "id": "demo-legacy-logs"}, "after": null}}
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-24T18:51:49.007599Z",
-  "total_apps": 27,
+  "generated_at": "2026-07-31T16:52:57.159516Z",
+  "total_apps": 28,
   "apps": [
     {
       "name": "anki-converter",
@@ -466,6 +466,27 @@
       "url": "/taboo",
       "credits": [],
       "has_credits": false
+    },
+    {
+      "name": "tfgr",
+      "title": "terraform-plan-graph",
+      "description": "An SVG dependency graph with pan and zoom. A module/resource tree with search and action filters. Details for every resource: action, provider, action reason, source location, dependencies, dependents, planned values, and changed attributes. One-hop and two-hop focus modes for tracing impact outward or inward from a resource. Existing unchanged resources from plannedvalues, and resources only present in priorstate when they are being removed. Sensitive values redacted before the frontend receives the graph data. The server binds to loopback by default.",
+      "tags": [
+        "Go",
+        "Json"
+      ],
+      "url": "/tfgr",
+      "credits": [
+        {
+          "name": "hashicorp",
+          "url": "https://github.com/hashicorp"
+        }
+      ],
+      "has_credits": true,
+      "author": {
+        "name": "hashicorp",
+        "url": "https://github.com/hashicorp"
+      }
     },
     {
       "name": "tfps",

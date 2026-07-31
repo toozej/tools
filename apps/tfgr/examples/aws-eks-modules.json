@@ -1,0 +1,53 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.4",
+  "timestamp": "2026-07-31T16:15:00Z",
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {"address": "aws_kms_key.cluster", "mode": "managed", "type": "aws_kms_key", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"description": "Demo EKS secrets", "enable_key_rotation": true, "arn": null}},
+        {"address": "aws_iam_role.cluster", "mode": "managed", "type": "aws_iam_role", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-eks-cluster", "arn": "arn:aws:iam::123456789012:role/demo-eks-cluster"}}
+      ],
+      "child_modules": [
+        {
+          "address": "module.network",
+          "resources": [
+            {"address": "module.network.aws_vpc.this", "mode": "managed", "type": "aws_vpc", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"cidr_block": "10.70.0.0/16", "id": "vpc-eks-demo"}},
+            {"address": "module.network.aws_subnet.private[\"us-east-1a\"]", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "us-east-1a", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"availability_zone": "us-east-1a", "cidr_block": "10.70.1.0/24", "id": "subnet-a"}},
+            {"address": "module.network.aws_subnet.private[\"us-east-1b\"]", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "us-east-1b", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"availability_zone": "us-east-1b", "cidr_block": "10.70.2.0/24", "id": "subnet-b"}}
+          ],
+          "child_modules": [
+            {
+              "address": "module.network.module.eks",
+              "resources": [
+                {"address": "module.network.module.eks.aws_eks_cluster.this", "mode": "managed", "type": "aws_eks_cluster", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_subnet.private[\"us-east-1a\"]", "module.network.aws_subnet.private[\"us-east-1b\"]", "aws_iam_role.cluster", "aws_kms_key.cluster"], "values": {"name": "demo-eks", "version": "1.31", "endpoint": null, "certificate_authority": [{"data": "synthetic-certificate-data"}]}, "sensitive_values": {"certificate_authority": [{"data": true}]}},
+                {"address": "module.network.module.eks.aws_eks_node_group.workers", "mode": "managed", "type": "aws_eks_node_group", "name": "workers", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.module.eks.aws_eks_cluster.this"], "values": {"cluster_name": "demo-eks", "node_group_name": "general", "instance_types": ["m7i.large"], "scaling_config": [{"desired_size": 3, "max_size": 5, "min_size": 2}]}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.10.4",
+    "values": {
+      "root_module": {
+        "resources": [
+          {"address": "aws_kms_key.cluster", "mode": "managed", "type": "aws_kms_key", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"description": "Demo EKS secrets", "enable_key_rotation": false, "arn": "arn:aws:kms:us-east-1:123456789012:key/demo"}},
+          {"address": "aws_iam_role.cluster", "mode": "managed", "type": "aws_iam_role", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-eks-cluster", "arn": "arn:aws:iam::123456789012:role/demo-eks-cluster"}}
+        ]
+      }
+    }
+  },
+  "resource_changes": [
+    {"address": "aws_kms_key.cluster", "mode": "managed", "type": "aws_kms_key", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"enable_key_rotation": false}, "after": {"enable_key_rotation": true}}},
+    {"address": "aws_iam_role.cluster", "mode": "managed", "type": "aws_iam_role", "name": "cluster", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["no-op"], "before": {"name": "demo-eks-cluster"}, "after": {"name": "demo-eks-cluster"}}},
+    {"address": "module.network.aws_vpc.this", "module_address": "module.network", "mode": "managed", "type": "aws_vpc", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"cidr_block": "10.70.0.0/16", "id": null}, "after_unknown": {"id": true}}},
+    {"address": "module.network.aws_subnet.private[\"us-east-1a\"]", "module_address": "module.network", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "us-east-1a", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"availability_zone": "us-east-1a", "cidr_block": "10.70.1.0/24"}}},
+    {"address": "module.network.aws_subnet.private[\"us-east-1b\"]", "module_address": "module.network", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "us-east-1b", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"availability_zone": "us-east-1b", "cidr_block": "10.70.2.0/24"}}},
+    {"address": "module.network.module.eks.aws_eks_cluster.this", "module_address": "module.network.module.eks", "mode": "managed", "type": "aws_eks_cluster", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"name": "demo-eks", "version": "1.31", "endpoint": null, "certificate_authority": [{"data": "synthetic-certificate-data"}]}, "after_unknown": {"endpoint": true}, "after_sensitive": {"certificate_authority": [{"data": true}]}}},
+    {"address": "module.network.module.eks.aws_eks_node_group.workers", "module_address": "module.network.module.eks", "mode": "managed", "type": "aws_eks_node_group", "name": "workers", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["delete", "create"], "before": {"instance_types": ["m6i.large"], "scaling_config": [{"desired_size": 2, "max_size": 4, "min_size": 2}]}, "after": {"instance_types": ["m7i.large"], "scaling_config": [{"desired_size": 3, "max_size": 5, "min_size": 2}]}, "replace_paths": [["instance_types"]]}}
+  ]
+}

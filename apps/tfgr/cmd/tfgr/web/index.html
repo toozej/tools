@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Terraform plan graph</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Terraform plan</p>
+        <h1>Resource graph</h1>
+      </div>
+      <div id="summary" class="summary" aria-label="Plan summary"></div>
+      <div class="plan-loader">
+        <label class="upload-button" for="plan-file">Load plan JSON</label>
+        <input id="plan-file" type="file" accept="application/json,.json" />
+        <span id="upload-status" role="status"></span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="left-panel" aria-label="Resource navigation">
+        <label class="search-label" for="search">Find a resource</label>
+        <input
+          id="search"
+          type="search"
+          autocomplete="off"
+          placeholder="Address, type, or provider"
+        />
+
+        <div class="filter-heading">
+          <span>Show actions</span>
+          <button id="reset-filters" class="text-button" type="button">
+            reset
+          </button>
+        </div>
+        <div id="filters" class="filters"></div>
+        <p id="tree-count" class="result-count"></p>
+        <nav id="tree" class="tree" aria-label="Resources by module"></nav>
+      </aside>
+
+      <main class="graph-panel">
+        <div class="graph-toolbar">
+          <div class="focus-controls" aria-label="Graph focus">
+            <span>Focus</span>
+            <button type="button" data-focus="one">1 hop</button>
+            <button type="button" data-focus="two">2 hops</button>
+            <button type="button" data-focus="all" class="is-active">
+              whole graph
+            </button>
+          </div>
+          <div class="instructions">
+            Click a node to inspect · drag to pan · scroll to zoom · arrows navigate
+          </div>
+        </div>
+        <div class="graph-shell">
+          <svg
+            id="graph"
+            role="region"
+            tabindex="0"
+            aria-label="Terraform resource dependency graph. Use arrow keys to navigate resources."
+          >
+            <defs>
+              <marker
+                id="arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="5"
+                markerHeight="5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z"></path>
+              </marker>
+            </defs>
+            <g id="graph-content"></g>
+          </svg>
+          <div id="empty-graph" class="empty-graph" hidden>
+            No resources match the selected filters.
+          </div>
+        </div>
+        <div class="legend" aria-label="Action legend">
+          <span><i class="swatch action-create"></i>create</span>
+          <span><i class="swatch action-update"></i>update</span>
+          <span><i class="swatch action-replace"></i>replace</span>
+          <span><i class="swatch action-delete"></i>delete</span>
+          <span><i class="swatch action-no-op"></i>no change</span>
+        </div>
+      </main>
+
+      <aside id="details" class="details" aria-live="polite">
+        <div class="empty-details">
+          <p class="eyebrow">Resource inspector</p>
+          <h2>Select a resource</h2>
+          <p>
+            Choose an item in the tree or graph to see its action, dependencies,
+            source location, and value changes.
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

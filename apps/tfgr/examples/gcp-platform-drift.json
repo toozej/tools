@@ -1,0 +1,42 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.4",
+  "timestamp": "2026-07-31T16:45:00Z",
+  "complete": false,
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {"address": "google_project_service.run", "mode": "managed", "type": "google_project_service", "name": "run", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "service": "run.googleapis.com"}},
+        {"address": "google_service_account.runtime", "mode": "managed", "type": "google_service_account", "name": "runtime", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "account_id": "demo-runtime", "email": "demo-runtime@tfgr-demo.iam.gserviceaccount.com"}},
+        {"address": "google_cloud_run_v2_service.api", "mode": "managed", "type": "google_cloud_run_v2_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/google", "depends_on": ["google_project_service.run", "google_service_account.runtime"], "values": {"name": "demo-api", "location": "us-central1", "template": [{"service_account": "demo-runtime@tfgr-demo.iam.gserviceaccount.com", "containers": [{"image": "us-docker.pkg.dev/cloudrun/container/hello", "env": [{"name": "LOG_LEVEL", "value": "info"}]}]}]}},
+        {"address": "google_secret_manager_secret.api_key", "mode": "managed", "type": "google_secret_manager_secret", "name": "api_key", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "secret_id": "demo-api-key", "replication": [{"auto": [{}]}]}}
+      ]
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.10.4",
+    "values": {
+      "root_module": {
+        "resources": [
+          {"address": "google_project_service.run", "mode": "managed", "type": "google_project_service", "name": "run", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "service": "run.googleapis.com"}},
+          {"address": "google_service_account.runtime", "mode": "managed", "type": "google_service_account", "name": "runtime", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "account_id": "demo-runtime", "email": "demo-runtime@tfgr-demo.iam.gserviceaccount.com"}},
+          {"address": "google_cloud_run_v2_service.api", "mode": "managed", "type": "google_cloud_run_v2_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/google", "depends_on": ["google_project_service.run", "google_service_account.runtime"], "values": {"name": "demo-api", "location": "us-central1", "template": [{"containers": [{"image": "us-docker.pkg.dev/cloudrun/container/hello", "env": [{"name": "LOG_LEVEL", "value": "debug"}]}]}]}},
+          {"address": "google_secret_manager_secret.api_key", "mode": "managed", "type": "google_secret_manager_secret", "name": "api_key", "provider_name": "registry.terraform.io/hashicorp/google", "values": {"project": "tfgr-demo", "secret_id": "demo-api-key", "replication": [{"auto": [{}]}]}}
+        ]
+      }
+    }
+  },
+  "resource_changes": [
+    {"address": "google_project_service.run", "mode": "managed", "type": "google_project_service", "name": "run", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["no-op"], "before": {"service": "run.googleapis.com"}, "after": {"service": "run.googleapis.com"}}},
+    {"address": "google_service_account.runtime", "mode": "managed", "type": "google_service_account", "name": "runtime", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["no-op"], "before": {"account_id": "demo-runtime"}, "after": {"account_id": "demo-runtime"}}},
+    {"address": "google_cloud_run_v2_service.api", "mode": "managed", "type": "google_cloud_run_v2_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["update"], "before": {"template": [{"containers": [{"env": [{"name": "LOG_LEVEL", "value": "debug"}]}]}]}, "after": {"template": [{"service_account": "demo-runtime@tfgr-demo.iam.gserviceaccount.com", "containers": [{"env": [{"name": "LOG_LEVEL", "value": "info"}]}]}]}}},
+    {"address": "google_secret_manager_secret.api_key", "mode": "managed", "type": "google_secret_manager_secret", "name": "api_key", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["create"], "before": null, "after": {"secret_id": "demo-api-key", "replication": [{"auto": [{}]}]}, "importing": {"id": "projects/tfgr-demo/secrets/demo-api-key"}, "generated_config": "resource \"google_secret_manager_secret\" \"api_key\" {\n  secret_id = \"demo-api-key\"\n}"}}
+  ],
+  "resource_drift": [
+    {"address": "google_cloud_run_v2_service.api", "mode": "managed", "type": "google_cloud_run_v2_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["update"], "before": {"template": [{"containers": [{"env": [{"name": "LOG_LEVEL", "value": "info"}]}]}]}, "after": {"template": [{"containers": [{"env": [{"name": "LOG_LEVEL", "value": "debug"}]}]}]}}}
+  ],
+  "deferred_changes": [
+    {"reason": "provider_config_unknown", "resource_change": {"address": "google_cloud_run_v2_service.worker", "mode": "managed", "type": "google_cloud_run_v2_service", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/google", "change": {"actions": ["create"], "before": null, "after": {"name": "demo-worker", "location": "us-central1"}, "after_unknown": {"uri": true}}}}
+  ]
+}

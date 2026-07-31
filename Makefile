@@ -57,7 +57,7 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 		echo "Detected JavaScript app, running tests..."; \
 		JS_TEST_FILES=$$(find apps/$(APP)/src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -v node_modules); \
 		if [ -n "$$JS_TEST_FILES" ]; then \
-			(cd apps/$(APP) && bun test) || FAILED=1; \
+			(cd apps/$(APP) && bun install --frozen-lockfile && bun test) || FAILED=1; \
 		else \
 			echo "No test files found, skipping"; \
 		fi; \
@@ -183,13 +183,20 @@ build: ## Build a specific app locally (usage: make build APP=namehere)
 	@echo "Building app: $(APP)"
 	@# Determine app language
 	@if [ -f "apps/$(APP)/go.mod" ]; then \
-		echo "Detected Go app, building WASM and generating static site..."; \
-		cd apps/$(APP) && rm -rf bin/ out/ && \
-		mkdir -p bin/web/ && \
-		GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/ && \
-     	go build -o bin/generate -ldflags="-s -w" ./cmd/web/ && \
-		cd bin/ && ./generate && rm -f ./generate && \
-		cd .. && mkdir -p out/ && cp -r bin/* out/ && cp -r static out/; \
+		if [ -d "apps/$(APP)/cmd/web" ]; then \
+			echo "Detected static Go/WASM app, generating static site..."; \
+			cd apps/$(APP) && rm -rf bin/ out/ && \
+			mkdir -p bin/web/ && \
+			GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/ && \
+			go build -o bin/generate -ldflags="-s -w" ./cmd/web/ && \
+			cd bin/ && ./generate && rm -f ./generate && \
+			cd .. && mkdir -p out/ && cp -r bin/* out/ && cp -r static out/; \
+		elif [ -d "apps/$(APP)/cmd/$(APP)" ]; then \
+			echo "Detected Go web service, building native binary..."; \
+			cd apps/$(APP) && mkdir -p bin && go build -o bin/$(APP) ./cmd/$(APP); \
+		else \
+			echo "Error: Go app must provide cmd/web or cmd/$(APP)"; exit 1; \
+		fi; \
 	elif [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running bun install and bun run build..."; \
 		cd apps/$(APP) && bun install && bun run build; \
@@ -211,15 +218,22 @@ run: ## Run a specific app locally (usage: make run APP=namehere)
 	@echo "Running app: $(APP)"
 	@# Determine app language
 	@if [ -f "apps/$(APP)/go.mod" ]; then \
-		echo "Detected Go app, serving out/ directory with Python web server on port 8080 at /$(APP)/..."; \
-		pkill -9 -f "python3 -m http.server 8080" 2>/dev/null || true; \
-		TMP_DIR=$$(mktemp -d); \
-		mkdir -p "$$TMP_DIR/$(APP)"; \
-		cp -r "apps/$(APP)/out"/* "$$TMP_DIR/$(APP)/"; \
-		(cd "$$TMP_DIR" && python3 -m http.server 8080) & \
-		SRV_PID=$$!; \
-		trap 'echo "Cleaning up Python server (PID: $$SRV_PID) and temp dir..."; kill $$SRV_PID 2>/dev/null || true; rm -rf "$$TMP_DIR"; exit 0' EXIT SIGINT SIGTERM; \
-		wait $$SRV_PID; \
+		if [ -d "apps/$(APP)/cmd/web" ]; then \
+			echo "Detected static Go/WASM app, serving out/ with Python on port 8080 at /$(APP)/..."; \
+			pkill -9 -f "python3 -m http.server 8080" 2>/dev/null || true; \
+			TMP_DIR=$$(mktemp -d); \
+			mkdir -p "$$TMP_DIR/$(APP)"; \
+			cp -r "apps/$(APP)/out"/* "$$TMP_DIR/$(APP)/"; \
+			(cd "$$TMP_DIR" && python3 -m http.server 8080) & \
+			SRV_PID=$$!; \
+			trap 'echo "Cleaning up Python server (PID: $$SRV_PID) and temp dir..."; kill $$SRV_PID 2>/dev/null || true; rm -rf "$$TMP_DIR"; exit 0' EXIT SIGINT SIGTERM; \
+			wait $$SRV_PID; \
+		elif [ -d "apps/$(APP)/cmd/$(APP)" ]; then \
+			echo "Detected Go web service, starting on http://localhost:8080"; \
+			cd apps/$(APP) && go run ./cmd/$(APP) -listen :8080 -open=false; \
+		else \
+			echo "Error: Go app must provide cmd/web or cmd/$(APP)"; exit 1; \
+		fi; \
 	elif [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running bun install and bun run dev..."; \
 		cd apps/$(APP) && bun install && bun run dev; \

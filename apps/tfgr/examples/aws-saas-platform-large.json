@@ -1,0 +1,85 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.10.4",
+  "timestamp": "2026-07-31T17:00:00Z",
+  "complete": true,
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {"address": "aws_route53_zone.primary", "mode": "managed", "type": "aws_route53_zone", "name": "primary", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo.example.com", "zone_id": "ZDEMO123"}},
+        {"address": "aws_acm_certificate.web", "mode": "managed", "type": "aws_acm_certificate", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["aws_route53_zone.primary"], "values": {"domain_name": "app.demo.example.com", "validation_method": "DNS", "arn": null}},
+        {"address": "aws_kms_key.application", "mode": "managed", "type": "aws_kms_key", "name": "application", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"description": "SaaS platform encryption", "enable_key_rotation": true, "arn": "arn:aws:kms:us-east-1:123456789012:key/demo"}},
+        {"address": "aws_s3_bucket.assets", "mode": "managed", "type": "aws_s3_bucket", "name": "assets", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"bucket": "demo-saas-assets", "tags": {"service": "web", "environment": "demo"}}},
+        {"address": "data.aws_caller_identity.current", "mode": "data", "type": "aws_caller_identity", "name": "current", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"account_id": "123456789012"}}
+      ],
+      "child_modules": [
+        {
+          "address": "module.network",
+          "resources": [
+            {"address": "module.network.aws_vpc.this", "mode": "managed", "type": "aws_vpc", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"cidr_block": "10.80.0.0/16", "id": "vpc-saas-demo"}},
+            {"address": "module.network.aws_internet_gateway.this", "mode": "managed", "type": "aws_internet_gateway", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"vpc_id": "vpc-saas-demo"}},
+            {"address": "module.network.aws_subnet.public[\"a\"]", "mode": "managed", "type": "aws_subnet", "name": "public", "index": "a", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"cidr_block": "10.80.1.0/24", "availability_zone": "us-east-1a"}},
+            {"address": "module.network.aws_subnet.public[\"b\"]", "mode": "managed", "type": "aws_subnet", "name": "public", "index": "b", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"cidr_block": "10.80.2.0/24", "availability_zone": "us-east-1b"}},
+            {"address": "module.network.aws_subnet.private[\"a\"]", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "a", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"cidr_block": "10.80.11.0/24", "availability_zone": "us-east-1a"}},
+            {"address": "module.network.aws_subnet.private[\"b\"]", "mode": "managed", "type": "aws_subnet", "name": "private", "index": "b", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"cidr_block": "10.80.12.0/24", "availability_zone": "us-east-1b"}}
+          ]
+        },
+        {
+          "address": "module.data",
+          "resources": [
+            {"address": "module.data.aws_db_subnet_group.this", "mode": "managed", "type": "aws_db_subnet_group", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_subnet.private[\"a\"]", "module.network.aws_subnet.private[\"b\"]"], "values": {"name": "demo-data", "subnet_ids": ["subnet-a", "subnet-b"]}},
+            {"address": "module.data.aws_security_group.database", "mode": "managed", "type": "aws_security_group", "name": "database", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"name": "demo-database", "vpc_id": "vpc-saas-demo"}},
+            {"address": "module.data.aws_rds_cluster.postgres", "mode": "managed", "type": "aws_rds_cluster", "name": "postgres", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.data.aws_db_subnet_group.this", "module.data.aws_security_group.database", "aws_kms_key.application"], "values": {"cluster_identifier": "demo-saas", "engine": "aurora-postgresql", "engine_version": "16.4", "endpoint": null}},
+            {"address": "module.data.aws_rds_cluster_instance.writer", "mode": "managed", "type": "aws_rds_cluster_instance", "name": "writer", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.data.aws_rds_cluster.postgres"], "values": {"identifier": "demo-saas-writer", "instance_class": "db.r6g.large"}},
+            {"address": "module.data.aws_elasticache_replication_group.redis", "mode": "managed", "type": "aws_elasticache_replication_group", "name": "redis", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_subnet.private[\"a\"]", "module.network.aws_subnet.private[\"b\"]", "aws_kms_key.application"], "values": {"replication_group_id": "demo-saas-cache", "node_type": "cache.r7g.large", "primary_endpoint_address": null}}
+          ]
+        },
+        {
+          "address": "module.platform",
+          "resources": [
+            {"address": "module.platform.aws_ecr_repository.api", "mode": "managed", "type": "aws_ecr_repository", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-saas-api"}},
+            {"address": "module.platform.aws_ecr_repository.worker", "mode": "managed", "type": "aws_ecr_repository", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-saas-worker"}},
+            {"address": "module.platform.aws_ecs_cluster.this", "mode": "managed", "type": "aws_ecs_cluster", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-saas"}},
+            {"address": "module.platform.aws_iam_role.task", "mode": "managed", "type": "aws_iam_role", "name": "task", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-saas-task"}},
+            {"address": "module.platform.aws_cloudwatch_log_group.api", "mode": "managed", "type": "aws_cloudwatch_log_group", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "/ecs/demo-saas-api", "retention_in_days": 30}},
+            {"address": "module.platform.aws_cloudwatch_log_group.worker", "mode": "managed", "type": "aws_cloudwatch_log_group", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "/ecs/demo-saas-worker", "retention_in_days": 30}},
+            {"address": "module.platform.aws_iam_role.legacy", "mode": "managed", "type": "aws_iam_role", "name": "legacy", "provider_name": "registry.terraform.io/hashicorp/aws", "values": {"name": "demo-legacy-task"}}
+          ]
+        },
+        {
+          "address": "module.workloads",
+          "resources": [
+            {"address": "module.workloads.aws_lb.public", "mode": "managed", "type": "aws_lb", "name": "public", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_subnet.public[\"a\"]", "module.network.aws_subnet.public[\"b\"]"], "values": {"name": "demo-saas-public", "load_balancer_type": "application", "dns_name": null}},
+            {"address": "module.workloads.aws_lb_target_group.api", "mode": "managed", "type": "aws_lb_target_group", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.network.aws_vpc.this"], "values": {"name": "demo-saas-api", "port": 8080, "protocol": "HTTP"}},
+            {"address": "module.workloads.aws_lb_listener.https", "mode": "managed", "type": "aws_lb_listener", "name": "https", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.workloads.aws_lb.public", "module.workloads.aws_lb_target_group.api", "aws_acm_certificate.web"], "values": {"port": 443, "protocol": "HTTPS"}},
+            {"address": "module.workloads.aws_ecs_task_definition.api", "mode": "managed", "type": "aws_ecs_task_definition", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.platform.aws_ecr_repository.api", "module.platform.aws_iam_role.task", "module.platform.aws_cloudwatch_log_group.api", "module.data.aws_rds_cluster.postgres", "module.data.aws_elasticache_replication_group.redis"], "values": {"family": "demo-saas-api", "cpu": "512", "memory": "1024"}},
+            {"address": "module.workloads.aws_ecs_task_definition.worker", "mode": "managed", "type": "aws_ecs_task_definition", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.platform.aws_ecr_repository.worker", "module.platform.aws_iam_role.task", "module.platform.aws_cloudwatch_log_group.worker", "module.data.aws_rds_cluster.postgres"], "values": {"family": "demo-saas-worker", "cpu": "256", "memory": "512"}},
+            {"address": "module.workloads.aws_ecs_service.api", "mode": "managed", "type": "aws_ecs_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.platform.aws_ecs_cluster.this", "module.workloads.aws_ecs_task_definition.api", "module.workloads.aws_lb_listener.https"], "values": {"name": "demo-saas-api", "desired_count": 3}},
+            {"address": "module.workloads.aws_ecs_service.worker", "mode": "managed", "type": "aws_ecs_service", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "depends_on": ["module.platform.aws_ecs_cluster.this", "module.workloads.aws_ecs_task_definition.worker"], "values": {"name": "demo-saas-worker", "desired_count": 2}}
+          ]
+        }
+      ]
+    }
+  },
+  "resource_changes": [
+    {"address": "aws_route53_zone.primary", "mode": "managed", "type": "aws_route53_zone", "name": "primary", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["no-op"], "before": {"name": "demo.example.com"}, "after": {"name": "demo.example.com"}}},
+    {"address": "aws_acm_certificate.web", "mode": "managed", "type": "aws_acm_certificate", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"domain_name": "app.demo.example.com", "arn": null}, "after_unknown": {"arn": true}}},
+    {"address": "aws_kms_key.application", "mode": "managed", "type": "aws_kms_key", "name": "application", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["no-op"], "before": {"enable_key_rotation": true}, "after": {"enable_key_rotation": true}}},
+    {"address": "aws_s3_bucket.assets", "mode": "managed", "type": "aws_s3_bucket", "name": "assets", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"tags": {"service": "web"}}, "after": {"tags": {"service": "web", "environment": "demo"}}}},
+    {"address": "data.aws_caller_identity.current", "mode": "data", "type": "aws_caller_identity", "name": "current", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["read"], "before": null, "after": {"account_id": "123456789012"}}},
+    {"address": "module.network.aws_vpc.this", "module_address": "module.network", "mode": "managed", "type": "aws_vpc", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["no-op"], "before": {"cidr_block": "10.80.0.0/16"}, "after": {"cidr_block": "10.80.0.0/16"}}},
+    {"address": "module.network.aws_internet_gateway.this", "module_address": "module.network", "mode": "managed", "type": "aws_internet_gateway", "name": "this", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"vpc_id": "vpc-saas-demo"}}},
+    {"address": "module.data.aws_rds_cluster.postgres", "module_address": "module.data", "mode": "managed", "type": "aws_rds_cluster", "name": "postgres", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["delete", "create"], "before": {"engine_version": "15.8"}, "after": {"engine_version": "16.4"}, "replace_paths": [["engine_version"]]}},
+    {"address": "module.data.aws_rds_cluster_instance.writer", "module_address": "module.data", "mode": "managed", "type": "aws_rds_cluster_instance", "name": "writer", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"instance_class": "db.r6g.xlarge"}, "after": {"instance_class": "db.r6g.large"}}},
+    {"address": "module.data.aws_elasticache_replication_group.redis", "module_address": "module.data", "mode": "managed", "type": "aws_elasticache_replication_group", "name": "redis", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"replication_group_id": "demo-saas-cache", "node_type": "cache.r7g.large"}}},
+    {"address": "module.platform.aws_cloudwatch_log_group.api", "module_address": "module.platform", "mode": "managed", "type": "aws_cloudwatch_log_group", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"retention_in_days": 14}, "after": {"retention_in_days": 30}}},
+    {"address": "module.platform.aws_cloudwatch_log_group.worker", "module_address": "module.platform", "mode": "managed", "type": "aws_cloudwatch_log_group", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"name": "/ecs/demo-saas-worker", "retention_in_days": 30}}},
+    {"address": "module.platform.aws_iam_role.legacy", "module_address": "module.platform", "mode": "managed", "type": "aws_iam_role", "name": "legacy", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["delete"], "before": {"name": "demo-legacy-task"}, "after": null}},
+    {"address": "module.workloads.aws_lb.public", "module_address": "module.workloads", "mode": "managed", "type": "aws_lb", "name": "public", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"name": "demo-saas-public", "dns_name": null}, "after_unknown": {"dns_name": true}}},
+    {"address": "module.workloads.aws_lb_listener.https", "module_address": "module.workloads", "mode": "managed", "type": "aws_lb_listener", "name": "https", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"port": 443, "protocol": "HTTPS"}}},
+    {"address": "module.workloads.aws_ecs_task_definition.api", "module_address": "module.workloads", "mode": "managed", "type": "aws_ecs_task_definition", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"cpu": "256", "memory": "512"}, "after": {"cpu": "512", "memory": "1024"}}},
+    {"address": "module.workloads.aws_ecs_task_definition.worker", "module_address": "module.workloads", "mode": "managed", "type": "aws_ecs_task_definition", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"family": "demo-saas-worker", "cpu": "256", "memory": "512"}}},
+    {"address": "module.workloads.aws_ecs_service.api", "module_address": "module.workloads", "mode": "managed", "type": "aws_ecs_service", "name": "api", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["update"], "before": {"desired_count": 2}, "after": {"desired_count": 3}}},
+    {"address": "module.workloads.aws_ecs_service.worker", "module_address": "module.workloads", "mode": "managed", "type": "aws_ecs_service", "name": "worker", "provider_name": "registry.terraform.io/hashicorp/aws", "change": {"actions": ["create"], "before": null, "after": {"desired_count": 2}}}
+  ]
+}
