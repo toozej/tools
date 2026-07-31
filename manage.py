@@ -263,10 +263,10 @@ class ToolsManager:
                 "html": ".dockerignore.html",
             },
             "dockerfile": {
-                "go": "Dockerfile.go",
-                "js-static": "Dockerfile.js.static",
-                "js-server": "Dockerfile.js.server",
-                "html": "Dockerfile.html",
+                "go": "Dockerfile.go.template",
+                "js-static": "Dockerfile.js.static.template",
+                "js-server": "Dockerfile.js.server.template",
+                "html": "Dockerfile.html.template",
             },
             "html_scaffold": {
                 "index.html": "index.html",
@@ -307,9 +307,9 @@ class ToolsManager:
             if template_path.exists():
                 dest_path = dest_dir / "Dockerfile"
                 shutil.copy2(template_path, dest_path)
-                print("Copied: Dockerfile.go")
+                print("Copied: Dockerfile.go.template")
             else:
-                print("Warning: Template 'Dockerfile.go' not found")
+                print("Warning: Template 'Dockerfile.go.template' not found")
         elif app_language == "js" and app_type in ["static", "server"]:
             template_key = f"js-{app_type}"
             if template_key in dockerfile_templates:
@@ -325,9 +325,9 @@ class ToolsManager:
             if template_path.exists():
                 dest_path = dest_dir / "Dockerfile"
                 shutil.copy2(template_path, dest_path)
-                print("Copied: Dockerfile.html")
+                print("Copied: Dockerfile.html.template")
             else:
-                print("Warning: Template 'Dockerfile.html' not found")
+                print("Warning: Template 'Dockerfile.html.template' not found")
 
         # Copy HTML scaffold files (index.html, style.css) for HTML apps
         if app_language == "html":

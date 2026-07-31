@@ -2,10 +2,10 @@
 
 This repository provides two Dockerfile templates for JS/Bun applications built with Next.js:
 
-- `templates/Dockerfile.js.static` - For static export apps served by nginx
-- `templates/Dockerfile.js.server` - For apps requiring Node.js runtime (API routes, server-side features)
+- `templates/Dockerfile.js.static.template` - For static export apps served by nginx
+- `templates/Dockerfile.js.server.template` - For apps requiring Node.js runtime (API routes, server-side features)
 
-## Static Template (`Dockerfile.js.static`)
+## Static Template (`Dockerfile.js.static.template`)
 
 Use this template for pure client-side apps that can be statically exported.
 
@@ -14,7 +14,7 @@ Use this template for pure client-side apps that can be statically exported.
 - **Output**: Builds to a Docker volume for nginx serving
 - **Build Command**: `make build`
 
-## Server Template (`Dockerfile.js.server`)
+## Server Template (`Dockerfile.js.server.template`)
 
 Use this template for applications that require server-side functionality.
 

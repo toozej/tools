@@ -162,10 +162,10 @@ Templates are located in the `templates/` directory:
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile.go` | Go application Dockerfile |
-| `Dockerfile.js.static` | NextJS static export Dockerfile |
-| `Dockerfile.js.server` | NextJS server Dockerfile |
-| `Dockerfile.html` | Pure HTML/CSS/JS Dockerfile |
+| `Dockerfile.go.template` | Go application Dockerfile |
+| `Dockerfile.js.static.template` | NextJS static export Dockerfile |
+| `Dockerfile.js.server.template` | NextJS server Dockerfile |
+| `Dockerfile.html.template` | Pure HTML/CSS/JS Dockerfile |
 | `.dockerignore.go` | Go .dockerignore template |
 | `.dockerignore.js` | JavaScript .dockerignore template |
 | `.dockerignore.html` | HTML .dockerignore template |
