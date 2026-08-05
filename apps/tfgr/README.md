@@ -68,6 +68,8 @@ Plans may contain sensitive infrastructure information. Do not expose this serve
 - Click a resource in the graph or tree to inspect it.
 - Use **1 hop** and **2 hops** to traverse its dependencies and dependents; choose **whole graph** to return to the complete plan.
 - Search resource addresses or types, then filter by action using the checkboxes.
+  Filter changes refit the visible graph; if they hide the resource anchoring a
+  focused view, the viewer returns to the whole graph.
 - Drag the graph background to pan; use the mouse wheel or trackpad to zoom.
 - With the graph focused, use **Left** and **Right** to follow dependencies and
   dependents; use **Up** and **Down** to cycle through the visible resources.

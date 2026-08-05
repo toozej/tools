@@ -113,6 +113,18 @@ function selectedAddress() {
   return window.document.querySelector("#details .address")?.textContent;
 }
 
+function actionFilter(action) {
+  return [...window.document.querySelectorAll(".action-filter")]
+    .find((label) => label.textContent === action)
+    .querySelector("input");
+}
+
+function hideAction(action) {
+  const checkbox = actionFilter(action);
+  checkbox.checked = false;
+  checkbox.dispatchEvent(new window.Event("change", { bubbles: true }));
+}
+
 describe("graph interactions", () => {
   test("hides the empty graph overlay while resources are visible", () => {
     expect(window.document.querySelector("#empty-graph").hidden).toBe(true);
@@ -181,6 +193,48 @@ describe("graph interactions", () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(graphElement.getAttribute("viewBox")).not.toBe(before);
+  });
+
+  test("refits the graph after action filters change", () => {
+    const graphElement = window.document.querySelector("#graph");
+    graphElement.dispatchEvent(
+      new window.MouseEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        clientX: 800,
+        clientY: 300,
+      }),
+    );
+    graphElement.dispatchEvent(
+      new window.MouseEvent("pointermove", {
+        bubbles: true,
+        clientX: -1200,
+        clientY: 300,
+      }),
+    );
+    graphElement.dispatchEvent(
+      new window.MouseEvent("pointerup", { bubbles: true }),
+    );
+    expect(graphElement.getAttribute("viewBox")).not.toStartWith("0 0 ");
+
+    hideAction("update");
+
+    expect(window.document.querySelectorAll(".graph-node")).toHaveLength(2);
+    expect(window.document.querySelector("#empty-graph").hidden).toBe(true);
+    expect(graphElement.getAttribute("viewBox")).toStartWith("0 0 ");
+  });
+
+  test("returns to the whole graph when filtering out the focus anchor", () => {
+    select("aws_vpc.network");
+    window.document.querySelector('[data-focus="one"]').click();
+    expect(window.document.querySelectorAll(".graph-node")).toHaveLength(2);
+
+    hideAction("no change");
+
+    expect(window.document.querySelectorAll(".graph-node")).toHaveLength(2);
+    expect(
+      window.document.querySelector('[data-focus="all"]').classList,
+    ).toContain("is-active");
   });
 
   test("shows changed attributes with both values without collapsible controls", () => {

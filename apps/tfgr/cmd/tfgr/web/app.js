@@ -136,24 +136,18 @@
     renderFilters();
     document.querySelector("#search").addEventListener("input", (event) => {
       state.query = event.target.value.trim().toLowerCase();
-      render();
+      filtersChanged();
     });
     document.querySelector("#reset-filters").addEventListener("click", () => {
       state.query = "";
       state.actions = new Set(actionOrder);
       document.querySelector("#search").value = "";
       renderFilters();
-      render();
+      filtersChanged();
     });
     document.querySelectorAll("[data-focus]").forEach((button) => {
       button.addEventListener("click", () => {
-        state.focus = button.dataset.focus;
-        state.resetViewport = true;
-        document
-          .querySelectorAll("[data-focus]")
-          .forEach((item) =>
-            item.classList.toggle("is-active", item === button),
-          );
+        setFocus(button.dataset.focus);
         renderGraph();
       });
     });
@@ -196,7 +190,7 @@
       checkbox.addEventListener("change", () => {
         if (checkbox.checked) state.actions.add(action);
         else state.actions.delete(action);
-        render();
+        filtersChanged();
       });
       const dot = document.createElement("span");
       dot.className = `status-dot action-${action}`;
@@ -213,6 +207,26 @@
     renderTree();
     renderGraph();
     renderDetails();
+  }
+
+  function filtersChanged() {
+    const selected = state.nodesByID.get(state.selectedID);
+    if (selected && state.focus !== "all" && !matchesFilter(selected)) {
+      setFocus("all");
+    } else {
+      state.resetViewport = true;
+    }
+    render();
+  }
+
+  function setFocus(focus) {
+    state.focus = focus;
+    state.resetViewport = true;
+    document
+      .querySelectorAll("[data-focus]")
+      .forEach((item) =>
+        item.classList.toggle("is-active", item.dataset.focus === focus),
+      );
   }
 
   function matchesFilter(node) {
@@ -526,13 +540,7 @@
       button.type = "button";
       button.textContent = text;
       button.addEventListener("click", () => {
-        state.focus = focus;
-        state.resetViewport = true;
-        document
-          .querySelectorAll("[data-focus]")
-          .forEach((item) =>
-            item.classList.toggle("is-active", item.dataset.focus === focus),
-          );
+        setFocus(focus);
         renderGraph();
       });
       detailActions.append(button);
