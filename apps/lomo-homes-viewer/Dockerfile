@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1-alpine AS dependencies
 
 WORKDIR /app
 
@@ -7,7 +7,13 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install dependencies
-RUN bun install
+RUN bun install --frozen-lockfile
+
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy source files
 COPY . .
@@ -16,10 +22,10 @@ COPY . .
 RUN mkdir -p public
 
 # Build the application
-RUN bun run build
+RUN ./node_modules/.bin/next build
 
 # Stage 2: Run the application
-FROM oven/bun:1-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

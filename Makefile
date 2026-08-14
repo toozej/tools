@@ -198,8 +198,13 @@ build: ## Build a specific app locally (usage: make build APP=namehere)
 			echo "Error: Go app must provide cmd/web or cmd/$(APP)"; exit 1; \
 		fi; \
 	elif [ -f "apps/$(APP)/package.json" ]; then \
-		echo "Detected JavaScript app, running bun install and bun run build..."; \
-		cd apps/$(APP) && bun install && bun run build; \
+		if grep -q '"next"' "apps/$(APP)/package.json"; then \
+			echo "Detected Next.js app, running bun install and Next.js with Node..."; \
+			cd apps/$(APP) && bun install --frozen-lockfile && ./node_modules/.bin/next build; \
+		else \
+			echo "Detected JavaScript app, running bun install and bun run build..."; \
+			cd apps/$(APP) && bun install && bun run build; \
+		fi; \
 	elif [ -f "apps/$(APP)/index.html" ]; then \
 		echo "Detected HTML app, no build steps needed"; \
 	else \
