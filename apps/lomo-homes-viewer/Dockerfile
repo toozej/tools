@@ -29,6 +29,10 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
+# Standalone Next.js servers only require Node at runtime.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
