@@ -17,6 +17,7 @@ export const filmFormats: FilmFormat[] = [
   { id: '35mm-academy', name: '35mm Academy', category: 'video', width: 22.0, height: 16.0 },
 
   // Digital sensor formats
+  { id: 'kodak-charmera', name: 'Kodak Charmera (1/4\")', category: 'photo-digital', width: 3.2, height: 2.4 },
   { id: 'nikon1', name: 'Nikon 1 CX', category: 'photo-digital', width: 13.2, height: 8.8 },
   { id: 'micro-four-thirds', name: 'Micro Four Thirds', category: 'photo-digital', width: 17.3, height: 13.0 },
   { id: 'aps-c-canon', name: 'APS-C (Canon)', category: 'photo-digital', width: 22.3, height: 14.9 },

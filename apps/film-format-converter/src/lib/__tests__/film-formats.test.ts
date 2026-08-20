@@ -4,6 +4,7 @@ import { calculateCropFactor, convertFocalLength, filmFormats } from '../film-fo
 describe("filmFormats database", () => {
   test("has all required formats", () => {
     const ids = filmFormats.map(f => f.id);
+    expect(ids).toContain('kodak-charmera');
     expect(ids).toContain('fullframe');
     expect(ids).toContain('aps-c');
     expect(ids).toContain('micro-four-thirds');
@@ -24,6 +25,12 @@ describe("filmFormats database", () => {
     const apsc = filmFormats.find(f => f.id === 'aps-c')!;
     expect(apsc.width).toBe(23.6);
     expect(apsc.height).toBe(15.6);
+  });
+
+  test("Kodak Charmera 1/4-inch sensor dimensions are correct", () => {
+    const charmera = filmFormats.find(f => f.id === 'kodak-charmera')!;
+    expect(charmera.width).toBe(3.2);
+    expect(charmera.height).toBe(2.4);
   });
 });
 
@@ -46,6 +53,11 @@ describe("calculateCropFactor", () => {
   test("Nikon 1 crop factor is ~2.7x", () => {
     const nikon1 = filmFormats.find(f => f.id === 'nikon1')!;
     expect(calculateCropFactor(nikon1)).toBeCloseTo(2.7, 1);
+  });
+
+  test("Kodak Charmera 1/4-inch crop factor is ~10.8x", () => {
+    const charmera = filmFormats.find(f => f.id === 'kodak-charmera')!;
+    expect(calculateCropFactor(charmera)).toBeCloseTo(10.8, 1);
   });
 });
 
