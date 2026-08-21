@@ -94,8 +94,7 @@ beforeEach(async () => {
     height: 600,
   });
   window.eval(appSource);
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise((resolve) => window.setTimeout(resolve, 0));
   expect(window.document.querySelectorAll(".graph-node")).toHaveLength(3);
 });
 
