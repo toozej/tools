@@ -1,0 +1,6 @@
+# Runtime apps intentionally omitted from the resource-constrained Fly Machine.
+clip2gist
+gh-dashboard
+lomo-homes-viewer
+www2epub
+www2s

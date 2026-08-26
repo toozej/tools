@@ -42,6 +42,38 @@ Runs the full tools stack using pre-built images from GitHub Container Registry 
     docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
     ```
 
+### Fly.io
+
+`fly.toml` deploys the isolated `docker-compose-fly.yml` with Fly's native
+multi-container Machine support. The self-hosted `docker-compose-prod.yml` and
+`nginx/conf.d/default.conf` remain unchanged. All static app outputs are baked
+into the one buildable nginx service; only `tfgr` runs as a prebuilt runtime
+sidecar on a unique loopback port. No persistent volume is required.
+
+The checked-in homepage colophon always contains the full app catalog. During
+the Fly nginx image build, `nginx/filter-fly-colophon.py` removes the runtime
+apps listed in `nginx/fly-colophon-exclude.txt` from a temporary copy before
+building the homepage, so Fly only advertises apps that are actually present.
+
+The configuration deliberately uses one `shared-cpu-1x` Machine with 256 MB
+RAM, automatic stop/start, and no minimum running Machine count. A swap file
+absorbs infrequent memory spikes without increasing the billable VM size. Keep
+the first deploy at one Machine so it stays inside the legacy Hobby allowance:
+
+```bash
+flyctl deploy --ha=false
+```
+
+Attach and verify the production hostname after deployment:
+
+```bash
+flyctl certs add tools.toozej.com
+flyctl certs check tools.toozej.com
+```
+
+Follow the DNS target printed by `fly certs add`; do not allocate a dedicated
+IPv4 address, which is outside the legacy Hobby free allowance.
+
 ## Development Usage
 
 For development, `docker-compose-dev.yml` is used. This allows you to develop without affecting your production `docker-compose.yml`.

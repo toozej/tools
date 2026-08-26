@@ -1,0 +1,82 @@
+# Fly's native Compose integration permits exactly one buildable service. The
+# published static app images become build stages so nginx can serve their
+# outputs without the named volumes that Fly intentionally ignores.
+FROM python:3.13-alpine AS fly_colophon
+COPY apps/homepage/src/data/colophon.json /tmp/colophon-full.json
+COPY nginx/filter-fly-colophon.py /usr/local/bin/filter-fly-colophon
+COPY nginx/fly-colophon-exclude.txt /tmp/fly-colophon-exclude.txt
+RUN python /usr/local/bin/filter-fly-colophon \
+    /tmp/colophon-full.json \
+    /tmp/colophon.json \
+    /tmp/fly-colophon-exclude.txt
+
+FROM oven/bun:1-alpine AS homepage_dependencies
+WORKDIR /app
+COPY apps/homepage/package.json apps/homepage/bun.lock ./
+RUN bun install --frozen-lockfile
+
+FROM node:22-alpine AS homepage
+WORKDIR /app
+COPY --from=homepage_dependencies /app/node_modules ./node_modules
+COPY apps/homepage/eslint.config.mjs ./
+COPY apps/homepage/next-env.d.ts ./
+COPY apps/homepage/next.config.ts ./
+COPY apps/homepage/postcss.config.mjs ./
+COPY apps/homepage/tsconfig.json ./
+COPY apps/homepage/src ./src
+COPY --from=fly_colophon /tmp/colophon.json ./src/data/colophon.json
+RUN ./node_modules/.bin/next build
+
+FROM ghcr.io/toozej/tools:taboo AS taboo
+FROM ghcr.io/toozej/tools:unit-converter AS unit_converter
+FROM ghcr.io/toozej/tools:yaml-formatter AS yaml_formatter
+FROM ghcr.io/toozej/tools:ocr AS ocr
+FROM ghcr.io/toozej/tools:emoji-identifier AS emoji_identifier
+FROM ghcr.io/toozej/tools:exiftools AS exiftools
+FROM ghcr.io/toozej/tools:ghissue2md AS ghissue2md
+FROM ghcr.io/toozej/tools:graphviz-visualizer AS graphviz_visualizer
+FROM ghcr.io/toozej/tools:link-extractor AS link_extractor
+FROM ghcr.io/toozej/tools:qr AS qr
+FROM ghcr.io/toozej/tools:render-markdown AS render_markdown
+FROM ghcr.io/toozej/tools:bingo-creator AS bingo_creator
+FROM ghcr.io/toozej/tools:json-utils AS json_utils
+FROM ghcr.io/toozej/tools:matter AS matter
+FROM ghcr.io/toozej/tools:tfps AS tfps
+FROM ghcr.io/toozej/tools:anki-converter AS anki_converter
+FROM ghcr.io/toozej/tools:md-converter AS md_converter
+FROM ghcr.io/toozej/tools:contact-sheet-creator AS contact_sheet_creator
+FROM ghcr.io/toozej/tools:xteink-wallpaper-converter AS xteink_wallpaper_converter
+FROM ghcr.io/toozej/tools:film-format-converter AS film_format_converter
+FROM ghcr.io/toozej/tools:kilo-credit-calculator AS kilo_credit_calculator
+
+FROM ghcr.io/nginx/nginx-unprivileged:stable
+
+USER root
+
+COPY nginx/html/ /usr/share/nginx/html/
+COPY nginx/conf.d/fly.conf /etc/nginx/conf.d/default.conf
+
+COPY --from=homepage /app/out/ /var/www/html/homepage/
+COPY --from=taboo /app/out/ /var/www/html/taboo/
+COPY --from=unit_converter /app/out/ /var/www/html/unit-converter/
+COPY --from=yaml_formatter /app/out/ /var/www/html/yaml-formatter/
+COPY --from=ocr /app/out/ /var/www/html/ocr/
+COPY --from=emoji_identifier /app/out/ /var/www/html/emoji-identifier/
+COPY --from=exiftools /app/out/ /var/www/html/exiftools/
+COPY --from=ghissue2md /app/out/ /var/www/html/ghissue2md/
+COPY --from=graphviz_visualizer /app/out/ /var/www/html/graphviz-visualizer/
+COPY --from=link_extractor /app/out/ /var/www/html/link-extractor/
+COPY --from=qr /app/out/ /var/www/html/qr/
+COPY --from=render_markdown /app/out/ /var/www/html/render-markdown/
+COPY --from=bingo_creator /app/out/ /var/www/html/bingo-creator/
+COPY --from=json_utils /app/out/ /var/www/html/json-utils/
+COPY --from=matter /app/out/ /var/www/html/matter/
+COPY --from=tfps /app/out/ /var/www/html/tfps/
+COPY --from=anki_converter /app/out/ /var/www/html/anki-converter/
+COPY --from=md_converter /app/out/ /var/www/html/md-converter/
+COPY --from=contact_sheet_creator /app/out/ /var/www/html/contact-sheet-creator/
+COPY --from=xteink_wallpaper_converter /app/out/ /var/www/html/xteink-wallpaper-converter/
+COPY --from=film_format_converter /app/out/ /var/www/html/film-format-converter/
+COPY --from=kilo_credit_calculator /app/out/ /var/www/html/kilo-credit-calculator/
+
+USER 101

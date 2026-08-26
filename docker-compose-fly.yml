@@ -1,0 +1,20 @@
+services:
+  www:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile.fly
+    ports:
+      - "8080:8080"
+    depends_on:
+      tfgr:
+        condition: service_healthy
+
+  tfgr:
+    image: ghcr.io/toozej/tools:tfgr
+    command: ["-listen", ":3002", "-open=false"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3002/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
