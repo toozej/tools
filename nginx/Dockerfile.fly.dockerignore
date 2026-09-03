@@ -5,7 +5,6 @@
 !apps/homepage/package.json
 !apps/homepage/bun.lock
 !apps/homepage/eslint.config.mjs
-!apps/homepage/next-env.d.ts
 !apps/homepage/next.config.ts
 !apps/homepage/postcss.config.mjs
 !apps/homepage/tsconfig.json

@@ -19,7 +19,6 @@ FROM node:22-alpine AS homepage
 WORKDIR /app
 COPY --from=homepage_dependencies /app/node_modules ./node_modules
 COPY apps/homepage/eslint.config.mjs ./
-COPY apps/homepage/next-env.d.ts ./
 COPY apps/homepage/next.config.ts ./
 COPY apps/homepage/postcss.config.mjs ./
 COPY apps/homepage/tsconfig.json ./
