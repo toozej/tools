@@ -1,0 +1,31 @@
+---
+name: deploy-fly
+
+on:
+  workflow_call:
+    secrets:
+      FLY_API_TOKEN:
+        required: true
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flyio-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master # nosemgrep: yaml.github-actions.security.third-party-action-not-pinned-to-commit-sha.third-party-action-not-pinned-to-commit-sha
+
+      - name: Deploy latest released Fly images
+        run: flyctl deploy --remote-only --ha=false --yes
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -64,6 +64,11 @@ the first deploy at one Machine so it stays inside the legacy Hobby allowance:
 flyctl deploy --ha=false
 ```
 
+The `deploy-fly` GitHub Actions workflow deploys the Fly configuration after
+the release workflow's `build-and-push` job succeeds; it can also be started
+manually from the Actions tab. Add a Fly deployment token as the
+`FLY_API_TOKEN` repository secret before enabling automatic deployments.
+
 Attach and verify the production hostname after deployment:
 
 ```bash
