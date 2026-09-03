@@ -7,6 +7,9 @@ A progressive web app (PWA) for creating custom bingo cards, built with Go + Web
 - **Custom Bingo Cards**: Create bingo cards for trips, events, or any occasion
 - **Adjustable Grid Size**: Choose from 3x3 to 10x10 grids
 - **PDF Export**: Download your bingo cards as PDF files
+- **Batch PDF Export**: Generate and download up to 50 numbered cards from the current tile list
+- **Tile Pools**: Save reusable tile lists, import `.txt` pools, and download them for sharing
+- **Tablet Play Mode**: Tap tiles to mark a card, then export the marked-up card as a PDF
 - **Local Storage**: Your items are saved automatically per trip name
 - **Shuffled Generation**: Each card gets a unique arrangement
 - **Free Space**: Center cell is automatically set as "Free Space"
@@ -122,6 +125,12 @@ Access the app at `http://localhost:8080`
 3. **Enter Items**: Add your bingo items, one per line in the text area
 4. **Generate Card**: Click "Generate New Card" to create the bingo grid
 5. **Export PDF**: Click "Export PDF" to download your bingo card as a PDF file
+
+### Tile Pools, Tablet Play, and Batch Export
+
+- Save the current newline-delimited list with a pool name, or upload a `.txt` file containing one tile per line. Saved pools are persisted in this browser and restored when the app reloads; use **Download pool** to keep a portable file copy.
+- Enable **Tablet play mode** after creating a card to tap tiles on an iPad or tablet. The free-space tile starts marked, and **Export Card PDF** includes every mark.
+- Set **Cards to export** and select **Export X PDFs** to create independently shuffled cards named `bingo_card_<trip>_1.pdf`, `bingo_card_<trip>_2.pdf`, and so on. Browsers may ask for permission to download multiple files.
 
 ### Item Guidelines
 

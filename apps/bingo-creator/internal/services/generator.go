@@ -102,12 +102,49 @@ func (g *Generator) GenerateGrid(items []string, size int) [][]string {
 	return grid
 }
 
+// ShuffleGrid randomizes the non-free cells on an existing bingo grid while
+// keeping the grid shape and center free space intact.
+func (g *Generator) ShuffleGrid(grid [][]string) [][]string {
+	if len(grid) == 0 {
+		return nil
+	}
+
+	result := make([][]string, len(grid))
+	items := make([]string, 0, len(grid)*len(grid))
+	center := len(grid) / 2
+
+	for row := range grid {
+		result[row] = make([]string, len(grid[row]))
+		for col, item := range grid[row] {
+			if row == center && col == center {
+				continue
+			}
+			items = append(items, item)
+		}
+	}
+
+	shuffled := g.Shuffle(items)
+	itemIndex := 0
+	for row := range result {
+		for col := range result[row] {
+			if row == center && col == center {
+				result[row][col] = FreeSpace
+				continue
+			}
+			result[row][col] = shuffled[itemIndex]
+			itemIndex++
+		}
+	}
+
+	return result
+}
+
 // SanitizeFilename removes characters that are not safe for filenames
 func SanitizeFilename(name string) string {
 	// Replace spaces and special characters with underscores
 	result := strings.ReplaceAll(name, " ", "_")
 	result = strings.ReplaceAll(result, "-", "_")
-	
+
 	// Remove any character that's not alphanumeric or underscore
 	var builder strings.Builder
 	for _, r := range result {
@@ -115,6 +152,6 @@ func SanitizeFilename(name string) string {
 			builder.WriteRune(r)
 		}
 	}
-	
+
 	return builder.String()
 }

@@ -217,6 +217,53 @@ body {
     color: var(--color-text);
 }
 
+.controls-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.tile-pools {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.section-heading h2 {
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.section-heading p,
+.pool-status {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.pool-controls {
+    display: flex;
+    align-items: end;
+    gap: 1rem;
+}
+
+.pool-controls .form-group {
+    flex: 1;
+}
+
+.pool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pool-actions .btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+}
+
 /* Grid Preview */
 .grid-placeholder {
     display: flex;
@@ -274,9 +321,32 @@ body {
     font-size: 1rem;
 }
 
+.grid-cell.marked {
+    background-color: #ffedd5;
+    background-image:
+        linear-gradient(45deg, transparent 47%, rgba(234, 88, 12, 0.7) 48%, rgba(234, 88, 12, 0.7) 52%, transparent 53%),
+        linear-gradient(-45deg, transparent 47%, rgba(234, 88, 12, 0.7) 48%, rgba(234, 88, 12, 0.7) 52%, transparent 53%);
+}
+
+.playable-cell {
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.playable-cell:active {
+    transform: scale(0.98);
+}
+
+.tablet-grid .grid-cell {
+    min-height: 100px;
+}
+
 /* Toolbar */
 .toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -355,6 +425,23 @@ body {
     .controls {
         padding: 1rem;
     }
+
+    .controls-row {
+        grid-template-columns: 1fr;
+    }
+
+    .pool-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pool-actions {
+        width: 100%;
+    }
+
+    .pool-actions .btn {
+        flex: 1;
+    }
     
     .grid-cell {
         min-height: 60px;
@@ -385,6 +472,16 @@ body {
     
     .app-title {
         font-size: 1.75rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1180px) {
+    .container {
+        max-width: 1000px;
+    }
+
+    .tablet-grid .grid-cell {
+        min-height: 120px;
     }
 }
 

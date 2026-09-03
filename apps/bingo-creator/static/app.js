@@ -14,7 +14,7 @@ function sanitizeForPDF(text) {
 }
 
 // PDF export function callable from Go WASM
-window.exportBingoPDF = async function(elementId, filename) {
+window.exportBingoPDF = async function(elementId, filename, options = {}) {
     const element = document.getElementById(elementId);
     
     if (!element) {
@@ -24,10 +24,10 @@ window.exportBingoPDF = async function(elementId, filename) {
     }
 
     // Show loading state
-    const btn = document.querySelector('.btn-success');
+    const btn = document.querySelector(options.buttonSelector || '.btn-success');
     const originalText = btn ? btn.textContent : 'Export PDF';
     if (btn) {
-        btn.textContent = 'Generating PDF...';
+        btn.textContent = options.loadingText || 'Generating PDF...';
         btn.disabled = true;
     }
 
@@ -72,6 +72,7 @@ window.exportBingoPDF = async function(elementId, filename) {
         const cells = grid.querySelectorAll('.grid-cell');
         const rawCellTexts = [];
         const unsupportedCells = [];
+        const markedCells = new Set();
 
         cells.forEach((cell, index) => {
             const textEl = cell.querySelector('.cell-text');
@@ -79,6 +80,9 @@ window.exportBingoPDF = async function(elementId, filename) {
             const normalizedRawText = (rawText || '').trim();
             rawCellTexts.push(normalizedRawText);
 
+            if (cell.classList.contains('marked')) {
+                markedCells.add(index);
+            }
             if (hasUnsupportedPDFCharacters(normalizedRawText)) {
                 unsupportedCells.push({
                     index,
@@ -180,9 +184,12 @@ window.exportBingoPDF = async function(elementId, filename) {
                 
                 // Check if this is the center cell (free space)
                 const isFreeSpace = row === Math.floor(columnCount / 2) && col === Math.floor(columnCount / 2);
+                const isMarked = markedCells.has(cellIndex);
                 
                 // Fill background
-                if (isFreeSpace) {
+                if (isMarked) {
+                    pdf.setFillColor(255, 237, 213);
+                } else if (isFreeSpace) {
                     pdf.setFillColor(240, 240, 240);
                 } else {
                     pdf.setFillColor(255, 255, 255);
@@ -221,6 +228,17 @@ window.exportBingoPDF = async function(elementId, filename) {
                 const textStartY = cellCenterY - (totalTextHeight / 2) + (lineHeight * 0.4);
                 
                 pdf.text(lines, cellCenterX, textStartY, { align: 'center' });
+
+                if (isMarked) {
+                    const markerRadius = Math.max(cellSize * 0.13, 0.08);
+                    pdf.setDrawColor(234, 88, 12);
+                    pdf.setLineWidth(0.02);
+                    pdf.circle(cellCenterX, cellCenterY, markerRadius, 'S');
+                    pdf.line(cellCenterX - markerRadius * 0.55, cellCenterY - markerRadius * 0.55, cellCenterX + markerRadius * 0.55, cellCenterY + markerRadius * 0.55);
+                    pdf.line(cellCenterX - markerRadius * 0.55, cellCenterY + markerRadius * 0.55, cellCenterX + markerRadius * 0.55, cellCenterY - markerRadius * 0.55);
+                    pdf.setDrawColor(0, 0, 0);
+                    pdf.setLineWidth(0.02);
+                }
             }
         }
 
@@ -237,4 +255,100 @@ window.exportBingoPDF = async function(elementId, filename) {
             btn.disabled = false;
         }
     }
+};
+
+
+function createBatchBingoCard(grid) {
+    const columnCount = grid.length;
+    const container = document.createElement('div');
+    container.id = 'bingo-batch-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    container.className = 'batch-export-card';
+    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:720px;background:rgb(255,255,255);padding:2px;';
+
+    const gridElement = document.createElement('div');
+    gridElement.className = 'bingo-grid';
+    gridElement.style.gridTemplateColumns = 'repeat(' + columnCount + ', 1fr)';
+
+    grid.forEach((row, rowIndex) => {
+        row.forEach((text, columnIndex) => {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            if (rowIndex === Math.floor(columnCount / 2) && columnIndex === Math.floor(columnCount / 2)) {
+                cell.classList.add('free-space');
+            }
+            const textElement = document.createElement('span');
+            textElement.className = 'cell-text';
+            textElement.textContent = text || '';
+            cell.appendChild(textElement);
+            gridElement.appendChild(cell);
+        });
+    });
+
+    container.appendChild(gridElement);
+    document.body.appendChild(container);
+    return container;
+}
+
+window.exportBingoPDFBatch = async function(cards, filenameBase) {
+    if (!Array.isArray(cards) || cards.length === 0) {
+        return;
+    }
+
+    const button = document.querySelector('.btn-batch-export');
+    const originalText = button ? button.textContent : 'Export PDFs';
+    try {
+        for (let index = 0; index < cards.length; index++) {
+            if (button) {
+                button.textContent = 'Exporting ' + (index + 1) + ' of ' + cards.length + '...';
+                button.disabled = true;
+            }
+            const card = createBatchBingoCard(cards[index]);
+            const filename = filenameBase + '_' + (index + 1) + '.pdf';
+            await window.exportBingoPDF(card.id, filename, {
+                buttonSelector: '.btn-batch-export',
+                loadingText: 'Generating ' + (index + 1) + ' of ' + cards.length + '...',
+            });
+            card.remove();
+            if (index < cards.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+        }
+    } finally {
+        if (button) {
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+};
+
+window.loadBingoPoolFile = function(files) {
+    const file = files && files.length > 0 ? files[0] : null;
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        if (window.onBingoPoolFileLoaded) {
+            window.onBingoPoolFileLoaded(file.name, String(event.target.result || ''));
+        }
+    };
+    reader.onerror = function() {
+        if (window.onBingoPoolFileError) {
+            window.onBingoPoolFileError();
+        }
+    };
+    reader.readAsText(file);
+};
+
+window.downloadBingoTilePool = function(items, filename) {
+    const blob = new Blob([String(items || '')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
