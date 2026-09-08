@@ -1,6 +1,6 @@
 module anki-converter
 
-go 1.24.0
+go 1.27.1
 
 require github.com/maxence-charriere/go-app/v10 v10.1.11
 

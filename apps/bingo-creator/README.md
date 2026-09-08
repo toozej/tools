@@ -20,7 +20,7 @@ A progressive web app (PWA) for creating custom bingo cards, built with Go + Web
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.27.1
 - Docker (for containerized deployment)
 
 ### Local Development

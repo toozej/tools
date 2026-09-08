@@ -65,7 +65,7 @@ A modern, responsive web application that converts Anki flashcard decks (.apkg f
 
 ### Prerequisites
 
-- [Go](https://go.dev/) 1.21+ installed on your system
+- [Go](https://go.dev/) 1.27.1 installed on your system
 - [Docker](https://www.docker.com/) (optional, for containerized development)
 
 ### Setup

@@ -17,6 +17,10 @@ APP ?=
 # Define the repository URL
 REPO_URL := https://github.com/toozej/tools
 
+# Pin the Go toolchain for apps and Go-based developer tools.
+GO_VERSION := 1.27.1
+GO_CMD := GOTOOLCHAIN=go$(GO_VERSION) go
+
 # Dependency lockfiles allowed to be committed after update-deps
 DEPENDENCY_FILES := package.json bun.lock go.mod go.sum pyproject.toml uv.lock requirements.txt
 
@@ -51,7 +55,7 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 	@FAILED=0; \
 	if [ -f "apps/$(APP)/go.mod" ]; then \
 		echo "Detected Go app, running go test..."; \
-		(cd apps/$(APP) && go test -v ./...) || FAILED=1; \
+		(cd apps/$(APP) && $(GO_CMD) test -v ./...) || FAILED=1; \
 	fi; \
 	if [ -f "apps/$(APP)/package.json" ]; then \
 		echo "Detected JavaScript app, running tests..."; \
@@ -150,7 +154,7 @@ update-deps: ## Update app dependencies for JS/TS, Go, and Python (usage: make u
 	fi; \
 	if [ -f "apps/$(APP)/go.mod" ]; then \
 		echo "Detected Go app, updating Go module dependencies..."; \
-		(cd apps/$(APP) && go get -u ./... && go mod tidy); \
+		(cd apps/$(APP) && $(GO_CMD) get -u ./... && $(GO_CMD) mod tidy); \
 		UPDATED=1; \
 	fi; \
 	if [ -f "apps/$(APP)/pyproject.toml" ]; then \
@@ -187,13 +191,13 @@ build: ## Build a specific app locally (usage: make build APP=namehere)
 			echo "Detected static Go/WASM app, generating static site..."; \
 			cd apps/$(APP) && rm -rf bin/ out/ && \
 			mkdir -p bin/web/ && \
-			GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/ && \
-			go build -o bin/generate -ldflags="-s -w" ./cmd/web/ && \
+			GOOS=js GOARCH=wasm $(GO_CMD) build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/ && \
+			$(GO_CMD) build -o bin/generate -ldflags="-s -w" ./cmd/web/ && \
 			cd bin/ && ./generate && rm -f ./generate && \
 			cd .. && mkdir -p out/ && cp -r bin/* out/ && cp -r static out/; \
 		elif [ -d "apps/$(APP)/cmd/$(APP)" ]; then \
 			echo "Detected Go web service, building native binary..."; \
-			cd apps/$(APP) && mkdir -p bin && go build -o bin/$(APP) ./cmd/$(APP); \
+			cd apps/$(APP) && mkdir -p bin && $(GO_CMD) build -o bin/$(APP) ./cmd/$(APP); \
 		else \
 			echo "Error: Go app must provide cmd/web or cmd/$(APP)"; exit 1; \
 		fi; \
@@ -235,7 +239,7 @@ run: ## Run a specific app locally (usage: make run APP=namehere)
 			wait $$SRV_PID; \
 		elif [ -d "apps/$(APP)/cmd/$(APP)" ]; then \
 			echo "Detected Go web service, starting on http://localhost:8080"; \
-			cd apps/$(APP) && go run ./cmd/$(APP) -listen :8080 -open=false; \
+			cd apps/$(APP) && $(GO_CMD) run ./cmd/$(APP) -listen :8080 -open=false; \
 		else \
 			echo "Error: Go app must provide cmd/web or cmd/$(APP)"; exit 1; \
 		fi; \
@@ -371,11 +375,11 @@ pre-commit-install: ## Install pre-commit hooks and necessary binaries
 	# shellcheck
 	command -v shellcheck || brew install shellcheck || apt install -y shellcheck || sudo dnf install -y ShellCheck || sudo apt install -y shellcheck
 	# checkmake
-	go install github.com/checkmake/checkmake/cmd/checkmake@latest
+	$(GO_CMD) install github.com/checkmake/checkmake/cmd/checkmake@latest
 	# air
-	go install github.com/air-verse/air@latest
+	$(GO_CMD) install github.com/air-verse/air@latest
 	# actionlint
-	command -v actionlint || brew install actionlint || go install github.com/rhysd/actionlint/cmd/actionlint@latest
+	command -v actionlint || brew install actionlint || $(GO_CMD) install github.com/rhysd/actionlint/cmd/actionlint@latest
 	# syft
 	command -v syft || curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 	# semgrep

@@ -37,7 +37,7 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '^1.26'
+          go-version: '1.27.1'
           check-latest: true
           cache: false
       - name: Run pre-commit
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         if: hashFiles(format('apps/{0}/go.mod', matrix.apps)) != ''
         with:
-          go-version: '^1.26'
+          go-version: '1.27.1'
           check-latest: true
           cache-dependency-path: apps/${{ matrix.apps }}/go.sum
       - name: Run tests
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '^1.26'
+          go-version: '1.27.1'
           check-latest: true
           cache-dependency-path: apps/*/go.sum
       - uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9

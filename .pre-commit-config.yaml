@@ -55,6 +55,7 @@ repos:
     rev: v1.7.12
     hooks:
       - id: actionlint
+        language_version: 1.27.1
 
   # Check for updates to dependencies in uv lock file
   - repo: https://github.com/astral-sh/uv-pre-commit

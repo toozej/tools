@@ -1,6 +1,6 @@
 module xteink-wallpaper-converter
 
-go 1.26
+go 1.27.1
 
 require (
 	github.com/anthonynsimon/bild v0.17.0
