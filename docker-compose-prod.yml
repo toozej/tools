@@ -63,6 +63,8 @@ services:
         condition: service_started
       kilo-credit-calculator:
         condition: service_started
+      lightbox:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -89,6 +91,8 @@ services:
       - "tools_contact-sheet-creator:/var/www/html/contact-sheet-creator:ro"
       - "tools_xteink-wallpaper-converter:/var/www/html/xteink-wallpaper-converter:ro"
       - "tools_film-format-converter:/var/www/html/film-format-converter:ro"
+      - "tools_kilo-credit-calculator:/var/www/html/kilo-credit-calculator:ro"
+      - "tools_lightbox:/var/www/html/lightbox:ro"
 
   # -------------------------
   # Runtime apps
@@ -359,6 +363,13 @@ services:
       - tools_kilo-credit-calculator:/app/out
     command: ["sleep", "5"]
 
+  lightbox:
+    container_name: tools_lightbox
+    image: ghcr.io/toozej/tools:lightbox
+    volumes:
+      - tools_lightbox:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -382,6 +393,7 @@ volumes:
   tools_xteink-wallpaper-converter:
   tools_film-format-converter:
   tools_kilo-credit-calculator:
+  tools_lightbox:
 
 networks:
   backend:

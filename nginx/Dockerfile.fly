@@ -47,6 +47,7 @@ FROM ghcr.io/toozej/tools:contact-sheet-creator AS contact_sheet_creator
 FROM ghcr.io/toozej/tools:xteink-wallpaper-converter AS xteink_wallpaper_converter
 FROM ghcr.io/toozej/tools:film-format-converter AS film_format_converter
 FROM ghcr.io/toozej/tools:kilo-credit-calculator AS kilo_credit_calculator
+FROM ghcr.io/toozej/tools:lightbox AS lightbox
 
 FROM ghcr.io/nginx/nginx-unprivileged:stable
 
@@ -77,5 +78,6 @@ COPY --from=contact_sheet_creator /app/out/ /var/www/html/contact-sheet-creator/
 COPY --from=xteink_wallpaper_converter /app/out/ /var/www/html/xteink-wallpaper-converter/
 COPY --from=film_format_converter /app/out/ /var/www/html/film-format-converter/
 COPY --from=kilo_credit_calculator /app/out/ /var/www/html/kilo-credit-calculator/
+COPY --from=lightbox /app/out/ /var/www/html/lightbox/
 
 USER 101

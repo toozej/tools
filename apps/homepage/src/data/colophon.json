@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T15:07:22.991590Z",
-  "total_apps": 28,
+  "generated_at": "2026-09-15T14:56:00.877008Z",
+  "total_apps": 29,
   "apps": [
     {
       "name": "anki-converter",
@@ -37,7 +37,7 @@
     {
       "name": "bingo-creator",
       "title": "Bingo Creator",
-      "description": "Custom Bingo Cards: Create bingo cards for trips, events, or any occasion. Adjustable Grid Size: Choose from 3x3 to 10x10 grids. PDF Export: Download your bingo cards as PDF files. Local Storage: Your items are saved automatically per trip name. Shuffled Generation: Each card gets a unique arrangement. Free Space: Center cell is automatically set as \"Free Space\". Offline Support: Works offline once loaded (PWA). Responsive Design: Works on desktop and mobile devices.",
+      "description": "Custom Bingo Cards: Create bingo cards for trips, events, or any occasion. Adjustable Grid Size: Choose from 3x3 to 10x10 grids. PDF Export: Download your bingo cards as PDF files. Batch PDF Export: Generate and download up to 50 numbered cards from the current tile list. Tile Pools: Save reusable tile lists, import .txt pools, and download them for sharing. Tablet Play Mode: Tap tiles to mark a card, then export the marked-up card as a PDF. Local Storage: Your items are saved automatically per trip name. Shuffled Generation: Each card gets a unique arrangement. Free Space: Center cell is automatically set as \"Free Space\". Offline Support: Works offline once loaded (PWA). Responsive Design: Works on desktop and mobile devices.",
       "tags": [
         "Go",
         "Docker",
@@ -284,6 +284,15 @@
         "Typescript"
       ],
       "url": "/kilo-credit-calculator",
+      "credits": [],
+      "has_credits": false
+    },
+    {
+      "name": "lightbox",
+      "title": "lightbox",
+      "description": "A static page that displays a solid white background.",
+      "tags": [],
+      "url": "/lightbox",
       "credits": [],
       "has_credits": false
     },
