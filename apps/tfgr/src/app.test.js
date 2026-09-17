@@ -73,7 +73,6 @@ let window;
 beforeEach(async () => {
   dom?.window.close();
   dom = new JSDOM(indexHTML, {
-    runScripts: "outside-only",
     url: "http://tfgr.test/tfgr/",
   });
   window = dom.window;
@@ -93,7 +92,20 @@ beforeEach(async () => {
     width: 1000,
     height: 600,
   });
-  window.eval(appSource);
+  new Function(
+    "document",
+    "fetch",
+    "HTMLInputElement",
+    "HTMLTextAreaElement",
+    "HTMLSelectElement",
+    appSource,
+  )(
+    window.document,
+    window.fetch,
+    window.HTMLInputElement,
+    window.HTMLTextAreaElement,
+    window.HTMLSelectElement,
+  );
   await new Promise((resolve) => window.setTimeout(resolve, 0));
   expect(window.document.querySelectorAll(".graph-node")).toHaveLength(3);
 });
