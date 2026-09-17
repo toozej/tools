@@ -3,7 +3,7 @@ module github.com/toozej/terraform-plan-graph
 go 1.27.1
 
 require (
-	github.com/hashicorp/hcl/v2 v2.24.0
+	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/hashicorp/terraform-json v0.28.0
 )
 
