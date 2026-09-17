@@ -8,7 +8,8 @@ Matter allows you to easily add professional-looking borders and mats to your im
 
 ### Key Features
 
-- **Multiple Upload Methods**: Upload images via file browser, drag & drop, paste from clipboard, or load from URL
+- **Image Collections**: Upload image files, a folder of images, or a ZIP archive of images
+- **Panel Layouts**: Create side-by-side or stacked diptychs, row or column triptychs, and a feature triptych
 - **Customizable Borders**: Adjust outer and inner border widths independently
 - **Color Selection**: Choose any color for your borders with an intuitive color picker
 - **EXIF Orientation Support**: Automatically detects and corrects image orientation from EXIF metadata
@@ -20,12 +21,26 @@ Matter allows you to easily add professional-looking borders and mats to your im
 
 ### Uploading Images
 
-You can upload images in four ways:
+You can load images in several ways:
 
-1. **File Browser**: Click the upload area to open a file picker
-2. **Drag & Drop**: Drag an image file directly onto the upload area
-3. **Paste**: Copy an image and paste it (Ctrl/Cmd + V) anywhere on the page
-4. **URL**: Enter an image URL in the input field and click "Load"
+1. **Images or ZIP**: Select one or more image files, or select a ZIP archive that contains image files.
+2. **Folder**: Select a folder that contains image files.
+3. **Drag and Drop**: Drag image files or a ZIP archive onto the upload area.
+4. **Paste**: Copy image files and paste them (Ctrl/Cmd + V) anywhere on the page.
+5. **URL**: Enter one image URL and click "Load".
+
+Matter sorts uploaded images by file name. Select the images for a layout in the order that they must appear. Matter crops each image to fill its panel.
+
+### Selecting a Layout
+
+Select one of these layouts before you select the images:
+
+- Single image
+- Side-by-side diptych
+- Stacked diptych
+- Three-panel row
+- Three-panel column
+- Feature triptych with one tall image and two stacked images
 
 ### Customizing Borders
 
@@ -42,7 +57,7 @@ You can upload images in four ways:
 
 ### Downloading
 
-Once you're happy with your borders, click the "Download Matted Image" button to save your image as a PNG file.
+Select PNG, PDF, JPG, or WEBP. Click the download button to save the layout in that format.
 
 ## Installation
 
