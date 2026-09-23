@@ -250,6 +250,12 @@ body {
     text-align: center;
 }
 
+.settings-help {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .error-msg {
     color: var(--error-color);
     margin-top: 15px;

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
+    let loadGeneration = 0;
 
     if (dropZone) {
         dropZone.addEventListener('click', function(e) {
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.loadImages = function(files) {
+        const generation = ++loadGeneration;
         const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.tif') || file.name.toLowerCase().endsWith('.tiff'));
         const count = imageFiles.length;
         if (window.onImagesLoaded) {
@@ -44,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const reader = new FileReader();
             reader.onload = (function(index) {
                 return function(e) {
+                    if (generation !== loadGeneration) {
+                        return;
+                    }
                     if (!e.target.result) {
                         if (window.onImageLoadError) {
                             window.onImageLoadError(index, file.name, 'empty result');
@@ -65,6 +70,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })(i);
             reader.onerror = (function(index) {
                 return function() {
+                    if (generation !== loadGeneration) {
+                        return;
+                    }
                     if (window.onImageLoadError) {
                         window.onImageLoadError(index, file.name, 'file read error');
                     }

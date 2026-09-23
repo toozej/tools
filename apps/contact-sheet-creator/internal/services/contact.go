@@ -187,7 +187,7 @@ func GetFilmTypes() []string {
 		types = append(types, string(ft))
 	}
 	sort.Strings(types)
-	return append([]string{"None"}, types...)
+	return types
 }
 
 type SheetSettings struct {
@@ -260,12 +260,34 @@ func matchFilmType(text string) FilmType {
 	upperText := strings.ToUpper(text)
 
 	for _, entry := range filmKeywords {
-		if strings.Contains(upperText, entry.keyword) {
+		if containsFilmKeyword(upperText, entry.keyword) {
 			return entry.filmType
 		}
 	}
 
 	return FilmNone
+}
+
+func containsFilmKeyword(text, keyword string) bool {
+	for offset := 0; offset < len(text); {
+		index := strings.Index(text[offset:], keyword)
+		if index < 0 {
+			return false
+		}
+		start := offset + index
+		end := start + len(keyword)
+		startsAtWord := start == 0 || !isFilmWordCharacter(text[start-1])
+		endsAtWord := end == len(text) || !isFilmWordCharacter(text[end])
+		if startsAtWord && endsAtWord {
+			return true
+		}
+		offset = start + 1
+	}
+	return false
+}
+
+func isFilmWordCharacter(char byte) bool {
+	return char >= 'A' && char <= 'Z' || char >= '0' && char <= '9'
 }
 
 func CreateFilmBorder(width, height int, filmType FilmType, isLandscape bool, pos BorderPosition) image.Image {
@@ -279,69 +301,44 @@ func CreateFilmBorder(width, height int, filmType FilmType, isLandscape bool, po
 		perfColor = def.PerfColor
 	}
 
-	// Always fill background
 	draw.Draw(borderImg, borderImg.Bounds(), &image.Uniform{bgColor}, image.Point{}, draw.Src)
-
-	// In middle frames, we might want to "clip" the sides to make it continuous
-	// but the user's request "middle columns should only have top and bottom"
-	// suggests they want to avoid the extra side padding.
-	// For now, let's keep the fill but only draw decorations on the ends.
-
 	filmPerfs := createFilmPerforations(width, height, isLandscape, perfColor)
 	draw.Draw(borderImg, filmPerfs.Bounds(), filmPerfs, image.Point{}, draw.Over)
-
-	// Draw hatch marks - draw across entire width to line up when cells touch
-	if isLandscape {
-		startX := 0
-		endX := width
-		// For the start/end of the whole strip, we can indent the markers slightly if desired,
-		// but drawing them fully ensures they meet perfectly between frames.
-		for x := startX; x < endX; x += 40 {
-			draw.Draw(borderImg, image.Rect(x, 5, x+2, height-5), &image.Uniform{color.RGBA{60, 60, 60, 255}}, image.Point{}, draw.Src)
+	if def, ok := FilmDefinitions[filmType]; ok {
+		textColor := color.RGBA{220, 190, 100, 255}
+		if def.Category == FilmCategoryBW {
+			textColor = color.RGBA{225, 225, 225, 255}
 		}
-
-		// Draw film info
-		if def, ok := FilmDefinitions[filmType]; ok {
-			textColor := color.RGBA{180, 150, 50, 200}
-			if def.Category == FilmCategoryBW {
-				textColor = color.RGBA{200, 200, 200, 180}
-			}
-
-			// Only draw name/codes at specific positions to avoid cluttering every frame
+		if isLandscape {
 			if pos == BorderPositionStart || pos == BorderPositionSingle {
-				drawText(borderImg, 20, 20, def.Name, textColor)
-				if len(def.EdgeprintCodes) > 0 {
-					drawText(borderImg, 20, height-15, def.EdgeprintCodes[0], textColor)
-				}
+				drawFilmLabel(borderImg, 18, 22, def.Name, textColor, bgColor)
 			}
-			if pos == BorderPositionEnd || pos == BorderPositionSingle {
-				if len(def.LetterCodes) > 0 {
-					drawText(borderImg, width-80, height-15, def.LetterCodes[0], textColor)
-				}
+			if (pos == BorderPositionEnd || pos == BorderPositionSingle) && len(def.LetterCodes) > 0 {
+				drawFilmLabel(borderImg, 18, height-10, def.LetterCodes[0], textColor, bgColor)
 			}
-		}
-	} else {
-		startY := 0
-		endY := height
-		for y := startY; y < endY; y += 40 {
-			draw.Draw(borderImg, image.Rect(5, y, width-5, y+2), &image.Uniform{color.RGBA{60, 60, 60, 255}}, image.Point{}, draw.Src)
-		}
-
-		if def, ok := FilmDefinitions[filmType]; ok {
-			textColor := color.RGBA{180, 150, 50, 200}
-			if def.Category == FilmCategoryBW {
-				textColor = color.RGBA{200, 200, 200, 180}
-			}
+		} else {
 			if pos == BorderPositionStart || pos == BorderPositionSingle {
-				drawText(borderImg, 10, 50, def.Name, textColor)
-				if len(def.EdgeprintCodes) > 0 {
-					drawText(borderImg, 10, height-80, def.EdgeprintCodes[0], textColor)
-				}
+				drawFilmLabel(borderImg, 10, 22, def.Name, textColor, bgColor)
+			}
+			if (pos == BorderPositionEnd || pos == BorderPositionSingle) && len(def.LetterCodes) > 0 {
+				drawFilmLabel(borderImg, 10, height-10, def.LetterCodes[0], textColor, bgColor)
 			}
 		}
 	}
 
 	return borderImg
+}
+
+func drawFilmLabel(dst *image.RGBA, x, y int, label string, textColor, bgColor color.RGBA) {
+	maxChars := (dst.Bounds().Dx() - x - 8) / 7
+	if maxChars <= 0 {
+		return
+	}
+	if len(label) > maxChars {
+		label = label[:maxChars]
+	}
+	draw.Draw(dst, image.Rect(x-3, y-12, x+len(label)*7+3, y+3), image.NewUniform(bgColor), image.Point{}, draw.Src)
+	drawText(dst, x, y, label, textColor)
 }
 
 func drawText(dst *image.RGBA, x, y int, text string, c color.Color) {
@@ -355,33 +352,33 @@ func drawText(dst *image.RGBA, x, y int, text string, c color.Color) {
 }
 
 func createFilmPerforations(width, height int, isLandscape bool, perfColor color.RGBA) image.Image {
+	perfImg := image.NewRGBA(image.Rect(0, 0, width, height))
+	holeColor := color.RGBA{165, 165, 155, 255}
+	drawHole := func(rect image.Rectangle) {
+		draw.Draw(perfImg, rect, image.NewUniform(holeColor), image.Point{}, draw.Src)
+		inner := rect.Inset(2)
+		draw.Draw(perfImg, inner, image.NewUniform(perfColor), image.Point{}, draw.Src)
+	}
 	if isLandscape {
-		perfW, perfH := 8, 20
-		perfCount := height / 30
-		startY := (height - perfCount*30) / 2
-
-		perfImg := image.NewRGBA(image.Rect(0, 0, width, height))
-
-		for i := 0; i < perfCount; i++ {
-			y := startY + i*30
-			draw.Draw(perfImg, image.Rect(5, y, 5+perfW, y+perfH), &image.Uniform{perfColor}, image.Point{}, draw.Src)
-			draw.Draw(perfImg, image.Rect(width-5-perfW, y, width-5, y+perfH), &image.Uniform{perfColor}, image.Point{}, draw.Src)
-		}
-		return perfImg
-	} else {
-		perfW, perfH := 20, 8
+		perfW, perfH := 15, 8
 		perfCount := width / 30
 		startX := (width - perfCount*30) / 2
-
-		perfImg := image.NewRGBA(image.Rect(0, 0, width, height))
-
 		for i := 0; i < perfCount; i++ {
 			x := startX + i*30
-			draw.Draw(perfImg, image.Rect(x, 5, x+perfW, 5+perfH), &image.Uniform{perfColor}, image.Point{}, draw.Src)
-			draw.Draw(perfImg, image.Rect(x, height-5-perfH, x+perfW, height-5), &image.Uniform{perfColor}, image.Point{}, draw.Src)
+			drawHole(image.Rect(x, 4, x+perfW, 4+perfH))
+			drawHole(image.Rect(x, height-4-perfH, x+perfW, height-4))
 		}
-		return perfImg
+	} else {
+		perfW, perfH := 8, 15
+		perfCount := height / 30
+		startY := (height - perfCount*30) / 2
+		for i := 0; i < perfCount; i++ {
+			y := startY + i*30
+			drawHole(image.Rect(4, y, 4+perfW, y+perfH))
+			drawHole(image.Rect(width-4-perfW, y, width-4, y+perfH))
+		}
 	}
+	return perfImg
 }
 
 func ProcessImage(imgData []byte, targetWidth, targetHeight int, orientation Orientation) (image.Image, error) {
@@ -457,11 +454,9 @@ func CreateContactSheet(images [][]byte, settings SheetSettings, onProgress ...P
 	if len(onProgress) > 0 && onProgress[0] != nil {
 		progressCb = onProgress[0]
 	}
-
 	if len(images) == 0 {
 		return nil, errors.New("no images provided")
 	}
-
 	if settings.Rows <= 0 {
 		settings.Rows = 8
 	}
@@ -488,187 +483,149 @@ func CreateContactSheet(images [][]byte, settings SheetSettings, onProgress ...P
 	if len(images) > totalCells {
 		images = images[:totalCells]
 	}
-
-	isLandscape := settings.Orientation == OrientationLandscape
-
-	imgWidth := settings.ImageWidth
-	imgHeight := settings.ImageHeight
-	if settings.FilmStrip && settings.FilmType != FilmNone {
-		if isLandscape {
-			imgHeight += settings.FilmBorderSize * 2
-		} else {
-			imgWidth += settings.FilmBorderSize * 2
-		}
+	type frame struct {
+		image image.Image
+		film  FilmType
 	}
-
-	// Spacing logic: zero out internal strip spacing
-	colSpacing := settings.Spacing
-	rowSpacing := settings.Spacing
-	if settings.FilmStrip && settings.FilmType != FilmNone {
-		if isLandscape {
-			colSpacing = 0
-		} else {
-			rowSpacing = 0
-		}
-	}
-
-	gridWidth := settings.Cols*imgWidth + (settings.Cols-1)*colSpacing
-	if settings.FilmStrip && settings.FilmType != FilmNone && isLandscape {
-		gridWidth = settings.Cols*(imgWidth+settings.FilmBorderSize) + settings.FilmBorderSize
-	}
-
-	gridHeight := settings.Rows*imgHeight + (settings.Rows-1)*rowSpacing
-	if settings.FilmStrip && settings.FilmType != FilmNone && !isLandscape {
-		gridHeight = settings.Rows*(imgHeight+settings.FilmBorderSize) + settings.FilmBorderSize
-	}
-
-	headerHeight := 0
-	if settings.HeaderText != "" {
-		headerHeight = 60
-	}
-	footerHeight := 0
-	if settings.FooterText != "" {
-		footerHeight = 60
-	}
-
-	sheetWidth := gridWidth + settings.Margin*2
-	sheetHeight := gridHeight + settings.Margin*2 + headerHeight + footerHeight
-
-	if settings.SheetWidth > 0 {
-		sheetWidth = settings.SheetWidth
-	}
-	if settings.SheetHeight > 0 {
-		sheetHeight = settings.SheetHeight
-	}
-
-	sheet := image.NewRGBA(image.Rect(0, 0, sheetWidth, sheetHeight))
-	draw.Draw(sheet, sheet.Bounds(), &image.Uniform{color.RGBA{20, 20, 20, 255}}, image.Point{}, draw.Src)
-
-	processedImages := make([]image.Image, 0, len(images))
-	totalSteps := len(images) + settings.Rows*settings.Cols
+	frames := make([]frame, 0, len(images))
+	totalSteps := len(images) + totalCells
 	currentStep := 0
 	failedImages := 0
-
+	hasBorder := false
 	for i, imgData := range images {
 		processed, err := ProcessImage(imgData, settings.ImageWidth, settings.ImageHeight, settings.Orientation)
+		currentStep++
+		progressCb(currentStep, totalSteps)
 		if err != nil {
 			failedImages++
 			fmt.Printf("[contact-sheet] image %d failed to process: %v\n", i, err)
-			currentStep++
-			progressCb(currentStep, totalSteps)
 			continue
 		}
-		processedImages = append(processedImages, processed)
+		filmType := FilmNone
+		if settings.FilmStrip {
+			if settings.FilmType != FilmNone {
+				if _, ok := FilmDefinitions[settings.FilmType]; ok {
+					filmType = settings.FilmType
+				}
+			} else {
+				filmType = DetectFilmType(imgData)
+			}
+		}
+		if filmType != FilmNone {
+			hasBorder = true
+		}
+		frames = append(frames, frame{image: processed, film: filmType})
+	}
+	if len(frames) == 0 {
+		return nil, errors.New("no images could be decoded; verify image format and metadata")
+	}
+
+	borderSize := 0
+	if hasBorder {
+		borderSize = settings.FilmBorderSize
+	}
+	cellWidth := settings.ImageWidth + borderSize*2
+	cellHeight := settings.ImageHeight + borderSize*2
+	gridWidth := settings.Cols*cellWidth + (settings.Cols-1)*settings.Spacing
+	gridHeight := settings.Rows*cellHeight + (settings.Rows-1)*settings.Spacing
+	headerHeight := 0
+	if settings.HeaderText != "" {
+		headerHeight = 40
+	}
+	footerHeight := 0
+	if settings.FooterText != "" {
+		footerHeight = 40
+	}
+	naturalWidth := gridWidth + settings.Margin*2
+	naturalHeight := gridHeight + settings.Margin*2 + headerHeight + footerHeight
+	sheet := image.NewRGBA(image.Rect(0, 0, naturalWidth, naturalHeight))
+	background := color.RGBA{20, 20, 20, 255}
+	draw.Draw(sheet, sheet.Bounds(), image.NewUniform(background), image.Point{}, draw.Src)
+	textColor := color.RGBA{235, 235, 235, 255}
+	if headerHeight > 0 {
+		drawSheetText(sheet, settings.HeaderText, settings.Margin, settings.Margin+24, naturalWidth-settings.Margin*2, textColor)
+	}
+	if footerHeight > 0 {
+		drawSheetText(sheet, settings.FooterText, settings.Margin, naturalHeight-settings.Margin-10, naturalWidth-settings.Margin*2, textColor)
+	}
+
+	composeStart := time.Now()
+	for idx, frame := range frames {
+		row := idx / settings.Cols
+		col := idx % settings.Cols
+		cellX := settings.Margin + col*(cellWidth+settings.Spacing)
+		cellY := settings.Margin + headerHeight + row*(cellHeight+settings.Spacing)
+		if frame.film != FilmNone {
+			border := CreateFilmBorder(cellWidth, cellHeight, frame.film, settings.Orientation == OrientationLandscape, BorderPositionSingle)
+			draw.Draw(sheet, image.Rect(cellX, cellY, cellX+cellWidth, cellY+cellHeight), border, image.Point{}, draw.Src)
+		}
+		imageX := cellX + borderSize
+		imageY := cellY + borderSize
+		draw.Draw(sheet, image.Rect(imageX, imageY, imageX+settings.ImageWidth, imageY+settings.ImageHeight), frame.image, image.Point{}, draw.Src)
+	}
+	for currentStep < totalSteps {
 		currentStep++
 		progressCb(currentStep, totalSteps)
 	}
 
-	if len(processedImages) == 0 {
-		return nil, errors.New("no images could be decoded; verify image format and metadata")
+	outputWidth := naturalWidth
+	outputHeight := naturalHeight
+	if settings.SheetWidth > 0 {
+		outputWidth = settings.SheetWidth
 	}
-
-	composeStart := time.Now()
-	for row := 0; row < settings.Rows; row++ {
-		for col := 0; col < settings.Cols; col++ {
-			idx := row*settings.Cols + col
-			if idx >= len(processedImages) || processedImages[idx] == nil {
-				continue
-			}
-
-			cellX := settings.Margin + col*(imgWidth+colSpacing)
-			if settings.FilmStrip && settings.FilmType != FilmNone && isLandscape {
-				if col > 0 {
-					cellX += settings.FilmBorderSize
-				}
-			}
-
-			cellY := headerHeight + settings.Margin + row*(imgHeight+rowSpacing)
-			if settings.FilmStrip && settings.FilmType != FilmNone && !isLandscape {
-				if row > 0 {
-					cellY += settings.FilmBorderSize
-				}
-			}
-
-			img := processedImages[idx]
-
-			if settings.FilmStrip && settings.FilmType != FilmNone {
-				pos := BorderPositionMiddle
-				if isLandscape {
-					if settings.Cols == 1 {
-						pos = BorderPositionSingle
-					} else if col == 0 {
-						pos = BorderPositionStart
-					} else if col == settings.Cols-1 {
-						pos = BorderPositionEnd
-					}
-				} else {
-					if settings.Rows == 1 {
-						pos = BorderPositionSingle
-					} else if row == 0 {
-						pos = BorderPositionStart
-					} else if row == settings.Rows-1 {
-						pos = BorderPositionEnd
-					}
-				}
-
-				// The very last image in the collection always gets an end-cap
-				if idx == len(processedImages)-1 {
-					if pos == BorderPositionStart || pos == BorderPositionSingle {
-						pos = BorderPositionSingle
-					} else {
-						pos = BorderPositionEnd
-					}
-				}
-
-				// Calculate cell dimensions for this specific frame
-				// Every frame gets its own "leading" film border gap on the left (landscape) or top (portrait).
-				// The VERY last frame also gets an "ending" film border cap on the right/bottom.
-				cellW := imgWidth
-				cellH := imgHeight
-				if isLandscape {
-					cellW += settings.FilmBorderSize
-					if pos == BorderPositionEnd || pos == BorderPositionSingle {
-						cellW += settings.FilmBorderSize
-					}
-				} else {
-					cellH += settings.FilmBorderSize
-					if pos == BorderPositionEnd || pos == BorderPositionSingle {
-						cellH += settings.FilmBorderSize
-					}
-				}
-
-				imgWithBorder := image.NewRGBA(image.Rect(0, 0, cellW, cellH))
-				border := CreateFilmBorder(cellW, cellH, settings.FilmType, isLandscape, pos)
-				draw.Draw(imgWithBorder, imgWithBorder.Bounds(), border, image.Point{}, draw.Over)
-
-				imgX := 0
-				imgY := 0
-				if isLandscape {
-					imgY = settings.FilmBorderSize
-					imgX = settings.FilmBorderSize // Every frame is indented by its leading border
-				} else {
-					imgX = settings.FilmBorderSize
-					imgY = settings.FilmBorderSize
-				}
-				draw.Draw(imgWithBorder, image.Rect(imgX, imgY, imgX+settings.ImageWidth, imgY+settings.ImageHeight), img, image.Point{}, draw.Src)
-				img = imgWithBorder
-			}
-
-			draw.Draw(sheet, image.Rect(cellX, cellY, cellX+img.Bounds().Dx(), cellY+img.Bounds().Dy()), img, image.Point{}, draw.Over)
-			currentStep++
-			progressCb(currentStep, totalSteps)
+	if settings.SheetHeight > 0 {
+		outputHeight = settings.SheetHeight
+	}
+	if outputWidth != naturalWidth || outputHeight != naturalHeight {
+		scale := math.Min(1, math.Min(float64(outputWidth)/float64(naturalWidth), float64(outputHeight)/float64(naturalHeight)))
+		scaledWidth := int(math.Round(float64(naturalWidth) * scale))
+		scaledHeight := int(math.Round(float64(naturalHeight) * scale))
+		if scaledWidth < 1 {
+			scaledWidth = 1
 		}
+		if scaledHeight < 1 {
+			scaledHeight = 1
+		}
+		var content image.Image = sheet
+		if scale < 1 {
+			content = transform.Resize(sheet, scaledWidth, scaledHeight, transform.Linear)
+		}
+		output := image.NewRGBA(image.Rect(0, 0, outputWidth, outputHeight))
+		draw.Draw(output, output.Bounds(), image.NewUniform(background), image.Point{}, draw.Src)
+		offset := image.Pt((outputWidth-scaledWidth)/2, (outputHeight-scaledHeight)/2)
+		draw.Draw(output, image.Rectangle{Min: offset, Max: offset.Add(image.Pt(scaledWidth, scaledHeight))}, content, image.Point{}, draw.Src)
+		sheet = output
 	}
-	fmt.Printf("[contact-sheet] processed=%d failed=%d process_ms=%d compose_ms=%d\n",
-		len(processedImages), failedImages, composeStart.Sub(start).Milliseconds(), time.Since(composeStart).Milliseconds())
 
+	fmt.Printf("[contact-sheet] processed=%d failed=%d process_ms=%d compose_ms=%d\n",
+		len(frames), failedImages, composeStart.Sub(start).Milliseconds(), time.Since(composeStart).Milliseconds())
 	var buf bytes.Buffer
-	err := jpeg.Encode(&buf, sheet, &jpeg.Options{Quality: 90})
-	if err != nil {
+	if err := jpeg.Encode(&buf, sheet, &jpeg.Options{Quality: 90}); err != nil {
 		return nil, errors.New("failed to encode output image")
 	}
-
 	return buf.Bytes(), nil
+}
+
+func drawSheetText(dst *image.RGBA, label string, x, y, maxWidth int, textColor color.Color) {
+	if label == "" || maxWidth < 1 {
+		return
+	}
+	textWidth := font.MeasureString(basicfont.Face7x13, label).Ceil()
+	if textWidth < 1 {
+		return
+	}
+	textImage := image.NewRGBA(image.Rect(0, 0, textWidth, 15))
+	drawText(textImage, 0, 13, label, textColor)
+	targetWidth := textWidth * 2
+	if targetWidth > maxWidth {
+		targetWidth = maxWidth
+	}
+	targetHeight := int(math.Round(15 * float64(targetWidth) / float64(textWidth)))
+	if targetHeight < 1 {
+		targetHeight = 1
+	}
+	scaledText := transform.Resize(textImage, targetWidth, targetHeight, transform.NearestNeighbor)
+	draw.Draw(dst, image.Rect(x, y-targetHeight, x+targetWidth, y), scaledText, image.Point{}, draw.Over)
 }
 
 func ImageToBase64(imgData []byte) string {

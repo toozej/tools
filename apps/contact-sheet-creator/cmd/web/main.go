@@ -15,8 +15,6 @@ import (
 // -ldflags "-X main.buildVersion=<version>"
 var buildVersion = "dev"
 
-const filmDetectMaxAttempts = 3
-
 func staticSiteVersion() string {
 	if buildVersion != "" && buildVersion != "dev" {
 		return buildVersion
@@ -59,16 +57,14 @@ func main() {
 type home struct {
 	app.Compo
 
-	imageCount     int
-	imagesLoaded   int
-	imagesFailed   int
-	processing     bool
-	processed      bool
-	resultImage    string
-	errorMsg       string
-	progress       int
-	filmDetectDone bool
-	filmDetectTry  int
+	imageCount   int
+	imagesLoaded int
+	imagesFailed int
+	processing   bool
+	processed    bool
+	resultImage  string
+	errorMsg     string
+	progress     int
 
 	orientation int
 	rows        int
@@ -82,8 +78,7 @@ type home struct {
 	filmStrip   bool
 	filmType    string
 
-	detectedFilm string
-	imageFiles   [][]byte
+	imageFiles [][]byte
 }
 
 func (h *home) OnMount(ctx app.Context) {
@@ -103,6 +98,11 @@ func (h *home) OnMount(ctx app.Context) {
 			h.imageCount = count
 			h.imagesLoaded = 0
 			h.imagesFailed = 0
+			h.imageFiles = make([][]byte, count)
+			h.processed = false
+			h.resultImage = ""
+			h.errorMsg = ""
+			h.progress = 0
 			h.rows = (count + h.cols - 1) / h.cols
 		})
 		return nil
@@ -127,16 +127,6 @@ func (h *home) OnMount(ctx app.Context) {
 			}
 			h.imageFiles[idx] = data
 
-			if !h.filmDetectDone && h.filmDetectTry < filmDetectMaxAttempts {
-				h.filmDetectTry++
-				filmType := services.DetectFilmType(data)
-				if filmType != "" && h.detectedFilm == "" {
-					h.detectedFilm = string(filmType)
-					h.filmDetectDone = true
-				} else if h.filmDetectTry >= filmDetectMaxAttempts {
-					h.filmDetectDone = true
-				}
-			}
 		})
 		return nil
 	}))
@@ -230,15 +220,10 @@ func (h *home) renderSettings() app.UI {
 
 	filmTypes := services.GetFilmTypes()
 
-	filmOptions := make([]app.UI, len(filmTypes))
-	for i, ft := range filmTypes {
-		selected := false
-		if h.filmType != "" && h.filmType == ft {
-			selected = true
-		} else if h.filmType == "" && h.detectedFilm != "" && h.detectedFilm == ft {
-			selected = true
-		}
-		filmOptions[i] = app.Option().Value(ft).Text(ft).Selected(selected)
+	filmOptions := make([]app.UI, 0, len(filmTypes)+1)
+	filmOptions = append(filmOptions, app.Option().Value("").Text("Automatic (each image's EXIF)").Selected(h.filmType == ""))
+	for _, ft := range filmTypes {
+		filmOptions = append(filmOptions, app.Option().Value(ft).Text(ft).Selected(h.filmType == ft))
 	}
 
 	return app.Div().Class("settings-section").Body(
@@ -268,11 +253,11 @@ func (h *home) renderSettings() app.UI {
 		),
 		app.Div().Class("settings-row").Body(
 			app.Div().Class("form-group").Body(
-				app.Label().For("sheet-width").Text("Sheet Width (px, 0=auto)"),
+				app.Label().For("sheet-width").Text("Sheet Width (px, 0 = auto)"),
 				app.Input().ID("sheet-width").Class("form-input").Type("number").Value(strconv.Itoa(h.sheetWidth)).Min("0").Max("10000").OnChange(h.onSheetWidthChange),
 			),
 			app.Div().Class("form-group").Body(
-				app.Label().For("sheet-height").Text("Sheet Height (px, 0=auto)"),
+				app.Label().For("sheet-height").Text("Sheet Height (px, 0 = auto)"),
 				app.Input().ID("sheet-height").Class("form-input").Type("number").Value(strconv.Itoa(h.sheetHeight)).Min("0").Max("10000").OnChange(h.onSheetHeightChange),
 			),
 		),
@@ -300,9 +285,7 @@ func (h *home) renderSettings() app.UI {
 				)
 			}),
 		),
-		app.If(h.detectedFilm != "", func() app.UI {
-			return app.P().Class("status-msg").Text(fmt.Sprintf("Detected film: %s", h.detectedFilm))
-		}),
+		app.P().Class("settings-help").Text("Automatic mode reads each image's EXIF data. Images without a supported film type have no border. Select a film type for all images. Clear the checkbox to remove all borders."),
 	)
 }
 
@@ -329,7 +312,7 @@ func (h *home) renderGenerateButton() app.UI {
 		app.Button().
 			Class("btn btn-primary btn-convert").
 			Text(buttonText).
-			Disabled(h.imageCount == 0 || h.processing || h.imagesLoaded == 0 || h.imagesLoaded < h.imageCount).
+			Disabled(h.imageCount == 0 || h.processing || h.imagesLoaded == 0 || h.imagesLoaded+h.imagesFailed < h.imageCount).
 			OnClick(h.onGenerate),
 		statusEl,
 		progressBar,
@@ -367,17 +350,6 @@ func (h *home) onFileChange(ctx app.Context, e app.Event) {
 	if files.Length() == 0 {
 		return
 	}
-	h.imageCount = 0
-	h.imagesLoaded = 0
-	h.imagesFailed = 0
-	h.imageFiles = nil
-	h.detectedFilm = ""
-	h.filmDetectDone = false
-	h.filmDetectTry = 0
-	h.processed = false
-	h.resultImage = ""
-	ctx.Update()
-
 	app.Window().Call("loadImages", files)
 }
 
@@ -455,8 +427,8 @@ func (h *home) onGenerate(ctx app.Context, e app.Event) {
 		return
 	}
 
-	if h.imagesLoaded < h.imageCount {
-		h.errorMsg = fmt.Sprintf("still loading images: %d/%d", h.imagesLoaded, h.imageCount)
+	if h.imagesLoaded+h.imagesFailed < h.imageCount {
+		h.errorMsg = fmt.Sprintf("Still loading images: %d/%d", h.imagesLoaded+h.imagesFailed, h.imageCount)
 		ctx.Update()
 		return
 	}
@@ -467,14 +439,6 @@ func (h *home) onGenerate(ctx app.Context, e app.Event) {
 	h.resultImage = ""
 	h.progress = 0
 	ctx.Update()
-
-	filmType := services.FilmType(h.filmType)
-	if filmType == "None" {
-		filmType = ""
-	}
-	if filmType == "" && h.detectedFilm != "" {
-		filmType = services.FilmType(h.detectedFilm)
-	}
 
 	settings := services.SheetSettings{
 		Orientation: services.Orientation(h.orientation),
@@ -487,7 +451,7 @@ func (h *home) onGenerate(ctx app.Context, e app.Event) {
 		HeaderText:  h.headerText,
 		FooterText:  h.footerText,
 		FilmStrip:   h.filmStrip,
-		FilmType:    filmType,
+		FilmType:    services.FilmType(h.filmType),
 	}
 
 	progressCb := func(current, total int) {

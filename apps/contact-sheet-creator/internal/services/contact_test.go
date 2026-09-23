@@ -3,8 +3,11 @@ package services
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/binary"
 	"image"
 	"image/color"
+	"image/draw"
+	"image/jpeg"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -45,6 +48,32 @@ func createTestImage(t *testing.T, width, height int) []byte {
 	return buf.Bytes()
 }
 
+func createTestJPEGWithFilm(t *testing.T, film string) []byte {
+	t.Helper()
+	var jpegData bytes.Buffer
+	img := image.NewRGBA(image.Rect(0, 0, 60, 40))
+	draw.Draw(img, img.Bounds(), image.NewUniform(color.RGBA{200, 80, 40, 255}), image.Point{}, draw.Src)
+	if err := jpeg.Encode(&jpegData, img, nil); err != nil {
+		t.Fatal(err)
+	}
+	label := append([]byte(film), 0)
+	tiffData := make([]byte, 26+len(label))
+	copy(tiffData, "II")
+	binary.LittleEndian.PutUint16(tiffData[2:], 42)
+	binary.LittleEndian.PutUint32(tiffData[4:], 8)
+	binary.LittleEndian.PutUint16(tiffData[8:], 1)
+	binary.LittleEndian.PutUint16(tiffData[10:], 0x010e)
+	binary.LittleEndian.PutUint16(tiffData[12:], 2)
+	binary.LittleEndian.PutUint32(tiffData[14:], uint32(len(label)))
+	binary.LittleEndian.PutUint32(tiffData[18:], 26)
+	copy(tiffData[26:], label)
+	segment := append([]byte("Exif\x00\x00"), tiffData...)
+	result := append([]byte{}, jpegData.Bytes()[:2]...)
+	result = append(result, 0xff, 0xe1, byte((len(segment)+2)>>8), byte(len(segment)+2))
+	result = append(result, segment...)
+	return append(result, jpegData.Bytes()[2:]...)
+}
+
 func TestMatchFilmType(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -69,6 +98,7 @@ func TestMatchFilmType(t *testing.T) {
 		{"KENTMERE 400", "KENTMERE 400"},
 		{"SFX 200", "SFX 200"},
 		{"Unknown Film", FilmNone},
+		{"MINOLTA MAXXUM 7000", FilmNone},
 		{"", FilmNone},
 		{"random text", FilmNone},
 	}
@@ -111,6 +141,122 @@ func TestDetectFilmType(t *testing.T) {
 			result := DetectFilmType(tt.exifData)
 			if result != tt.expected {
 				t.Errorf("DetectFilmType() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDetectFilmTypeFromJPEGEXIF(t *testing.T) {
+	tests := []struct {
+		label string
+		want  FilmType
+	}{
+		{"KODAK T-MAX 400", "TMAX 400"},
+		{"ILFORD HP5 PLUS", "HP5 PLUS"},
+		{"Unknown stock", FilmNone},
+	}
+	for _, tt := range tests {
+		t.Run(tt.label, func(t *testing.T) {
+			if got := DetectFilmType(createTestJPEGWithFilm(t, tt.label)); got != tt.want {
+				t.Fatalf("DetectFilmType() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func countBrightPixels(img image.Image, rect image.Rectangle) int {
+	count := 0
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		for x := rect.Min.X; x < rect.Max.X; x++ {
+			r, g, b, _ := img.At(x, y).RGBA()
+			if r>>8 > 150 && g>>8 > 150 && b>>8 > 150 {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func TestCreateContactSheet_AutomaticFilmAndPlainFrame(t *testing.T) {
+	settings := SheetSettings{Rows: 1, Cols: 3, ImageWidth: 60, ImageHeight: 40, Margin: 10, Spacing: 5, FilmStrip: true}
+	result, err := CreateContactSheet([][]byte{
+		createTestJPEGWithFilm(t, "T-MAX 400"),
+		createTestJPEGWithFilm(t, "ILFORD HP5 PLUS"),
+		createTestJPEGWithFilm(t, "Unknown stock"),
+	}, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := jpeg.Decode(bytes.NewReader(result))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := img.Bounds().Dx(), 390; got != want {
+		t.Fatalf("sheet width = %d, want %d", got, want)
+	}
+	if got := countBrightPixels(img, image.Rect(25, 14, 112, 36)); got < 10 {
+		t.Fatalf("first frame has no visible film label: %d bright pixels", got)
+	}
+	if got := countBrightPixels(img, image.Rect(150, 14, 237, 36)); got < 10 {
+		t.Fatalf("second frame has no visible film label: %d bright pixels", got)
+	}
+	if got := countBrightPixels(img, image.Rect(275, 14, 362, 36)); got != 0 {
+		t.Fatalf("unmatched frame has a film label: %d bright pixels", got)
+	}
+}
+
+func TestCreateContactSheet_CustomDimensionsAndText(t *testing.T) {
+	settings := SheetSettings{
+		Rows: 1, Cols: 1, ImageWidth: 60, ImageHeight: 40,
+		Margin: 10, SheetWidth: 90, SheetHeight: 100,
+		HeaderText: "HEADER", FooterText: "FOOTER",
+	}
+	result, err := CreateContactSheet([][]byte{createTestImage(t, 60, 40)}, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := jpeg.Decode(bytes.NewReader(result))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := img.Bounds().Size(); got != (image.Point{X: 90, Y: 100}) {
+		t.Fatalf("sheet size = %v, want 90x100", got)
+	}
+	if got := countBrightPixels(img, image.Rect(0, 0, 90, 35)); got < 10 {
+		t.Fatalf("header is not visible: %d bright pixels", got)
+	}
+	if got := countBrightPixels(img, image.Rect(0, 65, 90, 100)); got < 10 {
+		t.Fatalf("footer is not visible: %d bright pixels", got)
+	}
+}
+
+func TestCreateContactSheet_ManualAndDisabledBorders(t *testing.T) {
+	tests := []struct {
+		name      string
+		filmStrip bool
+		filmType  FilmType
+		wantWidth int
+	}{
+		{"manual film", true, "HP5 PLUS", 140},
+		{"border disabled", false, "HP5 PLUS", 80},
+		{"automatic without EXIF", true, FilmNone, 80},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			settings := SheetSettings{
+				Rows: 1, Cols: 1, ImageWidth: 60, ImageHeight: 40,
+				Margin: 10, FilmStrip: tt.filmStrip, FilmType: tt.filmType,
+			}
+			result, err := CreateContactSheet([][]byte{createTestImage(t, 60, 40)}, settings)
+			if err != nil {
+				t.Fatal(err)
+			}
+			img, err := jpeg.Decode(bytes.NewReader(result))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := img.Bounds().Dx(); got != tt.wantWidth {
+				t.Fatalf("sheet width = %d, want %d", got, tt.wantWidth)
 			}
 		})
 	}

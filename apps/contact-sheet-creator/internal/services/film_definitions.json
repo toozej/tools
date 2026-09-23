@@ -10,7 +10,7 @@
       "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
     },
     "TMAX 400": {
-      "name": "T-MAX 400 Professional",
+      "name": "KODAK T-MAX 400",
       "category": "bw",
       "edgeprint_codes": ["5053"],
       "letter_codes": ["400TMY", "TMY", "TMY2"],
@@ -46,7 +46,7 @@
       "perf_color": {"r": 35, "g": 35, "b": 35, "a": 255}
     },
     "HP5 PLUS": {
-      "name": "HP5 PLUS",
+      "name": "ILFORD HP5 PLUS",
       "category": "bw",
       "edgeprint_codes": [],
       "letter_codes": ["HP5"],
