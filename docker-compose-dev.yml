@@ -127,30 +127,32 @@ services:
     networks:
       - backend
 
-  lomo-homes-viewer:
-    container_name: tools_lomo-homes-viewer
+  photos-viewer:
+    container_name: tools_photos-viewer
     build:
-      context: ./apps/lomo-homes-viewer
+      context: ./apps/photos-viewer
       dockerfile: Dockerfile
-    image: tools_lomo-homes-viewer:latest
+    image: tools_photos-viewer:latest
     restart: always
     profiles: ["runtime"]
     depends_on:
-      lomo-flaresolverr:
+      photos-flaresolverr:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/lomo-homes-viewer/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/photos-viewer/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-    env_file: ./apps/lomo-homes-viewer/app.env
+    env_file:
+      - path: ./apps/photos-viewer/app.env
+        required: false
     environment:
-      FLARESOLVERR_URL: http://lomo-flaresolverr:8191/v1
+      FLARESOLVERR_URL: http://photos-flaresolverr:8191/v1
     networks:
       - backend
 
-  lomo-flaresolverr:
-    container_name: tools_lomo-flaresolverr
+  photos-flaresolverr:
+    container_name: tools_photos-flaresolverr
     image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
     restart: always
     profiles: ["runtime"]

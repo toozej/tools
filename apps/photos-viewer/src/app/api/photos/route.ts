@@ -1,6 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { execFileSync } from 'child_process';
 import { join } from 'path';
+import { fetchFlickr, fetchImgur, fetchReddit, SourceError } from '@/lib/remote-sources';
+import { isPhotoSource, type PhotoEntry } from '@/lib/sources';
+
+export type { PhotoEntry } from '@/lib/sources';
 
 // Helper to extract username from URL or plain string
 export function extractUsername(input: string): string | null {
@@ -15,7 +19,7 @@ export function extractUsername(input: string): string | null {
   try {
     const url = new URL(trimmed);
     // Only process lomography.com domains
-    if (url.hostname.includes('lomography.com')) {
+    if (url.protocol === 'https:' && (url.hostname === 'lomography.com' || url.hostname.endsWith('.lomography.com'))) {
       const pathSegments = url.pathname.split('/').filter(Boolean);
 
       // Look for the pattern: /homes/username/...
@@ -24,6 +28,7 @@ export function extractUsername(input: string): string | null {
         return pathSegments[homesIndex + 1];
       }
     }
+    return null;
   } catch (error) {
     // Not a valid URL, check if it might contain a lomography homes path
     const match = trimmed.match(/https?:\/\/[^/]*lomography\.com\/(?:[^/]*\/)*homes\/([a-zA-Z0-9_-]+)/);
@@ -48,12 +53,6 @@ export function extractUsername(input: string): string | null {
   }
 
   return null;
-}
-
-export interface PhotoEntry {
-  thumbnail: string;
-  photoPage: string;
-  fullsize?: string;
 }
 
 // Fetch a page range through the shared Python/FlareSolverr transport.
@@ -101,9 +100,29 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const input = searchParams.get('input');
   const pageParam = searchParams.get('page');
+  const sourceParam = searchParams.get('source') ?? 'lomography';
+
+  if (!isPhotoSource(sourceParam)) {
+    return Response.json({ error: 'Invalid photo source.' }, { status: 400 });
+  }
 
   if (!input) {
     return Response.json({ error: 'No input provided' }, { status: 400 });
+  }
+
+  if (sourceParam !== 'lomography') {
+    try {
+      const cursor = searchParams.get('cursor');
+      const batch = sourceParam === 'reddit'
+        ? await fetchReddit(input, cursor)
+        : sourceParam === 'flickr'
+          ? await fetchFlickr(input, cursor)
+          : await fetchImgur(input, cursor);
+      return Response.json({ ...batch, imageCount: batch.images.length });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to fetch photos.';
+      return Response.json({ error: message }, { status: error instanceof SourceError ? error.status : 502 });
+    }
   }
 
   const username = extractUsername(input);
@@ -152,6 +171,7 @@ export async function GET(request: NextRequest) {
       imageCount: result.imageCount,
       images: result.images,
       hasMore: result.pagesScanned >= batchSize,
+      nextCursor: result.pagesScanned >= batchSize ? String(endPage + 1) : null,
     });
   } catch (error) {
     console.error('Error fetching photos:', error);

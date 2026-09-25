@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      lomo-homes-viewer:
+      photos-viewer:
         condition: service_healthy
       clip2gist:
         condition: service_healthy
@@ -97,27 +97,29 @@ services:
   # -------------------------
   # Runtime apps
   # -------------------------
-  lomo-homes-viewer:
-    container_name: tools_lomo-homes-viewer
-    hostname: lomo-homes-viewer
-    image: ghcr.io/toozej/tools:lomo-homes-viewer
+  photos-viewer:
+    container_name: tools_photos-viewer
+    hostname: photos-viewer
+    image: ghcr.io/toozej/tools:photos-viewer
     restart: always
     depends_on:
-      lomo-flaresolverr:
+      photos-flaresolverr:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://lomo-homes-viewer:3000/lomo-homes-viewer/api/health"]
+      test: ["CMD", "curl", "-f", "http://photos-viewer:3000/photos-viewer/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
-    env_file: ./apps/lomo-homes-viewer/app.env
+    env_file:
+      - path: ./apps/photos-viewer/app.env
+        required: false
     environment:
-      FLARESOLVERR_URL: http://lomo-flaresolverr:8191/v1
+      FLARESOLVERR_URL: http://photos-flaresolverr:8191/v1
     networks:
       - backend
 
-  lomo-flaresolverr:
-    container_name: tools_lomo-flaresolverr
+  photos-flaresolverr:
+    container_name: tools_photos-flaresolverr
     image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
     restart: always
     environment:

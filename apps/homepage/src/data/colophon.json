@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-15T14:56:00.877008Z",
+  "generated_at": "2026-09-25T21:03:54.637593Z",
   "total_apps": 29,
   "apps": [
     {
@@ -78,9 +78,10 @@
     {
       "name": "contact-sheet-creator",
       "title": "Contact Sheet Creator",
-      "description": "Drag & drop images to create a contact sheet. Choose between landscape (35mm style) or portrait (half-frame) orientation. Customize rows, columns, and image dimensions. Add header and footer text. Optional film strip border with various film types (TMAX, HP5 PLUS, Portra, etc.). All processing happens in your browser. Your images never leave your device.",
+      "description": "Drag & drop images to create a contact sheet. Choose between landscape (35mm style) or portrait (half-frame) orientation. Set rows, columns, image dimensions, and overall sheet dimensions in pixels. Enter 0 for an automatically sized sheet. Add header and footer text to the exported image. Add a generated film border to each image based on its EXIF film type. Supported types include Kodak T-MAX 400 and Ilford HP5 Plus. Select one film type for every image, or turn off borders. Automatic mode leaves images without a supported EXIF film type plain. Fit the complete contact sheet inside custom dimensions without clipping images or text. All processing happens in your browser. Your images never leave your device.",
       "tags": [
         "Go",
+        "Exif",
         "Webassembly"
       ],
       "url": "/contact-sheet-creator",
@@ -317,29 +318,6 @@
       }
     },
     {
-      "name": "lomo-homes-viewer",
-      "title": "Lomography Homes Viewer",
-      "description": "Search & Discover. Search by Lomography URL or username. Random Artist — jump to a random featured artist's page. Featured Today — deterministic daily artist pick (same artist for the same date). Browse an artist's full album collection. Album Navigation. Artist sub-page showing a grid of all albums with cover images. Click an album to view its photos with the same feed/grid views. View Modes. Grid view for browsing photo thumbnails with lazy loading. Feed view — infinite-scrolling single-image layout with full-size photos. Sort Order (on album detail page). Latest (default, newest first). Oldest (reversed order). Shuffle (randomized order). Lightbox for individual photo inspection. Lazy loading via IntersectionObserver — new batches are fetched as you scroll. Automatic retries with exponential backoff for failed image loads and rate-limited pages.",
-      "tags": [
-        "Docker",
-        "Bun",
-        "Node.Js",
-        "Json"
-      ],
-      "url": "/lomo-homes-viewer",
-      "credits": [
-        {
-          "name": "FlareSolverr",
-          "url": "https://github.com/FlareSolverr"
-        }
-      ],
-      "has_credits": true,
-      "author": {
-        "name": "toozej",
-        "url": "https://github.com/toozej"
-      }
-    },
-    {
       "name": "matter",
       "title": "Matter - Image Border Adder",
       "description": "Matter allows you to easily add professional-looking borders and mats to your images. Whether you're preparing photos for printing, social media, or just want to give your images a polished look, Matter provides a simple and intuitive interface to customize your borders.",
@@ -418,6 +396,23 @@
       "author": {
         "name": "simonw",
         "url": "https://github.com/simonw"
+      }
+    },
+    {
+      "name": "photos-viewer",
+      "title": "Photos Viewer",
+      "description": "Browse public photos from Lomography Homes, Reddit communities, Flickr, and Imgur. Use a thumbnail grid or scrolling feed. View and download full size images. The viewer saves recent result pages in browser storage for ten minutes. Images use a blurred loading state and retry failed requests.",
+      "tags": [
+        "Docker",
+        "Oauth",
+        "Bun"
+      ],
+      "url": "/photos-viewer",
+      "credits": [],
+      "has_credits": false,
+      "author": {
+        "name": "toozej",
+        "url": "https://github.com/toozej"
       }
     },
     {

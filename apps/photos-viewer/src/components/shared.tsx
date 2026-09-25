@@ -24,19 +24,24 @@ export function ImageWithRetry({
   const [retryCount, setRetryCount] = useState(0);
   const [currentSrc, setCurrentSrc] = useState(src);
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentSrc(src);
     setRetryCount(0);
     setFailed(false);
+    setLoaded(false);
   }, [src]);
 
   const handleError = async () => {
     if (retryCount < MAX_IMAGE_RETRIES) {
       await sleep(IMAGE_RETRY_DELAY * (retryCount + 1));
       setRetryCount((prev) => prev + 1);
-      setCurrentSrc(`${src}?retry=${retryCount + 1}`);
+      const retryUrl = new URL(src, window.location.href);
+      retryUrl.searchParams.set('retry', String(retryCount + 1));
+      setCurrentSrc(retryUrl.toString());
+      setLoaded(false);
     } else {
       setFailed(true);
     }
@@ -58,9 +63,10 @@ export function ImageWithRetry({
       key={src}
       src={currentSrc}
       alt={alt}
-      className={className}
+      className={`${className ?? ''} transition-[filter,opacity] duration-500 ${loaded ? 'blur-0 opacity-100' : 'blur-md opacity-70'}`}
       loading={loading}
       onError={handleError}
+      onLoad={() => setLoaded(true)}
     />
   );
 }
@@ -110,7 +116,7 @@ export function FeedImage({
       <div className="w-full flex items-center justify-center bg-black">
         <ImageWithRetry
           src={src}
-          alt={`Photo ${index + 1}`}
+          alt={img.title ?? `Photo ${index + 1}`}
           className="w-full h-auto max-h-[90vh] object-contain"
           loading="lazy"
         />
@@ -140,10 +146,26 @@ export function Lightbox({
   onNext: () => void;
   getImageUrl: (img: PhotoEntry) => string;
 }) {
+  const photo = images[lightboxIndex];
+  const fullsize = fullsizeUrls.get(photo.photoPage) ?? photo.fullsize;
+  const sourcePage = photo.photoPage.startsWith('/homes/')
+    ? `https://www.lomography.com${photo.photoPage}`
+    : photo.photoPage;
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+      if (event.key === 'ArrowLeft') onPrev();
+      if (event.key === 'ArrowRight') onNext();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose, onPrev, onNext]);
+
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 sm:p-4">
+    <div role="dialog" aria-modal="true" aria-label="Full screen photo" className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 sm:p-4">
       <button
         onClick={onClose}
+        aria-label="Close photo"
         className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/10 backdrop-blur-sm w-11 h-11 rounded-full flex items-center justify-center hover:bg-white/20 active:bg-white/30 transition-colors text-white text-xl leading-none z-10"
       >
         ×
@@ -152,23 +174,29 @@ export function Lightbox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={getImageUrl(images[lightboxIndex])}
-          alt={`Photo ${lightboxIndex + 1}`}
+          alt={photo.title ?? `Photo ${lightboxIndex + 1}`}
           className="max-w-full max-h-[85vh] object-contain"
         />
         <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-md text-sm text-white">
           {lightboxIndex + 1} / {images.length}
-          {fullsizeUrls.has(images[lightboxIndex]?.photoPage) && (
+          {fullsize && (
             <span className="ml-2 text-green-400">Full size</span>
           )}
         </div>
+        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-2 z-10">
+          {fullsize && <a href={`/photos-viewer/api/download?url=${encodeURIComponent(fullsize)}`} download className="bg-blue-600 hover:bg-blue-700 rounded-md px-3 py-2 text-sm font-medium text-white">Download full size</a>}
+          <a href={sourcePage} target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-white/20 rounded-md px-3 py-2 text-sm font-medium text-white">Source</a>
+        </div>
         <button
           onClick={onPrev}
+          aria-label="Previous photo"
           className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 bg-black/40 sm:bg-black/50 backdrop-blur-sm w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-black/70 active:bg-black/80 transition-colors text-white text-lg"
         >
           ←
         </button>
         <button
           onClick={onNext}
+          aria-label="Next photo"
           className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 bg-black/40 sm:bg-black/50 backdrop-blur-sm w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-black/70 active:bg-black/80 transition-colors text-white text-lg"
         >
           →
@@ -182,6 +210,8 @@ export function useFullsizeResolver() {
   const [fullsizeUrls, setFullsizeUrls] = useState<Map<string, string>>(new Map());
   const queueRef = useRef<PhotoEntry[]>([]);
   const activeRef = useRef(0);
+  const pendingRef = useRef(new Set<string>());
+  const generationRef = useRef(0);
   const retryCountsRef = useRef(new Map<string, number>());
   const rateLimitedUntilRef = useRef(0);
 
@@ -212,40 +242,42 @@ export function useFullsizeResolver() {
 
     activeRef.current++;
     const photo = queueRef.current.shift()!;
+    const generation = generationRef.current;
 
     async function fetchFullsize() {
       try {
         const resp = await fetch(
-          `/lomo-homes-viewer/api/photo-detail?photoPage=${encodeURIComponent(photo.photoPage)}`
+          `/photos-viewer/api/photo-detail?photoPage=${encodeURIComponent(photo.photoPage)}`
         );
         if (resp.ok) {
           const data = await resp.json();
-          if (data.fullsize) {
+          if (data.fullsize && generation === generationRef.current) {
             setFullsizeUrls((prev) => {
               const next = new Map(prev);
               next.set(photo.photoPage, data.fullsize);
               return next;
             });
           }
-          retryCountsRef.current.delete(photo.photoPage);
+          if (generation === generationRef.current) retryCountsRef.current.delete(photo.photoPage);
         } else {
           const retries = (retryCountsRef.current.get(photo.photoPage) ?? 0) + 1;
           if (resp.status === 429) {
             rateLimitedUntilRef.current = Date.now() + RATE_LIMIT_COOLDOWN;
           }
-          if (retries <= MAX_RETRIES) {
+          if (retries <= MAX_RETRIES && generation === generationRef.current) {
             retryCountsRef.current.set(photo.photoPage, retries);
             queueRef.current.unshift(photo);
           }
         }
       } catch {
         const retries = (retryCountsRef.current.get(photo.photoPage) ?? 0) + 1;
-        if (retries <= MAX_RETRIES) {
+        if (retries <= MAX_RETRIES && generation === generationRef.current) {
           retryCountsRef.current.set(photo.photoPage, retries);
           queueRef.current.unshift(photo);
         }
       } finally {
         activeRef.current--;
+        pendingRef.current.delete(photo.photoPage);
         setTimeout(() => processNextRef.current(), REQUEST_GAP);
       }
     }
@@ -259,23 +291,30 @@ export function useFullsizeResolver() {
 
   const resolveFullsize = useCallback(
     (photo: PhotoEntry) => {
+      if (photo.fullsize) {
+        setFullsizeUrls((previous) => previous.has(photo.photoPage) ? previous : new Map(previous).set(photo.photoPage, photo.fullsize!));
+        return;
+      }
       if (fullsizeUrls.has(photo.photoPage)) return;
       if (
+        pendingRef.current.has(photo.photoPage) ||
         queueRef.current.some((p) => p.photoPage === photo.photoPage) ||
         retryCountsRef.current.has(photo.photoPage)
       ) {
         return;
       }
       queueRef.current.push(photo);
+      pendingRef.current.add(photo.photoPage);
       processNextRef.current();
     },
     [fullsizeUrls]
   );
 
   const clearFullsize = useCallback(() => {
+    generationRef.current++;
     setFullsizeUrls(new Map());
     queueRef.current = [];
-    activeRef.current = 0;
+    pendingRef.current.clear();
     retryCountsRef.current.clear();
     rateLimitedUntilRef.current = 0;
   }, []);

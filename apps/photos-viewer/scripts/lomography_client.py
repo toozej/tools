@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 
 DEFAULT_TIMEOUT_SECONDS = 60
 DEFAULT_SESSION_TTL_MINUTES = 30
-DEFAULT_SESSION_NAME = "lomo-homes-viewer"
-LOCK_PATH = Path("/tmp/lomo-homes-viewer-flaresolverr.lock")
+DEFAULT_SESSION_NAME = "photos-viewer"
+LOCK_PATH = Path("/tmp/photos-viewer-flaresolverr.lock")
 
 HEADERS = {
     "User-Agent": (

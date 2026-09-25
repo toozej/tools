@@ -15,7 +15,7 @@ WORKDIR /app
 COPY apps/homepage/package.json apps/homepage/bun.lock ./
 RUN bun install --frozen-lockfile
 
-FROM node:22-alpine AS homepage
+FROM node:26-alpine AS homepage
 WORKDIR /app
 COPY --from=homepage_dependencies /app/node_modules ./node_modules
 COPY apps/homepage/eslint.config.mjs ./

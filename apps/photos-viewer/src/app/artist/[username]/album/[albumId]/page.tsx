@@ -58,7 +58,7 @@ export default function AlbumPage() {
     try {
       const batchSize = viewMode === 'grid' ? 4 : 8;
       const response = await fetch(
-        `/lomo-homes-viewer/api/album-photos?input=${encodeURIComponent(username)}&albumId=${albumId}&page=${nextPage}&batchSize=${batchSize}`
+        `/photos-viewer/api/album-photos?input=${encodeURIComponent(username)}&albumId=${albumId}&page=${nextPage}&batchSize=${batchSize}`
       );
 
       if (!response.ok) {

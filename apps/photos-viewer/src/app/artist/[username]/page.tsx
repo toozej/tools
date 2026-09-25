@@ -21,7 +21,7 @@ export default function ArtistPage() {
 
     try {
       const response = await fetch(
-        `/lomo-homes-viewer/api/albums?input=${encodeURIComponent(username)}`
+        `/photos-viewer/api/albums?input=${encodeURIComponent(username)}`
       );
 
       if (!response.ok) {
