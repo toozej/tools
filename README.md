@@ -187,6 +187,8 @@ uv run manage remove old-app --force
 
 The tools repository supports two deployment patterns:
 
+The existing Next.js app Dockerfiles use Node.js 26 Alpine for builds. Server app images also use Node.js 26 Alpine at runtime.
+
 #### Static Apps (HTML, JS static)
 Static apps are built once and served by nginx. Build output is stored in Docker volumes.
 

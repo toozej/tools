@@ -61,7 +61,8 @@ test: ## Run tests for a specific app (usage: make test APP=namehere)
 		echo "Detected JavaScript app, running tests..."; \
 		JS_TEST_FILES=$$(find apps/$(APP)/src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -v node_modules); \
 		if [ -n "$$JS_TEST_FILES" ]; then \
-			(cd apps/$(APP) && bun install --frozen-lockfile && bun test) || FAILED=1; \
+			(cd apps/$(APP) && bun install --frozen-lockfile && \
+				if grep -Eq '^[[:space:]]*"test"[[:space:]]*:' package.json; then bun run test; else bun test; fi) || FAILED=1; \
 		else \
 			echo "No test files found, skipping"; \
 		fi; \
