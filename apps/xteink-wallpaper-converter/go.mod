@@ -15,6 +15,6 @@ require (
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/golang/geo v0.0.0-20260928092222-7d12f68cfadb // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
