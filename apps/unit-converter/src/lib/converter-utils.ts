@@ -15,13 +15,16 @@ export const unitMap: Record<string, string> = {
   'litres': 'l',
   'gallon': 'gal',
   'gallons': 'gal',
+  'gal': 'gal',
   'gals': 'gal',
   'pint': 'pnt',
   'pints': 'pnt',
+  'pnt': 'pnt',
   'pt': 'pnt',
   'pts': 'pnt',
   'quart': 'qt',
   'quarts': 'qt',
+  'qt': 'qt',
   'qts': 'qt',
   'floz': 'fl-oz',
   'fl-oz': 'fl-oz',
@@ -29,9 +32,11 @@ export const unitMap: Record<string, string> = {
   'fluidounces': 'fl-oz',
   'tablespoon': 'tbs',
   'tablespoons': 'tbs',
+  'tbs': 'tbs',
   'tbsp': 'tbs',
   'teaspoon': 'tsp',
   'teaspoons': 'tsp',
+  'tsp': 'tsp',
   'mm': 'mm',
   'millimeter': 'mm',
   'millimeters': 'mm',
@@ -78,28 +83,36 @@ export const unitMap: Record<string, string> = {
 
 export function parseInput(input: string, fromUnit: string, toUnit: string) {
   const trimmedInput = input.trim();
-  const fullMatch = trimmedInput.match(/(\d+(?:\.\d+)?)\s*(\w+(?:\s+\w+)*)\s+to\s+(\w+(?:\s+\w+)*)/i);
+  const fullMatch = trimmedInput.match(/^([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*([a-z]+(?:[\s-]+[a-z]+)*)\s+to\s+([a-z]+(?:[\s-]+[a-z]+)*)$/i);
   if (fullMatch) {
-    const value = parseFloat(fullMatch[1]);
-    const from = fullMatch[2].toLowerCase().replace(/\s+/g, '');
-    const to = fullMatch[3].toLowerCase().replace(/\s+/g, '');
-    const fromMapped = unitMap[from];
+    const value = Number(fullMatch[1]);
+    const from = fullMatch[2].toLowerCase().replace(/[\s-]+/g, '');
+    const to = fullMatch[3].toLowerCase().replace(/[\s-]+/g, '');
+    let fromMapped = unitMap[from];
     let toMapped = unitMap[to];
-    if (fromMapped && toMapped) {
+    if (Number.isFinite(value) && fromMapped && toMapped) {
+      if (fromMapped === 'oz' && volumeUnits.has(toMapped)) {
+        fromMapped = 'fl-oz';
+      }
       if (toMapped === 'oz' && volumeUnits.has(fromMapped)) {
         toMapped = 'fl-oz';
       }
       return { value, from: fromMapped, to: toMapped };
     }
   }
-  const numMatch = trimmedInput.match(/^(\d+(?:\.\d+)?)$/);
+  const numMatch = trimmedInput.match(/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/);
   if (numMatch && fromUnit && toUnit) {
-    const value = parseFloat(numMatch[1]);
+    const value = Number(trimmedInput);
+    if (!Number.isFinite(value)) return null;
+    let from = fromUnit;
     let to = toUnit;
-    if (to === 'oz' && volumeUnits.has(fromUnit)) {
+    if (from === 'oz' && volumeUnits.has(to)) {
+      from = 'fl-oz';
+    }
+    if (to === 'oz' && volumeUnits.has(from)) {
       to = 'fl-oz';
     }
-    return { value, from: fromUnit, to };
+    return { value, from, to };
   }
   return null;
 }

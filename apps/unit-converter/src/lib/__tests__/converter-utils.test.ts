@@ -207,4 +207,33 @@ describe("parseInput", () => {
       to: "cup",
     });
   });
+
+  test("accepts the unit abbreviations shown in the selectors", () => {
+    expect(parseInput("1 gal to qt", "", "")).toEqual({ value: 1, from: "gal", to: "qt" });
+    expect(parseInput("2 pnt to cup", "", "")).toEqual({ value: 2, from: "pnt", to: "cup" });
+    expect(parseInput("3 tbs to tsp", "", "")).toEqual({ value: 3, from: "tbs", to: "tsp" });
+    expect(parseInput("4 yd to ft", "", "")).toEqual({ value: 4, from: "yd", to: "ft" });
+    expect(parseInput("5 fl-oz to ml", "", "")).toEqual({ value: 5, from: "fl-oz", to: "ml" });
+  });
+
+  test("accepts spaced fluid ounce names", () => {
+    expect(parseInput("2 fluid ounces to cups", "", "")).toEqual({ value: 2, from: "fl-oz", to: "cup" });
+  });
+
+  test("uses fluid ounces when the target is a volume unit", () => {
+    expect(parseInput("8 oz to cups", "", "")).toEqual({ value: 8, from: "fl-oz", to: "cup" });
+    expect(parseInput("8", "oz", "cup")).toEqual({ value: 8, from: "fl-oz", to: "cup" });
+  });
+
+  test("accepts signed and fractional values", () => {
+    expect(parseInput("-40 c to f", "", "")).toEqual({ value: -40, from: "C", to: "F" });
+    expect(parseInput(".5 l to ml", "", "")).toEqual({ value: 0.5, from: "l", to: "ml" });
+    expect(parseInput("-12.5", "C", "F")).toEqual({ value: -12.5, from: "C", to: "F" });
+  });
+
+  test("rejects unrelated text and incomplete numbers", () => {
+    for (const input of ["convert 9 cups to ml", "9 cups to ml please", "- 9 cups to ml", "9. cups to ml extra", "1e3 cups to ml"]) {
+      expect(parseInput(input, "", "")).toBeNull();
+    }
+  });
 });

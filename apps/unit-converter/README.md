@@ -8,10 +8,15 @@ A responsive web application for unit conversion using natural language input (e
 - Optional dropdown menus for unit selection
 - Support for multiple unit categories (volume, length, mass, temperature, etc.)
 - Responsive design for mobile and desktop
-- Real-time conversion results
+- Conversion results after you select Convert
+
+## Input format
+Enter a value and two units. For example, enter `9 cups to ml` or `1 gal to qt`. You can use the abbreviations shown in the selectors. Signed and fractional values also work. For example, enter `-40 c to f` or `.5 l to ml`.
+
+For volume conversions, `oz` means fluid ounces. For mass conversions, `oz` means ounces. If you enter only a number, select both units first.
 
 ## Architectural Decisions
-- Built with Next.js 15, React 19, TypeScript, and Tailwind CSS v4
+- Built with Next.js 16, React 19, TypeScript, and Tailwind CSS v4
 - Uses `convert-units` library for accurate unit conversions
 - Client-side component for interactive conversion logic
 - Server Components for layout and static content
