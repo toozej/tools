@@ -6,7 +6,7 @@ require (
 	github.com/anthonynsimon/bild v0.17.1
 	github.com/dsoprea/go-exif/v3 v3.0.1
 	github.com/maxence-charriere/go-app/v10 v10.1.11
-	golang.org/x/image v0.46.0
+	golang.org/x/image v0.47.0
 )
 
 require (
@@ -15,6 +15,6 @@ require (
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/golang/geo v0.0.0-20260928092222-7d12f68cfadb // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
