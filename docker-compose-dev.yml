@@ -10,8 +10,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      tfgr:
-        condition: service_healthy
+      memory-card-shots-estimator:
+        condition: service_started
     networks:
       - backend
     volumes:
@@ -40,10 +40,29 @@ services:
       - "tools_film-format-converter:/var/www/html/film-format-converter:ro"
       - "tools_kilo-credit-calculator:/var/www/html/kilo-credit-calculator:ro"
       - "tools_lightbox:/var/www/html/lightbox:ro"
+      - "tools_memory-card-shots-estimator:/var/www/html/memory-card-shots-estimator:ro"
 
   # -------------------------
   # Runtime apps
   # -------------------------
+  readeck-labeler:
+    container_name: tools_readeck-labeler
+    build:
+      context: ./apps/readeck-labeler
+      dockerfile: Dockerfile
+    image: tools_readeck-labeler:latest
+    restart: always
+    profiles: ["runtime"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/readeck-labeler/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    env_file:
+      - path: ./apps/readeck-labeler/app.env
+    networks:
+      - backend
+
   clip2gist:
     container_name: tools_clip2gist
     build:
@@ -430,6 +449,17 @@ services:
       - tools_lightbox:/app/out
     command: ["sleep", "5"]
 
+  memory-card-shots-estimator:
+    container_name: tools_memory-card-shots-estimator
+    profiles: ["build"]
+    build:
+      context: ./apps/memory-card-shots-estimator
+      dockerfile: Dockerfile
+    image: tools_memory-card-shots-estimator:latest
+    volumes:
+      - tools_memory-card-shots-estimator:/app/out
+    command: ["sleep", "5"]
+
 volumes:
   tools_homepage:
   tools_taboo:
@@ -454,6 +484,7 @@ volumes:
   tools_film-format-converter:
   tools_kilo-credit-calculator:
   tools_lightbox:
+  tools_memory-card-shots-estimator:
 
 networks:
   backend:

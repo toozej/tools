@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-25T21:03:54.637593Z",
-  "total_apps": 29,
+  "generated_at": "2026-10-24T21:02:06.538213Z",
+  "total_apps": 31,
   "apps": [
     {
       "name": "anki-converter",
@@ -377,6 +377,19 @@
       }
     },
     {
+      "name": "memory-card-shots-estimator",
+      "title": "Memory Card Photo Estimator",
+      "description": "1. Select megapixels or pixel dimensions. 2. Enter the image resolution. 3. Select a file format. 4. Enter the card capacity in MB or GB. 5. Read the estimated photo count, file size, used space, and remaining space. The estimator uses decimal storage units. One GB equals 1,000 MB. File size estimates use an average per megapixel, so actual results vary with camera settings, image content, and compression.",
+      "tags": [
+        "Tailwind Css",
+        "Typescript",
+        "Bun"
+      ],
+      "url": "/memory-card-shots-estimator",
+      "credits": [],
+      "has_credits": false
+    },
+    {
       "name": "ocr",
       "title": "ocr",
       "description": "Extract text from PDF documents and images using optical character recognition (OCR) directly in your browser. The tool leverages Tesseract.js for text recognition and PDF.js to handle multi-page PDF files, supporting multiple languages and file formats including JPEG, PNG, and GIF. All processing occurs locally in your browser with no files being transmitted to external servers.",
@@ -435,6 +448,18 @@
         "name": "simonw",
         "url": "https://github.com/simonw"
       }
+    },
+    {
+      "name": "readeck-labeler",
+      "title": "Readeck Labeler",
+      "description": "Find unlabeled Readeck bookmarks and apply labels generated from their saved articles by an LLM.",
+      "tags": [
+        "Docker",
+        "Bun"
+      ],
+      "url": "/readeck-labeler",
+      "credits": [],
+      "has_credits": false
     },
     {
       "name": "render-markdown",
