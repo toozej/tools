@@ -26,7 +26,7 @@ function createImageId(): string {
 
 function loadImageElement(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const image = new Image();
+    const image = new window.Image();
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("The image could not load."));
