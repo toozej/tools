@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import EXIF from "exif-js";
 import JSZip from "jszip";
 import { EXPORT_FORMATS, getExportFilename, getRasterMimeType, type ExportFormat } from "@/lib/export";
@@ -255,7 +256,7 @@ export default function Home() {
 }
 
 function ImageSelector({ images, selectedIds, count, onToggle }: { images: ImageData[]; selectedIds: string[]; count: number; onToggle: (id: string) => void; }) {
-  return <div className="mt-5"><div className="mb-2 flex items-center justify-between gap-3 text-sm"><p className="text-slate-300">Select {count} image{count === 1 ? "" : "s"} in order.</p><span className="text-slate-500">{selectedIds.length}/{count}</span></div><div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">{images.map((image) => { const position = selectedIds.indexOf(image.id); const selected = position >= 0; return <button key={image.id} type="button" onClick={() => onToggle(image.id)} disabled={!selected && selectedIds.length === count} className={`relative overflow-hidden rounded-lg border text-left disabled:cursor-not-allowed ${selected ? "border-blue-400 ring-2 ring-blue-500" : "border-slate-600"}`}><img src={image.src} alt="" className="h-20 w-full object-cover" /><span className="block truncate px-2 py-1 text-xs text-slate-300">{image.name}</span>{selected && <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-blue-600 text-xs font-bold">{position + 1}</span>}</button>; })}</div></div>;
+  return <div className="mt-5"><div className="mb-2 flex items-center justify-between gap-3 text-sm"><p className="text-slate-300">Select {count} image{count === 1 ? "" : "s"} in order.</p><span className="text-slate-500">{selectedIds.length}/{count}</span></div><div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">{images.map((image) => { const position = selectedIds.indexOf(image.id); const selected = position >= 0; return <button key={image.id} type="button" onClick={() => onToggle(image.id)} disabled={!selected && selectedIds.length === count} className={`relative overflow-hidden rounded-lg border text-left disabled:cursor-not-allowed ${selected ? "border-blue-400 ring-2 ring-blue-500" : "border-slate-600"}`}><Image src={image.src} alt="" width={image.width} height={image.height} unoptimized className="h-20 w-full object-cover" /><span className="block truncate px-2 py-1 text-xs text-slate-300">{image.name}</span>{selected && <span className="absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-blue-600 text-xs font-bold">{position + 1}</span>}</button>; })}</div></div>;
 }
 
 function BorderControls({ settings, onChange }: { settings: BorderSettings; onChange: React.Dispatch<React.SetStateAction<BorderSettings>>; }) {
