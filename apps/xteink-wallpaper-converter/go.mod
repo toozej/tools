@@ -1,6 +1,6 @@
 module xteink-wallpaper-converter
 
-go 1.27.1
+go 1.27.3
 
 require (
 	github.com/anthonynsimon/bild v0.17.1
@@ -13,8 +13,8 @@ require (
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20221003172846-a3e1774ef349 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
-	github.com/golang/geo v0.0.0-20261026081726-9e1e803a26c2 // indirect
+	github.com/golang/geo v0.0.0-20261029132150-f51d36688936 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
