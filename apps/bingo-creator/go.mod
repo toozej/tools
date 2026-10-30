@@ -1,6 +1,6 @@
 module bingo-creator
 
-go 1.27.1
+go 1.27.3
 
 require github.com/maxence-charriere/go-app/v10 v10.1.11
 
