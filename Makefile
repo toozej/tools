@@ -17,9 +17,9 @@ APP ?=
 # Define the repository URL
 REPO_URL := https://github.com/toozej/tools
 
-# Pin the Go toolchain for apps and Go-based developer tools.
-GO_VERSION := 1.27.1
-GO_CMD := GOTOOLCHAIN=go$(GO_VERSION) go
+# Use the pinned Go toolchain unless an app requires a newer version.
+GO_VERSION := 1.27.3
+GO_CMD := GOTOOLCHAIN=go$(GO_VERSION)+auto go
 
 # Dependency lockfiles allowed to be committed after update-deps
 DEPENDENCY_FILES := package.json bun.lock go.mod go.sum pyproject.toml uv.lock requirements.txt
@@ -34,10 +34,10 @@ else
 	OPENER=open
 endif
 
-.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-validate update-deps update-root-deps status push
+.PHONY: all test build build-docker run iterate up down dev dev-down dev-logs dev-nc local pre-commit-install pre-commit-run pre-commit pre-reqs clean rebuild-app help check validate update update-validate update-deps update-root-deps update-go-version status push
 
 all: clean up ## Run default workflow via Docker
-update: update-root-deps update-validate status push ## Update deps, validate, show status, and push changes
+update: update-root-deps update-validate status push ## Update Go versions and deps, validate, show status, and push changes
 local: pre-commit dev-nc ## Run dev workflow using Docker
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
@@ -109,15 +109,41 @@ validate: ## Run check build test for one app (usage: make validate APP=namehere
 	@make build APP="$(APP)"
 	@make test APP="$(APP)"
 
-update-validate: ## Update deps and validate all apps, or one app via APP=namehere
+update-go-version: ## Set the latest stable Go version in all app modules, or one app via APP=namehere
+	@set -euo pipefail; \
+	if [ -n "$(APP)" ]; then \
+		if [ ! -d "apps/$(APP)" ]; then \
+			echo "Error: App '$(APP)' not found in apps/ directory" >&2; \
+			exit 1; \
+		fi; \
+		MODULES=("apps/$(APP)/go.mod"); \
+	else \
+		MODULES=(apps/*/go.mod); \
+	fi; \
+	if [ ! -f "$${MODULES[0]}" ]; then \
+		echo "No Go apps found. Skipping the Go version update."; \
+		exit 0; \
+	fi; \
+	VERSION=$$(curl --fail --silent --show-error --location "https://go.dev/dl/?mode=json" \
+		| jq -er 'first(.[] | select(.stable == true)) | .version | ltrimstr("go")'); \
+	if [[ ! "$$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$$ ]]; then \
+		echo "Error: Invalid Go release version: $$VERSION" >&2; \
+		exit 1; \
+	fi; \
+	for MODULE in "$${MODULES[@]}"; do \
+		echo "Setting Go $$VERSION in $$MODULE"; \
+		GOTOOLCHAIN=auto go mod edit -go="$$VERSION" "$$MODULE"; \
+	done
+
+update-validate: update-go-version ## Update Go versions and deps, then validate all apps, or one app via APP=namehere
 	@if [ -n "$(APP)" ]; then \
 		if [ ! -d "apps/$(APP)" ]; then \
 			echo "Error: App '$(APP)' not found in apps/ directory"; \
 			exit 1; \
 		fi; \
 		echo "Updating dependencies and validating app: $(APP)"; \
-		make update-deps APP="$(APP)"; \
-		make validate APP="$(APP)"; \
+		$(MAKE) update-deps APP="$(APP)" || exit 1; \
+		$(MAKE) validate APP="$(APP)" || exit 1; \
 	else \
 		echo "Updating dependencies and validating all apps..."; \
 		for dir in apps/*/; do \
@@ -126,8 +152,8 @@ update-validate: ## Update deps and validate all apps, or one app via APP=namehe
 			echo "================================="; \
 			echo "Processing app: $$APP_NAME"; \
 			echo "================================="; \
-			make update-deps APP="$$APP_NAME" || exit 1; \
-			make validate APP="$$APP_NAME" || exit 1; \
+			$(MAKE) update-deps APP="$$APP_NAME" || exit 1; \
+			$(MAKE) validate APP="$$APP_NAME" || exit 1; \
 		done; \
 	fi
 
@@ -155,7 +181,7 @@ update-deps: ## Update app dependencies for JS/TS, Go, and Python (usage: make u
 	fi; \
 	if [ -f "apps/$(APP)/go.mod" ]; then \
 		echo "Detected Go app, updating Go module dependencies..."; \
-		(cd apps/$(APP) && $(GO_CMD) get -u ./... && $(GO_CMD) mod tidy); \
+		(cd apps/$(APP) && $(GO_CMD) get -u ./... && $(GO_CMD) mod tidy) || exit 1; \
 		UPDATED=1; \
 	fi; \
 	if [ -f "apps/$(APP)/pyproject.toml" ]; then \
@@ -287,7 +313,7 @@ build-docker: ## Build Docker image for a specific app (usage: make build-docker
 	@echo "Building Docker image for app: $(APP)"
 	@docker build -t ghcr.io/toozej/tools:$(APP) --no-cache --pull --progress=plain apps/$(APP)
 
-up: ## Run Docker Compose project with pre-built Docker images
+up: update-go-version ## Update app Go versions and run Docker Compose with pre-built images
 	docker compose -f docker-compose.yml --profile build --profile runtime down --remove-orphans
 	docker compose -f docker-compose.yml --profile build --profile runtime up -d
 

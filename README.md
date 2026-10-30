@@ -122,6 +122,27 @@ To perform a clean rebuild (without cache) in development:
     docker compose -f docker-compose-dev.yml --profile build --profile runtime build --no-cache --pull
     docker compose -f docker-compose-dev.yml --profile build --profile runtime up -d
     ```
+
+### Update Go versions and dependencies
+
+The app modules, Makefile, CI jobs, and Go app Docker images use Go 1.27.3.
+Keep the CI and Docker versions at least as new as the app module requirements.
+
+Run `make update-go-version` to set the latest stable Go version in each
+`apps/*/go.mod` file. This target requires Go, `curl`, `jq`, and network access.
+Use `APP` to update one app:
+
+```bash
+make update-go-version
+make update-go-version APP=md-converter
+```
+
+`make up` runs this target before it starts Docker Compose. `make update` and
+`make update-validate` run this target before they update app dependencies and
+validate the apps. These targets also support `APP`. The Go commands can select
+a newer toolchain when an app requires it. Go downloads that toolchain if needed.
+An error during the Go version update stops the calling target.
+
 ### manage
 - install uv
 - install pre-requisite packages
