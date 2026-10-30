@@ -25,6 +25,11 @@ The server reads these values at request time. The form can override any value f
 
 For OpenAI, set `LLM_API_URL` to `https://api.openai.com/v1/chat/completions`. For Anthropic, set it to `https://api.anthropic.com/v1/messages`. The app sends article text to the configured LLM service. Protect this app with your normal access controls if you deploy it on a public host.
 
+## Container
+
+The runtime image starts the standalone Next.js server directly with Node.js.
+The image removes npm and Corepack because the server does not need them.
+
 ## How it works
 
 1. Enter your Readeck URL and API token. Enter the LLM API URL, model, and token. You can leave fields empty when you set environment values.

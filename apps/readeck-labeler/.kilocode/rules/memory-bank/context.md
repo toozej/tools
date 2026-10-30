@@ -18,6 +18,11 @@ The LLM endpoint accepts either OpenAI Chat Completions or Anthropic Messages fo
 4. The route validates generated labels. It updates Readeck with `add_labels`.
 5. The browser makes one request per bookmark. It updates progress and results after each request.
 
+## Container
+
+The runtime image starts the standalone Next.js server directly with Node.js.
+The image removes npm and Corepack because the server does not need them.
+
 ## Main files
 
 | File | Purpose |

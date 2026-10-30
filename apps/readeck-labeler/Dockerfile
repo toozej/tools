@@ -23,6 +23,10 @@ FROM node:26-alpine AS runner
 
 WORKDIR /app
 
+# The standalone server does not need npm or Corepack.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
