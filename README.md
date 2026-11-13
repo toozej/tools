@@ -146,6 +146,8 @@ An error during the Go version update stops the calling target.
 
 Run `python3 -m unittest discover -s tests -v` to test Go version updates without network access.
 CI runs these tests and builds each Go Docker image to check its toolchain.
+CI blocks high and critical image findings when fixes are available.
+The Go images install Debian security updates for Expat, kernel headers, and zlib where those packages are present.
 
 ### manage
 - install uv

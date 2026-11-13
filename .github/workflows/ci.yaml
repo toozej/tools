@@ -74,6 +74,18 @@ jobs:
         with:
           context: ./apps/${{ matrix.apps }}
           push: false
+          load: true
+          tags: tools-ci:${{ matrix.apps }}
+      - name: Scan Go Docker image
+        if: hashFiles(format('apps/{0}/go.mod', matrix.apps)) != ''
+        uses: aquasecurity/trivy-action@master # nosemgrep: yaml.github-actions.security.third-party-action-not-pinned-to-commit-sha.third-party-action-not-pinned-to-commit-sha
+        with:
+          image-ref: tools-ci:${{ matrix.apps }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
   gitleaks:
     name: gitleaks
