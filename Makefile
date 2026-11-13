@@ -18,7 +18,7 @@ APP ?=
 REPO_URL := https://github.com/toozej/tools
 
 # Use the pinned Go toolchain unless an app requires a newer version.
-GO_VERSION := 1.27.3
+GO_VERSION := 1.27.4
 GO_CMD := GOTOOLCHAIN=go$(GO_VERSION)+auto go
 
 # Dependency lockfiles allowed to be committed after update-deps
@@ -109,7 +109,7 @@ validate: ## Run check build test for one app (usage: make validate APP=namehere
 	@make build APP="$(APP)"
 	@make test APP="$(APP)"
 
-update-go-version: ## Set the latest stable Go version in all app modules, or one app via APP=namehere
+update-go-version: ## Update Go modules, Docker images, and shared toolchains, or one app via APP=namehere
 	@set -euo pipefail; \
 	if [ -n "$(APP)" ]; then \
 		if [ ! -d "apps/$(APP)" ]; then \
@@ -133,7 +133,13 @@ update-go-version: ## Set the latest stable Go version in all app modules, or on
 	for MODULE in "$${MODULES[@]}"; do \
 		echo "Setting Go $$VERSION in $$MODULE"; \
 		GOTOOLCHAIN=auto go mod edit -go="$$VERSION" "$$MODULE"; \
-	done
+		DOCKERFILE="$${MODULE%go.mod}Dockerfile"; \
+		if [ -f "$$DOCKERFILE" ]; then \
+			sed -i -E "s/^(FROM golang:)[0-9]+\.[0-9]+\.[0-9]+/\1$$VERSION/" "$$DOCKERFILE"; \
+		fi; \
+	done; \
+	sed -i -E "s/^(GO_VERSION := )[0-9]+\.[0-9]+\.[0-9]+/\1$$VERSION/" Makefile; \
+	sed -i -E "s/(go-version: ')[0-9]+\.[0-9]+\.[0-9]+/\1$$VERSION/" .github/workflows/ci.yaml
 
 update-validate: update-go-version ## Update Go versions and deps, then validate all apps, or one app via APP=namehere
 	@if [ -n "$(APP)" ]; then \

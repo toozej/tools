@@ -125,12 +125,13 @@ To perform a clean rebuild (without cache) in development:
 
 ### Update Go versions and dependencies
 
-The app modules, Makefile, CI jobs, and Go app Docker images use Go 1.27.3.
+The app modules, Makefile, CI jobs, and Go app Docker images use Go 1.27.4.
 Keep the CI and Docker versions at least as new as the app module requirements.
 
 Run `make update-go-version` to set the latest stable Go version in each
-`apps/*/go.mod` file. This target requires Go, `curl`, `jq`, and network access.
-Use `APP` to update one app:
+`apps/*/go.mod` file and its Go Docker image. The target also updates the shared
+Makefile and CI toolchains. This target requires Go, `curl`, `jq`, `sed`, and network access.
+Use `APP` to update one app and the shared toolchains:
 
 ```bash
 make update-go-version
@@ -142,6 +143,9 @@ make update-go-version APP=md-converter
 validate the apps. These targets also support `APP`. The Go commands can select
 a newer toolchain when an app requires it. Go downloads that toolchain if needed.
 An error during the Go version update stops the calling target.
+
+Run `python3 -m unittest discover -s tests -v` to test Go version updates without network access.
+CI runs these tests and builds each Go Docker image to check its toolchain.
 
 ### manage
 - install uv
