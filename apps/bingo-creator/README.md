@@ -126,6 +126,10 @@ Access the app at `http://localhost:8080`
 4. **Generate Card**: Click "Generate New Card" to create the bingo grid
 5. **Export PDF**: Click "Export PDF" to download your bingo card as a PDF file
 
+PDF export wraps each label and reduces its font size as needed to keep all text inside its cell.
+Short labels use a readable font size for every supported grid size.
+Labels with Unicode characters that the PDF font cannot display use an image of the grid.
+
 ### Tile Pools, Tablet Play, and Batch Export
 
 - Save the current newline-delimited list with a pool name, or upload a `.txt` file containing one tile per line. Saved pools are persisted in this browser and restored when the app reloads; use **Download pool** to keep a portable file copy.
@@ -176,12 +180,20 @@ apps/bingo-creator/
 ## Additional Commands
 
 ```bash
-# Run tests (if any)
-go test ./...
+# Run Go tests and JavaScript PDF regression tests (requires Node 18 or later)
+make test APP=bingo-creator
+
+# Build the static site
+make build APP=bingo-creator
+
+# Run all pre-commit checks
+make pre-commit-run
 
 # Lint
 go vet ./...
 ```
+
+Run the `make` commands from the repository root.
 
 ## Troubleshooting
 

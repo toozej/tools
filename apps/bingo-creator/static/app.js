@@ -13,6 +13,28 @@ function sanitizeForPDF(text) {
         .trim();
 }
 
+// Fit each label inside its cell. jsPDF uses points for fonts and inches for this page.
+function fitBingoPDFText(pdf, text, cellSize) {
+    const pointsPerInch = 72;
+    const maxWidth = cellSize * 0.9;
+    const maxHeight = cellSize * 0.9;
+    let fontSize = Math.min(cellSize * pointsPerInch * 0.3, 12);
+
+    while (true) {
+        pdf.setFontSize(fontSize);
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        const lineHeight = fontSize * pdf.getLineHeightFactor() / pointsPerInch;
+        const textHeight = lines.length * lineHeight;
+
+        if (textHeight <= maxHeight) {
+            return { lines, lineHeight };
+        }
+
+        // Rewrap at the smaller font size without dropping any text.
+        fontSize *= 0.9;
+    }
+}
+
 // PDF export function callable from Go WASM
 window.exportBingoPDF = async function(elementId, filename, options = {}) {
     const element = document.getElementById(elementId);
@@ -199,19 +221,7 @@ window.exportBingoPDF = async function(elementId, filename, options = {}) {
                 // Add text
                 const text = cellTexts[cellIndex] || '';
                 
-                // Calculate font size based on cell size and text length
-                const maxFontSize = cellSize * 0.3;
-                const minFontSize = 6;
-                let fontSize = Math.min(maxFontSize, 12);
-                
-                // Reduce font size for longer text
-                if (text.length > 20) {
-                    fontSize = Math.max(minFontSize, fontSize * 0.7);
-                } else if (text.length > 15) {
-                    fontSize = Math.max(minFontSize, fontSize * 0.8);
-                }
-                
-                pdf.setFontSize(fontSize);
+                const { lines, lineHeight } = fitBingoPDFText(pdf, text, cellSize);
                 
                 // Set text color
                 pdf.setTextColor(0, 0, 0);
@@ -220,14 +230,10 @@ window.exportBingoPDF = async function(elementId, filename, options = {}) {
                 const cellCenterX = x + (cellSize / 2);
                 const cellCenterY = y + (cellSize / 2);
                 
-                // Split text if too long and center it
-                const maxWidth = cellSize * 0.9;
-                const lines = pdf.splitTextToSize(text, maxWidth);
-                const lineHeight = fontSize * 0.05; // Convert to inches (approximate)
-                const totalTextHeight = lines.length * lineHeight;
-                const textStartY = cellCenterY - (totalTextHeight / 2) + (lineHeight * 0.4);
+                // Center the complete block using jsPDF's line spacing.
+                const textStartY = cellCenterY - ((lines.length - 1) * lineHeight / 2);
                 
-                pdf.text(lines, cellCenterX, textStartY, { align: 'center' });
+                pdf.text(lines, cellCenterX, textStartY, { align: 'center', baseline: 'middle' });
 
                 if (isMarked) {
                     const markerRadius = Math.max(cellSize * 0.13, 0.08);
