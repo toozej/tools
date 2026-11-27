@@ -21,8 +21,10 @@ RUN GOOS=js GOARCH=wasm go build -o bin/web/app.wasm -ldflags="-s -w" ./cmd/web/
 # Create final output directory and copy all static + generated files to out directory
 RUN mkdir -p /app/out && cp -r bin/* /app/out/ && cp -r static /app/out/
 
+FROM builder AS security
+
 # Install patched Debian security packages and remove package metadata.
-RUN apt-get update && apt-get install -y --only-upgrade libexpat1 linux-libc-dev zlib1g zlib1g-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --only-upgrade libexpat1 linux-libc-dev zlib1g zlib1g-dev libzstd1 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 # The container will exit after copying files to the volume mount
