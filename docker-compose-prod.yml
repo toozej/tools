@@ -140,7 +140,7 @@ services:
 
   photos-flaresolverr:
     container_name: tools_photos-flaresolverr
-    image: ghcr.io/flaresolverr/flaresolverr:v3.5.0
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
     restart: always
     environment:
       LOG_LEVEL: info
