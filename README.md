@@ -145,6 +145,10 @@ a newer toolchain when an app requires it. Go downloads that toolchain if needed
 An error during the Go version update stops the calling target.
 
 Run `python3 -m unittest discover -s tests -v` to test Go version updates without network access.
+Run `make pre-commit-run` to check all files with the pinned pre-commit hooks.
+CI installs pre-commit and Semgrep directly before it runs this target.
+CI does not install unrelated development tools or update hook versions during validation.
+JavaScript app checks use Node.js 26 to match the container runtime and support the test dependencies.
 CI runs these tests and builds each Go Docker image to check its toolchain.
 CI blocks high and critical image findings when fixes are available.
 The Go images install Debian security updates for Expat, kernel headers, zlib, and Zstandard where those packages are present.

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import yaml from 'js-yaml';
-import { deepDiff, formatIncompleteJson, isValidJson, isIncompleteJson } from '@/lib/json-utils';
+import { deepDiff, formatIncompleteJson, isValidJson, isIncompleteJson, jsonToYaml } from '@/lib/json-utils';
 
 type Mode = 'auto' | 'format' | 'yaml' | 'diff' | 'incomplete';
 
@@ -75,16 +74,7 @@ export default function JsonUtils() {
         case 'yaml': {
           if (!leftTrimmed) return { output: '', error: '' };
           const parsed = JSON.parse(leftTrimmed);
-          const options: yaml.DumpOptions = {
-            indent: indentSize,
-            noArrayIndent: false,
-          };
-          if (yamlStyle === 'flow') {
-            options.flowLevel = 1;
-          } else if (yamlStyle === 'quote') {
-            options.styles = { '!!str': 'double' };
-          }
-          return { output: yaml.dump(parsed, options), error: '' };
+          return { output: jsonToYaml(parsed, indentSize, yamlStyle), error: '' };
         }
 
         case 'diff': {
