@@ -147,7 +147,13 @@ An error during the Go version update stops the calling target.
 Run `python3 -m unittest discover -s tests -v` to test Go version updates without network access.
 CI runs these tests and builds each Go Docker image to check its toolchain.
 CI blocks high and critical image findings when fixes are available.
-The Go images install Debian security updates for Expat, kernel headers, and zlib where those packages are present.
+The Go images install Debian security updates for Expat, kernel headers, zlib, and Zstandard where those packages are present.
+CI and release builds pull current base images and rebuild each named `security` stage.
+These stages refresh Debian packages and Alpine OpenSSL packages without reusing cached package updates.
+Other build stages can use the build cache.
+
+Dependabot uses the `bun` ecosystem for apps with `bun.lock` files.
+The repository has no devcontainer configuration, so Dependabot does not configure devcontainer updates.
 
 ### manage
 - install uv

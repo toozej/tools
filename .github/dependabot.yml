@@ -30,12 +30,12 @@ updates:
     directories:
       - "apps/*/"
     multi-ecosystem-group: combined
-  - package-ecosystem: npm
+  - package-ecosystem: bun
     cooldown:
       default-days: 7
     labels:
       - dependencies
-      - npm
+      - bun
     patterns:
       - '*'
     directories:
@@ -87,16 +87,6 @@ updates:
     labels:
       - dependencies
       - docker-compose
-    patterns:
-      - '*'
-    multi-ecosystem-group: combined
-  - package-ecosystem: devcontainers
-    directory: /
-    cooldown:
-      default-days: 7
-    labels:
-      - dependencies
-      - devcontainers
     patterns:
       - '*'
     multi-ecosystem-group: combined

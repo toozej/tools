@@ -8,9 +8,10 @@ RUN go mod download
 COPY cmd ./cmd
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /tfgr ./cmd/tfgr
 
-FROM debian:trixie-slim
+FROM debian:trixie-slim AS security
 
 RUN apt-get update \
+    && apt-get install -y --only-upgrade libzstd1 \
     && apt-get install -y --no-install-recommends ca-certificates curl zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
