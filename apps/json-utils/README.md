@@ -13,7 +13,7 @@ A modern, responsive web application that combines multiple JSON utilities into 
 - Convert JSON to YAML with three output styles:
   - **Block Style**: Standard YAML format with proper indentation
   - **Flow Style**: Compact single-line format
-  - **Quoted Strings**: All strings are double-quoted
+  - **Quoted Strings**: String values use double quotes
 
 ### 🔍 JSON Diff
 - Compare two JSON documents side-by-side
@@ -94,9 +94,9 @@ bun start
 |------------|---------|---------|
 | [Next.js](https://nextjs.org/) | 16.x | React framework with App Router |
 | [React](https://react.dev/) | 19.x | UI library |
-| [TypeScript](https://www.typescriptlang.org/) | 5.9.x | Type-safe JavaScript |
+| [TypeScript](https://www.typescriptlang.org/) | 7.x | Type-safe JavaScript |
 | [Tailwind CSS](https://tailwindcss.com/) | 4.x | Utility-first CSS framework |
-| [js-yaml](https://github.com/nodeca/js-yaml) | 4.1.x | YAML parser and dumper |
+| [js-yaml](https://github.com/nodeca/js-yaml) | 5.x | YAML parser and dumper |
 | [Bun](https://bun.sh/) | Latest | Package manager & runtime |
 
 ### Project Structure

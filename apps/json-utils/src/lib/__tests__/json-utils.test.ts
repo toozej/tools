@@ -1,10 +1,35 @@
 import { describe, test, expect } from "bun:test";
+import { load } from "js-yaml";
 import {
   deepDiff,
   isValidJson,
   isIncompleteJson,
   formatIncompleteJson,
+  jsonToYaml,
 } from "../json-utils";
+
+describe("jsonToYaml", () => {
+  const input = { items: ["first", "second"], message: 'A "quoted" value' };
+
+  test("preserves nested data and the selected block indentation", () => {
+    const output = jsonToYaml(input, 4);
+    expect(output).toContain("items:\n    - first\n    - second\n");
+    expect(load(output)).toEqual(input);
+  });
+
+  test("renders nested collections in compact flow style", () => {
+    const output = jsonToYaml(input, 2, "flow");
+    expect(output).toContain("items: [first, second]");
+    expect(load(output)).toEqual(input);
+  });
+
+  test("quotes string values and escapes embedded quotes", () => {
+    const output = jsonToYaml(input, 2, "quote");
+    expect(output).toContain('- "first"');
+    expect(output).toContain('message: "A \\"quoted\\" value"');
+    expect(load(output)).toEqual(input);
+  });
+});
 
 describe("deepDiff", () => {
   test("returns empty array for identical primitives", () => {

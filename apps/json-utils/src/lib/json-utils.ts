@@ -1,3 +1,20 @@
+import * as yaml from 'js-yaml';
+
+export function jsonToYaml(
+  value: unknown,
+  indent: number = 2,
+  style: 'block' | 'flow' | 'quote' = 'block',
+): string {
+  const options: yaml.DumpOptions = { indent, seqNoIndent: false };
+  if (style === 'flow') {
+    options.flowLevel = 1;
+  } else if (style === 'quote') {
+    options.quoteStyle = 'double';
+    options.forceQuotes = true;
+  }
+  return yaml.dump(value, options);
+}
+
 export interface DiffResult {
   type: 'added' | 'removed' | 'modified';
   path: string;

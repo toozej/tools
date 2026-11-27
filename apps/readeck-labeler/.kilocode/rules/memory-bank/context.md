@@ -37,4 +37,9 @@ The image removes npm and Corepack because the server does not need them.
 
 ## Verification
 
+The TypeScript 7 configuration uses relative alias paths without the removed `baseUrl` option.
+The configuration explicitly includes Bun types for the test files.
+The native `tsc` command uses TypeScript 7 through `@typescript/native`.
+ESLint and Next.js use the TypeScript 6 API through the `typescript` package.
+
 Run `bun run typecheck`, `bun run lint`, `bun test`, and `bun run build`. Validate Compose with its runtime and build profiles. The repository colophon includes this app.
