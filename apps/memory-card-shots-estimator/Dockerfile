@@ -14,7 +14,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN ./node_modules/.bin/next build
 
-FROM alpine:3.22 AS security
+FROM alpine:3.24 AS security
 
 WORKDIR /app
 RUN apk upgrade --no-cache && addgroup -S appgroup && adduser -S appuser -G appgroup
